@@ -134,13 +134,20 @@ ul.ck li:before{content:"✓ ";color:var(--gold);font-weight:800}
 
 <div class="modal" id="addm" onclick="if(event.target===this)closeAdd()"><div class="sheet" id="addsheet"></div></div>
 
+<input type="file" id="stfile" accept=".pdf,.csv,.txt,application/pdf,text/csv" hidden onchange="onStmt(this.files[0]);this.value=''">
+<div class="modal" id="sm" onclick="if(event.target===this)closeStmt()"><div class="sheet" id="ssheet"></div></div>
+
 <div class="modal" id="gm" onclick="if(event.target===this)closeGoal()"><div class="sheet" id="gsheet"></div></div>
+
+<div class="modal" id="dm" onclick="if(event.target===this)closeDecide()"><div class="sheet" id="dsheet"></div></div>
 
 <div class="modal" id="paywall" onclick="if(event.target===this)closePaywall()"><div class="sheet">
   <h3>Goldstück <span class="gold">Premium</span></h3>
   <p class="mute">Unbegrenzt Kassenzettel scannen, alle Spartipps und das Abo-Radar. Ohne Werbung, ohne Datenverkauf, ohne Provisionen.</p>
+  <p class="gold sm" id="pwTrial" style="font-weight:700;margin-top:6px"></p>
   <ul class="ck">
     <li>Unbegrenzt Kassenzettel scannen (gratis: 5 pro Monat)</li>
+    <li>Unbegrenzt Kontoauszüge analysieren (gratis: 1 pro Monat)</li>
     <li>Unbegrenzt Budgets und Sparziele (gratis: 3 Budgets, 1 Ziel)</li>
     <li>Alle Spartipps mit Euro-Effekt pro Monat</li>
     <li>Abo- und Vertrags-Radar mit Jahreskosten</li>
@@ -175,11 +182,19 @@ const EXP_CATS = CAT_NAMES.filter(c=>c!=='Einkommen');
 const FREE_SCANS = 5;
 
 /* ---------- Zustand & Speicher ---------- */
-let S = {tx:[], rules:{}, rec:[], scans:{}, budgets:{}, goals:[], premium:false, month:null, tab:'home', filter:'', form:null, scan:null, gf:null};
+let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
 const KEY='goldstueck_v2';
-const FREE_BUDGETS=3, FREE_GOALS=1;
-function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||'null'); if(j){S.tx=j.tx||[];S.rules=j.rules||{};S.rec=j.rec||[];S.scans=j.scans||{};S.budgets=j.budgets||{};S.goals=j.goals||[];S.premium=!!j.premium;}}catch(e){}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify({tx:S.tx,rules:S.rules,rec:S.rec,scans:S.scans,budgets:S.budgets,goals:S.goals,premium:S.premium}))}catch(e){toast('Speichern nicht möglich (Speicher voll oder gesperrt)')}}
+const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
+/* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
+const TRIAL_DAYS=56, DECIDE_DAY=56;
+function trialInfo(){
+  const day=S.trialStart?Math.round((new Date(today()+'T00:00:00')-new Date(S.trialStart+'T00:00:00'))/86400000):0;  /* round: Zeitumstellung macht Tage 23h/25h lang */
+  return {day,left:Math.max(0,TRIAL_DAYS-day),decideIn:Math.max(0,DECIDE_DAY-day),phase:day>=TRIAL_DAYS?'ended':day>=DECIDE_DAY?'decide':'trial'};
+}
+/* S.premium gilt als aktiv, wenn gekauft (paid) oder die Testphase noch läuft */
+Object.defineProperty(S,'premium',{get(){return S.paid||trialInfo().phase!=='ended';},set(v){S.paid=!!v;}});
+function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||'null'); if(j){S.tx=j.tx||[];S.rules=j.rules||{};S.rec=j.rec||[];S.scans=j.scans||{};S.stmts=j.stmts||{};S.budgets=j.budgets||{};S.goals=j.goals||[];S.paid=!!j.paid;S.trialStart=j.trialStart||null;S.choice=j.choice||null;}}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({tx:S.tx,rules:S.rules,rec:S.rec,scans:S.scans,stmts:S.stmts,budgets:S.budgets,goals:S.goals,paid:S.paid,trialStart:S.trialStart,choice:S.choice}))}catch(e){toast('Speichern nicht möglich (Speicher voll oder gesperrt)')}}
 
 /* ---------- Helfer ---------- */
 const eur=(n,d=0)=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',minimumFractionDigits:d,maximumFractionDigits:d}).format(n);
@@ -350,14 +365,14 @@ function monthBar(){
 function empty(){
   return `<div class="empty"><div class="big">🪙</div><h2 style="margin:8px 0;color:var(--text);font-size:22px;text-transform:none;letter-spacing:0">Ihr Haushaltsbuch. Ohne Tabellen.</h2>
   <p class="mute" style="margin-bottom:20px">Erfassen Sie Einnahmen und Ausgaben mit wenigen Taps, oder fotografieren Sie einfach den Kassenzettel.</p>
-  <div class="btns"><button class="btn" onclick="openAdd()">Erste Buchung erfassen</button><button class="btn ghost" onclick="openAdd(true)">📷 Kassenzettel scannen</button></div>
+  <div class="btns"><button class="btn" onclick="openStatement()">🏦 Kontoauszug hochladen</button><button class="btn ghost" onclick="openAdd()">Buchung erfassen</button><button class="btn ghost" onclick="openAdd(true)">📷 Kassenzettel scannen</button></div>
   <p class="note" style="margin-top:18px"><a href="#" style="color:var(--gold)" onclick="loadDemo();return false">Oder erst mit Beispieldaten ansehen</a></p></div>`;
 }
 function vHome(){
   if(!S.tx.length) return empty();
   const s=sums(S.month), f=forecast(S.month), pct=f.inc?Math.min(100,f.exp/f.inc*100):0, over=f.exp>f.inc;
   const tp=tips(S.month), sv=tp.reduce((x,t)=>x+t.save,0);
-  return monthBar()+`
+  return trialBanner()+monthBar()+`
   <div class="card"><div class="mute sm">${f.open?'Voraussichtlich am Monatsende':'Saldo im Monat'}</div>
     <div class="big ${f.saldo>=0?'pos':'neg'}">${f.saldo>=0?'+':''}${eur(f.saldo)}</div>
     <div class="bar"><i class="${over?'over':''}" style="width:${pct}%"></i></div>
@@ -465,15 +480,18 @@ function saveGoal(){
 function delGoal(id){if(confirm('Sparziel löschen?')){S.goals=S.goals.filter(g=>g.id!==id);save();render(true);}}
 
 function vMore(){
-  return `${goalsCard(true)}<div class="btns" style="margin-top:12px"><button class="btn ghost" onclick="openGoal('new')">+ Neues Sparziel ${!S.premium&&S.goals.length>=FREE_GOALS?'🔒':''}</button></div>
+  return `<h2>Kontoauszug analysieren</h2><div class="card"><div class="row"><div><b>Kontoauszug hochladen</b><div class="mute sm">PDF oder CSV aus dem Online-Banking. Einnahmen und Kategorien erkennt die App selbst.</div></div></div>
+   <button class="btn" style="margin-top:12px" onclick="openStatement()">🏦 Kontoauszug hochladen</button>
+   <p class="note">${S.premium?'Unbegrenzt.':`${Math.max(0,FREE_STMTS-stmtsUsed())} von ${FREE_STMTS} Gratis-Auszügen in diesem Monat übrig.`}</p></div>
+  ${goalsCard(true)}<div class="btns" style="margin-top:12px"><button class="btn ghost" onclick="openGoal('new')">+ Neues Sparziel ${!S.premium&&S.goals.length>=FREE_GOALS?'🔒':''}</button></div>
   <h2>Monatsbudgets pro Kategorie</h2><div class="card">
    ${EXP_CATS.map(c=>`<div class="row" style="padding:6px 0"><span><span class="dot" style="background:${CATS[c].c};display:inline-block"></span> ${c}</span><input class="f" style="width:110px;text-align:right;padding:8px 10px" inputmode="decimal" placeholder="kein Limit" value="${S.budgets[c]||''}" onchange="setBudget('${c}',this.value)" aria-label="Budget ${c}"></div>`).join('')}
    <p class="note">${S.premium?'Unbegrenzt viele Budgets.':`Gratis: bis zu ${FREE_BUDGETS} Budgets (${Object.keys(S.budgets).length} belegt).`}</p></div>
   <h2>Wiederkehrende Buchungen</h2><div class="card">
    ${S.rec.map(r=>`<div class="tx"><span class="dot" style="background:${CATS[r.cat].c}"></span><div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">jeden Monat am ${r.day}.</div></div><div class="amt ${r.amt>0?'pos':''}">${r.amt>0?'+':''}${eur2(r.amt)}</div><button class="del" onclick="delRec('${r.id}')" aria-label="Entfernen">✕</button></div>`).join('')||'<p class="mute sm">Noch keine. Beim Erfassen einer Buchung können Sie „Jeden Monat wiederholen" anhaken, z. B. für Miete und Gehalt.</p>'}</div>
   <h2>Kassenzettel-Scans</h2><div class="card"><div class="row"><div><b>${S.premium?'Unbegrenzt':scansLeft()+' von '+FREE_SCANS+' übrig'}</b><div class="mute sm">${S.premium?'Mit Premium':'in diesem Monat (Gratis-Version)'}</div></div><button class="btn sm" onclick="openAdd(true)">📷 Scannen</button></div></div>
-  <h2>Premium</h2><div class="card"><div class="row"><div><b>${S.premium?'Premium aktiv (Demo)':'Kostenlose Version'}</b><div class="mute sm">${S.premium?'Alle Funktionen freigeschaltet':'Erfassen, Dashboard und Prognose sind kostenlos'}</div></div>
-  <button class="btn sm" onclick="${S.premium?'togglePremium(false)':'openPaywall()'}">${S.premium?'Beenden':'Ansehen'}</button></div></div>
+  <h2>Premium</h2>${trialBanner()}<div class="card"><div class="row"><div><b>${S.paid?'Premium aktiv (Demo)':trialInfo().phase!=='ended'?'Premium-Testphase':'Basis-Version'}</b><div class="mute sm">${S.paid?'Alle Funktionen freigeschaltet':trialInfo().phase!=='ended'?`Alle Funktionen frei, noch ${trialInfo().left} Tage`:'Erfassen, Dashboard und Prognose sind kostenlos'}</div></div>
+  <button class="btn sm" onclick="${S.paid?'togglePremium(false)':'openPaywall()'}">${S.paid?'Beenden':'Preise'}</button></div></div>
   <h2>Ihre Daten</h2><div class="card"><div><b>${S.tx.length}</b> Buchungen gespeichert<div class="mute sm">Nur lokal auf diesem Gerät. Kassenzettel-Fotos werden nicht gespeichert.</div></div>
   <div class="btns" style="margin-top:14px"><button class="btn ghost sm" onclick="dlCsv()">Exportieren (CSV)</button><button class="btn ghost sm" onclick="loadDemo()">Beispieldaten laden</button><button class="btn ghost sm" onclick="wipe()">Alles löschen</button></div></div>`;
 }
@@ -511,6 +529,7 @@ function renderSheet(){
   ${F.rcpt&&F.items&&F.items.length?`<div class="rcpt"><b>🧾 ${F.items.length} Positionen erkannt</b><ul class="items">${F.items.map(i=>`<li><span>${esc(i.n)}</span><span>${eur2(i.p)}</span></li>`).join('')}</ul></div>`:''}
   ${sc&&sc.busy?`<div class="rcpt"><span class="spin"></span>${esc(sc.msg)}</div>`:''}
   ${sc&&sc.err?`<div class="rcpt" style="border-color:var(--neg)">${esc(sc.err)}</div>`:''}
+  ${ed?'':`<button class="btn ghost" style="margin-top:14px" onclick="openStatement()">🏦 Stattdessen Kontoauszug hochladen</button>`}
   ${F.type==='exp'&&!ed?`<div class="grid2" style="margin-top:14px"><button class="scanbtn" style="margin:0;flex-direction:column;text-align:center;gap:4px" onclick="tryScan('cam')" ${sc&&sc.busy?'disabled':''}><span class="e">📷</span><b>Foto aufnehmen</b></button>
   <button class="scanbtn" style="margin:0;flex-direction:column;text-align:center;gap:4px" onclick="tryScan('file')" ${sc&&sc.busy?'disabled':''}><span class="e">📄</span><b>PDF / Bild hochladen</b></button></div>
   <p class="note">${S.premium?'Kassenzettel-Scans: unbegrenzt.':scansLeft()+' von '+FREE_SCANS+' Gratis-Scans übrig.'}</p>`:''}
@@ -589,11 +608,11 @@ function loadPdfJs(){
     pdfjsLib.GlobalWorkerOptions.workerSrc=URL.createObjectURL(new Blob([w],{type:'text/javascript'}));
   })().catch(e=>{pdfP=null;throw new Error('offline');}));
 }
-async function pdfRead(file){
+async function pdfRead(file,maxPages=3){
   await loadPdfJs();
   const pdf=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
   let text='';
-  for(let p=1;p<=Math.min(pdf.numPages,3);p++){
+  for(let p=1;p<=Math.min(pdf.numPages,maxPages);p++){
     const tc=await (await pdf.getPage(p)).getTextContent(), rows=[];
     tc.items.forEach(it=>{if(!it.str.trim())return;const y=Math.round(it.transform[5]/4),x=it.transform[4];let r=rows.find(r=>Math.abs(r.y-y)<=1);if(!r){r={y,it:[]};rows.push(r);}r.it.push({x,s:it.str});});
     text+=rows.sort((a,b)=>b.y-a.y).map(r=>r.it.sort((a,b)=>a.x-b.x).map(i=>i.s).join('  ')).join('\n')+'\n';
@@ -676,6 +695,150 @@ function parseReceipt(text){
   return {total,date,merchant,cat,items:items.slice(0,120)};
 }
 
+/* ---------- Kontoauszug-Import (PDF oder CSV) ---------- */
+const stmtsUsed=()=>S.stmts[mk(today())]||0;
+function openStatement(){
+  if(!S.premium&&stmtsUsed()>=FREE_STMTS){openPaywall();toast(`Gratis: ${FREE_STMTS} Kontoauszug pro Monat`);return;}
+  closeAdd(); document.getElementById('stfile').click();
+}
+function cleanDesc(s){
+  return s.replace(/\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/g,' ').replace(/\b(EREF|MREF|CRED|SVWZ|KREF|ABWA|IBAN|BIC)\s*[+:.]?\s*\S*/gi,' ')
+    .replace(/\b\d{8,}\b/g,' ').replace(/\b(SEPA[- ]?(Basis|Firmen)?[- ]?Lastschrift|Kartenzahlung|Girocard|Debitkarte|Lastschrift|Dauerauftrag|Überweisung|Ueberweisung|Gutschrift|Online[- ]?Banking|Folgelastschrift)\b/gi,' ')
+    .replace(/\s+/g,' ').trim().slice(0,80);
+}
+const NOISE=/kontostand|übertrag|uebertrag|summe|saldo|habenumsätze|sollumsätze|buchungstag|^seite\b|^blatt\b|kontoauszug|neuer kontostand|alter kontostand/i;
+const AMT_RE=/([+-]?\s?\d{1,3}(?:\.\d{3})*,\d{2}|[+-]?\d+,\d{2})(?:\s?([SH])(?![A-Za-z])|(-))?/g;
+function parseStatementText(text){
+  const lines=text.split(/\r?\n/).map(l=>l.replace(/\s+/g,' ').trim()).filter(Boolean);
+  const years={}; (text.match(/\b\d{2}\.\d{2}\.(20\d{2})\b/g)||[]).forEach(d=>{const y=d.slice(-4);years[y]=(years[y]||0)+1;});
+  const refYear=+(Object.entries(years).sort((a,b)=>b[1]-a[1])[0]||[String(new Date().getFullYear())])[0];
+  const rows=[]; let prev=null;
+  const takeAmt=str=>{const all=[...str.matchAll(AMT_RE)]; if(!all.length) return null; const m=all[all.length-1];
+    let v=num(m[1].replace(/\s/g,'').replace(/^[+-]/,'')); if(isNaN(v)) return null;
+    let sign=0; if(/^\s*-/.test(m[1])||m[3]==='-'||m[2]==='S') sign=-1; else if(/^\s*\+/.test(m[1])||m[2]==='H') sign=1;
+    return {v,sign,text:str.slice(0,m.index).trim(),many:all.length>1};};
+  for(const l of lines){
+    const dm=l.match(/^(\d{2})\.(\d{2})\.(?:(\d{4}|\d{2})(?!\d))?/);
+    if(dm){
+      if(NOISE.test(l)){prev=null;continue;}
+      let rest=l.slice(dm[0].length).trim().replace(/^(\d{2})\.(\d{2})\.(?:\d{4}|\d{2})?\s+/,'');
+      const y=dm[3]?(dm[3].length===2?2000+ +dm[3]:+dm[3]):refYear, mo=+dm[2], d=+dm[1];
+      if(mo<1||mo>12||d<1||d>31){prev=null;continue;}
+      const a=takeAmt(rest);
+      prev={d:`${y}-${pad(mo)}-${pad(d)}`,desc:a?a.text:rest,amt:a?a.v:null,sign:a?a.sign:0,many:a?a.many:false};
+      rows.push(prev);
+    } else if(prev&&!NOISE.test(l)){
+      if(prev.amt===null){const a=takeAmt(l); if(a){prev.amt=a.v;prev.sign=a.sign;prev.desc+=' '+a.text;prev.many=a.many;continue;}}
+      if(prev.desc.length<200&&!/^\d+\s*\/\s*\d+$/.test(l)) prev.desc+=' '+l;
+    }
+  }
+  const raw=rows.filter(r=>r.amt!==null&&r.amt>0);
+  /* Steht bei den anderen Buchungen überall ein Minus, sind Beträge ohne Vorzeichen Einnahmen (und umgekehrt). */
+  const hasNeg=raw.some(r=>r.sign<0), hasPos=raw.some(r=>r.sign>0);
+  return raw.map(r=>{let s=r.sign; if(s===0){if(hasNeg&&!hasPos)s=1;else if(hasPos&&!hasNeg)s=-1;} return finishRow(r.d,r.desc,r.amt,s,r.many);});
+}
+const INC_KW=/gehalt|lohn\b|bez(ü|ue)ge|rente|honorar|kindergeld|zinsen|dividende|erstattung|r(ü|u)ckzahlung|gutschrift|eingang|erl(ö|oe)s|verg(ü|u)tung/i;
+function finishRow(d,desc0,v,sign,many){
+  const desc=cleanDesc(desc0)||'Buchung';
+  let guess=false, amt;
+  if(sign===0){ guess=true; amt=INC_KW.test(desc0)?v:-v; } else amt=sign*v;
+  return {d,desc,amt:Math.round(amt*100)/100,cat:categorize(desc,amt),guess:guess||false,many:!!many};
+}
+/* CSV-Export aus dem Online-Banking */
+function csvParse(text){
+  const first=text.split(/\r?\n/).slice(0,15).join('\n');
+  const cnt=ch=>(first.split(ch).length-1);
+  const sep=[';',',','\t'].sort((a,b)=>cnt(b)-cnt(a))[0];
+  const rows=[]; let r=[],f='',q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){f+='"';i++;} else q=false;} else f+=c; }
+    else if(c==='"') q=true;
+    else if(c===sep){r.push(f);f='';}
+    else if(c==='\n'||c==='\r'){ if(c==='\r'&&text[i+1]==='\n')i++; r.push(f);f=''; if(r.some(x=>x.trim()!==''))rows.push(r); r=[]; }
+    else f+=c;
+  }
+  r.push(f); if(r.some(x=>x.trim()!==''))rows.push(r);
+  return rows;
+}
+function dat(s){
+  s=String(s||'').trim(); let m;
+  if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return `${m[1]}-${m[2]}-${m[3]}`;
+  if((m=s.match(/^(\d{1,2})[./](\d{1,2})[./](\d{2,4})/))){ let y=m[3]; if(y.length===2) y='20'+y; return `${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`; }
+  return null;
+}
+function parseStatementCsv(text){
+  const rows=csvParse(text);
+  const isD=h=>/buchungstag|buchungsdatum|^datum|^date|valuta|wertstellung/i.test(h), isA=h=>/^betrag|umsatz|amount|^summe/i.test(h)||/^(soll|haben)$/i.test(h.trim());
+  const hi=rows.slice(0,30).findIndex(r=>r.some(isD)&&r.some(isA)); if(hi<0) return null;
+  const head=rows[hi].map(x=>x.trim());
+  const di=Math.max(head.findIndex(h=>/buchungstag|buchungsdatum|^datum|^date/i.test(h)),head.findIndex(isD)>=0?head.findIndex(isD):0);
+  const ai=head.findIndex(h=>/^betrag|amount|^summe|umsatz/i.test(h)), si=head.findIndex(h=>/^soll$/i.test(h.trim())), hai=head.findIndex(h=>/^haben$/i.test(h.trim()));
+  const dcols=head.map((h,i)=>/verwendungszweck|buchungstext|beschreibung|^text|details|empf|auftraggeber|beg(ü|ue)nstigter|zahlungspflichtiger|^name|payee/i.test(h)&&i!==di&&i!==ai?i:-1).filter(i=>i>=0);
+  if(ai<0&&si<0&&hai<0) return null;
+  const out=[];
+  rows.slice(hi+1).forEach(r=>{
+    const d=dat(r[di]); if(!d) return;
+    let v=ai>=0?num(r[ai]):(num(r[hai]||'0')||0)-Math.abs(num(r[si]||'0')||0); if(isNaN(v)||v===0) return;
+    const desc=[...new Set(dcols.map(i=>(r[i]||'').trim()).filter(Boolean))].join(' ');
+    out.push(finishRow(d,desc,Math.abs(v),v<0?-1:1,false));
+  });
+  return out;
+}
+async function onStmt(file){
+  if(!file) return;
+  S.st={busy:true,msg:'Kontoauszug wird gelesen …',rows:[],name:file.name}; renderStmt(); document.getElementById('sm').classList.add('show');
+  try{
+    let rows;
+    if(isPdf(file)){
+      const {text}=await pdfRead(file,40);
+      if(text.replace(/\s/g,'').length<60) throw new Error('scan');
+      rows=parseStatementText(text);
+    } else {
+      const buf=await file.arrayBuffer(); let t=new TextDecoder('utf-8').decode(buf);
+      if(t.includes('�')) t=new TextDecoder('windows-1252').decode(buf);
+      rows=parseStatementCsv(t.replace(/^﻿/,''));
+      if(rows===null) throw new Error('cols');
+    }
+    if(!rows.length) throw new Error('empty');
+    const seen=new Set(S.tx.map(t=>t.d+'|'+t.amt+'|'+t.desc));
+    rows.forEach((r,i)=>{r.i=i;r.dup=seen.has(r.d+'|'+r.amt+'|'+r.desc);r.inc=!r.dup;});
+    S.st={rows,name:file.name};
+  }catch(e){
+    const m={offline:'Die PDF-Bibliothek konnte nicht geladen werden. Bitte Internetverbindung prüfen (nur beim ersten Mal nötig).',scan:'Dieses PDF enthält keinen lesbaren Text (vermutlich ein Foto oder Scan). Bitte laden Sie den Kontoauszug als PDF oder CSV direkt aus Ihrem Online-Banking herunter.',cols:'In der CSV-Datei wurden keine Spalten für Datum und Betrag gefunden.',empty:'Ich konnte in dieser Datei keine Buchungen erkennen. Bitte versuchen Sie den CSV-Export Ihrer Bank.'}[e&&e.message];
+    S.st={err:m||'Die Datei konnte nicht gelesen werden (bei PDFs: Passwortschutz?).',rows:[]};
+  }
+  renderStmt();
+}
+function stTotals(){const R=(S.st.rows||[]).filter(r=>r.inc);return {n:R.length,inc:R.filter(r=>r.amt>0).reduce((x,r)=>x+r.amt,0),exp:R.filter(r=>r.amt<0).reduce((x,r)=>x-r.amt,0)};}
+function renderStmt(){
+  const st=S.st, box=document.getElementById('ssheet'); if(!st||!box) return;
+  const head=`<div class="row" style="margin-bottom:10px"><h3>Kontoauszug analysieren</h3><button class="del" style="font-size:20px" onclick="closeStmt()" aria-label="Schließen">✕</button></div>`;
+  if(st.busy){box.innerHTML=head+`<div class="rcpt"><span class="spin"></span>${esc(st.msg)}</div>`;return;}
+  if(st.err){box.innerHTML=head+`<div class="rcpt" style="border-color:var(--neg)">${esc(st.err)}</div><button class="btn ghost" style="margin-top:14px" onclick="closeStmt()">Schließen</button>`;return;}
+  const T=stTotals(), ds=st.rows.map(r=>r.d).sort(), guess=st.rows.filter(r=>r.guess&&r.inc).length, dups=st.rows.filter(r=>r.dup).length;
+  box.innerHTML=head+`
+   <p class="mute sm">${esc(st.name)} · ${st.rows.length} Buchungen erkannt · ${ds[0].slice(8)}.${ds[0].slice(5,7)}.–${ds[ds.length-1].slice(8)}.${ds[ds.length-1].slice(5,7)}.${ds[ds.length-1].slice(0,4)}</p>
+   <div class="grid2" style="margin:12px 0"><div class="card kpi" style="margin:0"><div class="lbl">Einnahmen</div><div class="val pos">${eur(T.inc)}</div></div><div class="card kpi" style="margin:0"><div class="lbl">Ausgaben</div><div class="val">${eur(T.exp)}</div></div></div>
+   ${guess?`<div class="rcpt" style="margin:0 0 12px">⚠️ Bei ${guess} Buchungen war das Vorzeichen nicht eindeutig. Tippen Sie auf den Betrag, um zwischen Einnahme und Ausgabe zu wechseln.</div>`:''}
+   ${dups?`<p class="note" style="margin:0 0 8px">${dups} bereits vorhandene Buchungen sind abgewählt.</p>`:''}
+   <div class="card" style="padding:4px 14px;max-height:46vh;overflow:auto">${st.rows.map((r,i)=>`<div class="tx" style="${r.inc?'':'opacity:.45'}"><input type="checkbox" style="width:20px;height:20px;accent-color:#C9AA22;flex:none" ${r.inc?'checked':''} onchange="stToggle(${i})" aria-label="Übernehmen">
+     <div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">${r.d.slice(8)}.${r.d.slice(5,7)}. <select onchange="stCat(${i},this.value)" aria-label="Kategorie">${CAT_NAMES.map(c=>`<option ${c===r.cat?'selected':''}>${c}</option>`).join('')}</select>${r.guess?' <span class="gold">Vorzeichen prüfen</span>':''}</div></div>
+     <button class="amt ${r.amt>0?'pos':''}" style="background:none;border:0;font-size:15px;cursor:pointer;color:${r.amt>0?'':'var(--text)'}" onclick="stFlip(${i})" aria-label="Vorzeichen wechseln">${r.amt>0?'+':''}${eur2(r.amt)}</button></div>`).join('')}</div>
+   <button class="btn" style="margin-top:16px" ${T.n?'':'disabled'} onclick="stImport()">${T.n} Buchungen übernehmen</button>
+   <p class="note">Ihr Kontoauszug wird nur auf diesem Gerät verarbeitet und nicht hochgeladen oder gespeichert.</p>`;
+}
+function stToggle(i){S.st.rows[i].inc=!S.st.rows[i].inc;renderStmt();}
+function stCat(i,c){S.st.rows[i].cat=c;}
+function stFlip(i){const r=S.st.rows[i];r.amt=-r.amt;r.guess=false;r.cat=categorize(r.desc,r.amt);renderStmt();}
+function closeStmt(){document.getElementById('sm').classList.remove('show');S.st=null;}
+function stImport(){
+  const R=S.st.rows.filter(r=>r.inc); if(!R.length) return;
+  R.forEach(r=>S.tx.push({id:uid(),d:r.d,desc:r.desc,amt:r.amt,cat:r.cat}));
+  const cnt={}; R.forEach(r=>cnt[mk(r.d)]=(cnt[mk(r.d)]||0)+1); const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0][0];
+  S.stmts[mk(today())]=stmtsUsed()+1; save(); closeStmt(); S.month=top; S.tab='home'; render(); window.scrollTo(0,0);
+  toast(`${R.length} Buchungen übernommen · ${mLabel(top)}`);
+}
+
 /* ---------- Aktionen ---------- */
 function mv(d){const ms=months(),i=ms.indexOf(S.month)+d;if(ms[i]){S.month=ms[i];render(true);}}
 function go(t){S.tab=t;render();window.scrollTo(0,0);}
@@ -687,9 +850,41 @@ function dlCsv(){
   const text='Datum;Beschreibung;Betrag;Kategorie\n'+S.tx.slice().sort((a,b)=>a.d.localeCompare(b.d)).map(t=>`${t.d.slice(8)}.${t.d.slice(5,7)}.${t.d.slice(0,4)};"${t.desc.replace(/"/g,'""')}";${String(t.amt).replace('.',',')};${t.cat}`).join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+text],{type:'text/csv;charset=utf-8'}));a.download='goldstueck-export.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
-function openPaywall(){document.getElementById('paywall').classList.add('show');}
+function openPaywall(){
+  const t=trialInfo(), n=document.getElementById('pwTrial');
+  n.textContent=S.paid?'':t.phase!=='ended'?`Sie testen Premium gerade kostenlos: noch ${t.left} Tage.`:'Ihre Testphase ist beendet.';
+  document.getElementById('paywall').classList.add('show');
+}
 function closePaywall(){document.getElementById('paywall').classList.remove('show');}
-function togglePremium(v){S.premium=v;save();closePaywall();render(true);toast(v?'Premium aktiviert (Demo)':'Premium beendet');}
+function togglePremium(v){S.paid=v;if(v)S.choice='premium';save();closePaywall();closeDecide();render(true);toast(v?'Premium aktiviert (Demo)':'Premium beendet');}
+function chooseBasic(){
+  S.choice='basic';save();closeDecide();render(true);
+  const t=trialInfo();toast(t.phase==='ended'?'Sie nutzen die Basis-Version':`Basis-Version gewählt. Premium haben Sie noch ${t.left} Tage.`);
+}
+function openDecide(){
+  const t=trialInfo();
+  document.getElementById('dsheet').innerHTML=`<div class="row" style="margin-bottom:6px"><h3>Wie geht es weiter?</h3><button class="del" style="font-size:20px" onclick="closeDecide()" aria-label="Später">✕</button></div>
+   <p class="mute">${t.phase==='ended'?'Ihre Premium-Testphase ist beendet.':`Ihre Premium-Testphase endet in <b class="gold">${t.left} Tagen</b>.`} Bitte entscheiden Sie, wie Sie Goldstück weiter nutzen möchten.</p>
+   <div class="card" style="border-color:var(--gold);margin-top:14px"><b>★ Premium</b> <span class="gold sm">3,99 € im Monat · 29,99 € im Jahr</span>
+    <ul class="ck"><li>Unbegrenzt Kassenzettel und Kontoauszüge</li><li>Alle Spartipps und Abo-Radar</li><li>Unbegrenzt Budgets und Sparziele</li></ul>
+    <button class="btn" onclick="togglePremium(true)">Premium behalten (Demo)</button></div>
+   <div class="card"><b>Basis</b> <span class="mute sm">kostenlos, für immer</span>
+    <ul class="ck" style="color:var(--mute)"><li>5 Kassenzettel-Scans und 1 Kontoauszug pro Monat</li><li>3 Budgets, 1 Sparziel</li><li>Dashboard, Prognose, 2 Spartipps</li></ul>
+    <button class="btn ghost" onclick="chooseBasic()">Basis-Version nutzen</button></div>
+   <p class="note">Ihre Buchungen und Daten bleiben in beiden Fällen erhalten. Prototyp: Es wird keine Zahlung ausgelöst.</p>`;
+  document.getElementById('dm').classList.add('show');
+}
+function closeDecide(){document.getElementById('dm').classList.remove('show');}
+function trialBanner(){
+  if(S.paid) return '';
+  const t=trialInfo();
+  if(t.phase==='trial'&&!S.choice) return `<div class="card" style="margin-top:14px;padding:12px 16px"><div class="row sm"><span>🎁 <b>Premium-Testphase</b></span><span class="gold"><b>noch ${t.left} Tage</b></span></div><div class="bar" style="margin:8px 0 2px;height:6px"><i style="width:${Math.min(100,t.day/TRIAL_DAYS*100)}%"></i></div><div class="mute sm">Alle Funktionen sind freigeschaltet. In ${t.decideIn} Tagen fragen wir, wie es weitergeht.</div></div>`;
+  if(t.phase==='trial') return `<div class="card" style="margin-top:14px;padding:12px 16px"><div class="row sm"><span>🎁 <b>Premium-Testphase</b></span><span class="gold"><b>noch ${t.left} Tage</b></span></div><div class="mute sm">Sie wechseln danach zur Basis-Version.</div></div>`;
+  if(t.phase==='decide'&&!S.choice) return `<div class="card total" style="margin-top:14px"><div class="gold sm" style="font-weight:700">ENTSCHEIDUNG · NOCH ${t.left} TAGE</div><div style="margin:6px 0 12px">Ihre Premium-Testphase endet bald. Möchten Sie Premium behalten oder die Basis-Version nutzen?</div><button class="btn" onclick="openDecide()">Jetzt entscheiden</button></div>`;
+  if(t.phase==='decide') return `<div class="card" style="margin-top:14px;padding:12px 16px"><div class="row sm"><span>🎁 <b>Premium-Testphase</b></span><span class="gold"><b>noch ${t.left} Tage</b></span></div><div class="mute sm">Sie haben die Basis-Version gewählt. Das gilt nach der Testphase.</div></div>`;
+  if(t.phase==='ended'&&S.choice!=='basic') return `<div class="card total" style="margin-top:14px"><div class="gold sm" style="font-weight:700">TESTPHASE BEENDET</div><div style="margin:6px 0 12px">Sie nutzen jetzt die Basis-Version. Premium gibt es für 3,99 € im Monat.</div><button class="btn" onclick="openDecide()">Optionen ansehen</button></div>`;
+  return '';
+}
 let tt;function toast(m){let e=document.getElementById('toast');if(!e){e=document.createElement('div');e.id='toast';e.style.cssText='position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:#F2F3F5;color:#111;padding:10px 16px;border-radius:12px;font-weight:600;font-size:13px;z-index:30;max-width:90%;text-align:center';document.body.appendChild(e);}e.textContent=m;e.style.display='block';clearTimeout(tt);tt=setTimeout(()=>e.style.display='none',2800);}
 
 /* ---------- Render ---------- */
@@ -698,12 +893,15 @@ function render(keepScroll){
   if(!S.month||!ms.includes(S.month)) S.month=ms[ms.length-1]||mk(today());
   document.getElementById('app').innerHTML={home:vHome,tx:vTx,tips:vTips,more:vMore}[S.tab]();
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tab));
-  const p=document.getElementById('premPill');p.classList.toggle('on',S.premium);p.textContent=S.premium?'★ Premium aktiv':'★ Premium';
+  const p=document.getElementById('premPill'), ti=trialInfo();p.classList.toggle('on',S.premium);p.textContent=S.paid?'★ Premium aktiv':ti.phase!=='ended'?`★ Test · ${ti.left} Tage`:'★ Premium';
   if(keepScroll) window.scrollTo(0,y);
   const s=document.querySelector('input[type=search]'); if(s&&S.filter&&document.activeElement===document.body){s.focus();s.setSelectionRange(s.value.length,s.value.length);}
 }
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.t));
-load(); autoPost(); render();
+load(); autoPost();
+if(!S.trialStart){S.trialStart=today();save();}   /* Testphase startet beim ersten Öffnen */
+render();
+{const t=trialInfo(); if(!S.paid&&!S.choice&&t.phase!=='trial') setTimeout(openDecide,600);}   /* ab Tag 42 einmal pro Start nachfragen */
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
