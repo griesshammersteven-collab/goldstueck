@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0B0C0F">
-<meta name="description" content="Goldstück: Haushaltsbuch mit Kassenzettel-Scan, Budgets, Sparzielen und Spartipps. Ihre Daten bleiben auf Ihrem Gerät.">
+<meta name="description" content="Monatsklar: Haushaltsbuch mit Kassenzettel-Scan, Budgets, Sparzielen und Spartipps. Ihre Daten bleiben auf Ihrem Gerät.">
 <meta name="robots" content="noindex">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' data: blob:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <link rel="manifest" href="manifest.webmanifest">
@@ -12,9 +12,9 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Goldstück">
+<meta name="apple-mobile-web-app-title" content="Monatsklar">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Goldstück – Ihr Haushaltsbuch</title>
+<title>Monatsklar – Ihr Haushaltsbuch</title>
 <style>
 :root{
   --bg:#0B0C0F; --ink:#111318; --card:rgba(255,255,255,.04); --card2:rgba(255,255,255,.06); --line:rgba(255,255,255,.1);
@@ -206,7 +206,7 @@ svg.i{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.22em;flex
 <body>
 <div class="glow" aria-hidden="true"><i></i><i></i></div>
 <header><div class="wrap">
-  <div class="logo"><span class="coin">G</span><span>Gold<b>stück</b></span></div>
+  <div class="logo"><span class="coin">M</span><span>Monats<b>klar</b></span></div>
   <div class="pill" id="premPill" onclick="openPaywall()" role="button" tabindex="0">Premium</div>
 </div>
 <div class="killbar"><button type="button" onclick="openCancel()">Verträge hier kündigen <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></div></header>
@@ -236,7 +236,7 @@ svg.i{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.22em;flex
 <div class="modal" id="dm" onclick="if(event.target===this)closeDecide()"><div class="sheet" id="dsheet"></div></div>
 
 <div class="modal" id="paywall" onclick="if(event.target===this)closePaywall()"><div class="sheet">
-  <h3>Goldstück <span class="gold">Premium</span></h3>
+  <h3>Monatsklar <span class="gold">Premium</span></h3>
   <p class="mute">Unbegrenzt Kassenzettel scannen, alle Spartipps und das Abo-Radar. Ohne Werbung, ohne Datenverkauf, ohne Provisionen.</p>
   <p class="gold sm" id="pwTrial" style="font-weight:700;margin-top:6px"></p>
   <ul class="ck">
@@ -598,7 +598,7 @@ function vMore(){
   <h2>Ihre Daten</h2><div class="card"><div><b>${S.tx.length}</b> Buchungen gespeichert<div class="mute sm">Nur lokal auf diesem Gerät. Kassenzettel-Fotos werden nicht gespeichert.</div></div>
   <div class="btns" style="margin-top:14px"><button class="btn ghost sm" onclick="dlCsv()">Exportieren (CSV)</button><button class="btn ghost sm" onclick="loadDemo()">Beispieldaten laden</button><button class="btn ghost sm" onclick="wipe()">Alles löschen</button></div></div>
   <h2>Rechtliches</h2><div class="card"><div class="legal"><a href="info/impressum.html" target="_blank" rel="noopener">Impressum</a><a href="info/datenschutz.html" target="_blank" rel="noopener">Datenschutz</a><a href="info/agb.html" target="_blank" rel="noopener">AGB</a><a href="mailto:griesshammersteven@gmail.com">Kontakt</a></div>
-  <p class="note" style="margin-top:12px">Goldstück gibt keine Anlage-, Steuer- oder Rechtsberatung. Die Spartipps dienen der Orientierung.</p></div>`;
+  <p class="note" style="margin-top:12px">Monatsklar gibt keine Anlage-, Steuer- oder Rechtsberatung. Die Spartipps dienen der Orientierung.</p></div>`;
 }
 
 /* ---------- Erfassen ---------- */
@@ -972,7 +972,7 @@ function closeList(){document.getElementById('lm').classList.remove('show');}
 function listEdit(id){closeList();openEdit(id);}
 
 /* ---------- Kündigung (Kündigungsbutton nach § 312k BGB) ---------- */
-const CONTRACTS=['Goldstück Premium – monatlich','Goldstück Premium – jährlich','Kostenlose Testphase / Basis-Version'];
+const CONTRACTS=['Monatsklar Premium – monatlich','Monatsklar Premium – jährlich','Kostenlose Testphase / Basis-Version'];
 const OP_MAIL='griesshammersteven@gmail.com';
 const fmtDT=d=>d.toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'})+' Uhr';
 const fmtD=s=>s.slice(8)+'.'+s.slice(5,7)+'.'+s.slice(0,4);
@@ -1038,12 +1038,12 @@ function cxConfirm(){
   const rec={ref:'GS-'+today().replace(/-/g,'')+'-'+Math.random().toString(36).slice(2,7).toUpperCase(),ts:now.toISOString(),name:C.name.trim(),email:C.email.trim(),contract:C.contract,cid:C.cid.trim(),kind:C.kind,when:C.when,reason:C.reason.trim()};
   S.cancels.push(rec);
   /* Wirkung in dieser Version: Premium endet, die App wechselt zur Basis-Version. Daten bleiben erhalten. */
-  if(rec.contract.startsWith('Goldstück Premium')){S.paid=false;S.choice='basic';}
+  if(rec.contract.startsWith('Monatsklar Premium')){S.paid=false;S.choice='basic';}
   else{const d=new Date();d.setDate(d.getDate()-TRIAL_DAYS);S.trialStart=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;S.choice='basic';}
   save(); C.rec=rec; C.step=3; renderCancel(); render(true);
 }
 function cxText(r){
-  return `Kündigung – Goldstück\n\nReferenz: ${r.ref}\nEingang (Gerätezeit): ${fmtDT(new Date(r.ts))}\n\nName: ${r.name}\nE-Mail: ${r.email}\nVertrag: ${r.contract}\n${r.cid?`Vertrags-/Bestellnummer: ${r.cid}\n`:''}Kündigung: ${kindText(r)}\n\nHiermit kündige ich den oben genannten Vertrag. Bitte bestätigen Sie mir den Eingang und den Zeitpunkt der Beendigung in Textform an die angegebene E-Mail-Adresse.\n`;
+  return `Kündigung – Monatsklar\n\nReferenz: ${r.ref}\nEingang (Gerätezeit): ${fmtDT(new Date(r.ts))}\n\nName: ${r.name}\nE-Mail: ${r.email}\nVertrag: ${r.contract}\n${r.cid?`Vertrags-/Bestellnummer: ${r.cid}\n`:''}Kündigung: ${kindText(r)}\n\nHiermit kündige ich den oben genannten Vertrag. Bitte bestätigen Sie mir den Eingang und den Zeitpunkt der Beendigung in Textform an die angegebene E-Mail-Adresse.\n`;
 }
 function cxMail(){
   const r=S.cx.rec, u=`mailto:${OP_MAIL}?cc=${encodeURIComponent(r.email)}&subject=${encodeURIComponent('Kündigung '+r.ref)}&body=${encodeURIComponent(cxText(r))}`;
@@ -1063,7 +1063,7 @@ function delTx(id){if(!confirm('Diese Buchung löschen?'))return;S.tx=S.tx.filte
 function wipe(){if(confirm('Wirklich alle Daten (Buchungen, Budgets, Sparziele) von diesem Gerät löschen?')){S.tx=[];S.rules={};S.rec=[];S.scans={};S.budgets={};S.goals=[];save();render();}}
 function dlCsv(){
   const text='Datum;Beschreibung;Betrag;Kategorie\n'+S.tx.slice().sort((a,b)=>a.d.localeCompare(b.d)).map(t=>`${t.d.slice(8)}.${t.d.slice(5,7)}.${t.d.slice(0,4)};"${t.desc.replace(/"/g,'""')}";${String(t.amt).replace('.',',')};${t.cat}`).join('\n');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+text],{type:'text/csv;charset=utf-8'}));a.download='goldstueck-export.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+text],{type:'text/csv;charset=utf-8'}));a.download='monatsklar-export.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 function openPaywall(){
   const t=trialInfo(), n=document.getElementById('pwTrial');
@@ -1079,7 +1079,7 @@ function chooseBasic(){
 function openDecide(){
   const t=trialInfo();
   document.getElementById('dsheet').innerHTML=`<div class="row" style="margin-bottom:6px"><h3>Wie geht es weiter?</h3><button class="del" style="font-size:20px" onclick="closeDecide()" aria-label="Später">${ic('x')}</button></div>
-   <p class="mute">${t.phase==='ended'?'Ihre Premium-Testphase ist beendet.':`Ihre Premium-Testphase endet in <b class="gold">${t.left} Tagen</b>.`} Bitte entscheiden Sie, wie Sie Goldstück weiter nutzen möchten.</p>
+   <p class="mute">${t.phase==='ended'?'Ihre Premium-Testphase ist beendet.':`Ihre Premium-Testphase endet in <b class="gold">${t.left} Tagen</b>.`} Bitte entscheiden Sie, wie Sie Monatsklar weiter nutzen möchten.</p>
    <div class="card" style="border-color:var(--gold);margin-top:14px"><b>${ic('star')} Premium</b> <span class="gold sm">3,99 € im Monat · 29,99 € im Jahr</span>
     <ul class="ck"><li>Unbegrenzt Kassenzettel und Kontoauszüge</li><li>Alle Spartipps und Abo-Radar</li><li>Unbegrenzt Budgets und Sparziele</li></ul>
     <button class="btn" onclick="togglePremium(true)">Premium behalten (Demo)</button></div>
