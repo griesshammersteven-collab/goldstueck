@@ -36,10 +36,11 @@ main{position:relative;z-index:1}
 /* Hintergrund-Glow wie auf der Landingpage */
 .glow{position:fixed;inset:0;pointer-events:none;z-index:0}
 .glow i{position:absolute;border-radius:50%}
-.glow i:first-child{left:50%;top:-12%;width:min(900px,140vw);height:520px;transform:translateX(-50%);background:rgba(201,170,34,.10);filter:blur(140px)}
-.glow i:last-child{right:-12%;bottom:-10%;width:min(520px,100vw);height:420px;background:rgba(99,102,241,.10);filter:blur(140px)}
+/* Farbverlauf statt blur-Filter: gleiche Optik, viel weniger Rechenaufwand auf dem Handy */
+.glow i:first-child{left:50%;top:-12%;width:min(900px,140vw);height:520px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(201,170,34,.14),rgba(201,170,34,0))}
+.glow i:last-child{right:-12%;bottom:-10%;width:min(520px,100vw);height:420px;background:radial-gradient(closest-side,rgba(99,102,241,.13),rgba(99,102,241,0))}
 
-header{padding-top:env(safe-area-inset-top);position:sticky;top:0;z-index:5;background:rgba(11,12,15,.72);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-bottom:1px solid var(--line)}
+header{padding-top:env(safe-area-inset-top);position:sticky;top:0;z-index:5;background:rgba(11,12,15,.88);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
 header .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
 .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.2px}
 .logo b{color:var(--gold)}
@@ -137,7 +138,7 @@ label.fl{display:block;font-size:12px;color:var(--mute);margin:16px 0 6px}
 .fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(50px + env(safe-area-inset-bottom));z-index:7;width:64px;height:64px;border-radius:50%;border:4px solid var(--bg);background:linear-gradient(135deg,var(--gold2),var(--gold));color:#0B0C0F;cursor:pointer;box-shadow:0 10px 34px -4px rgba(201,170,34,.6);display:flex;align-items:center;justify-content:center;transition:transform .3s,box-shadow .3s}
 .fab:hover{transform:translateX(-50%) translateY(-3px) scale(1.05);box-shadow:0 16px 44px -4px rgba(201,170,34,.8)}
 .fab .ico{width:28px;height:28px;margin:0;stroke-width:2.4}
-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,12,15,.8);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-top:1px solid var(--line);z-index:6;padding-bottom:env(safe-area-inset-bottom)}
+nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,12,15,.9);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--line);z-index:6;padding-bottom:env(safe-area-inset-bottom)}
 nav .wrap{display:grid;grid-template-columns:1fr 1fr 76px 1fr 1fr}
 nav button{position:relative;background:none;border:0;color:var(--mute);padding:11px 0 10px;font-size:11px;font-weight:600;cursor:pointer;transition:color .25s}
 nav button:hover{color:#fff}
