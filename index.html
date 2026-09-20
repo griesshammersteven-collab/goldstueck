@@ -142,7 +142,7 @@ ul.ck li:before{content:"✓ ";color:var(--gold);font-weight:800}
   <ul class="ck">
     <li>Unbegrenzt Kassenzettel scannen (gratis: 5 pro Monat)</li>
     <li>Unbegrenzt Budgets und Sparziele (gratis: 3 Budgets, 1 Ziel)</li>
-    <li>Alle Spartipps mit Euro-Effekt pro Jahr</li>
+    <li>Alle Spartipps mit Euro-Effekt pro Monat</li>
     <li>Abo- und Vertrags-Radar mit Jahreskosten</li>
     <li>Export Ihrer Daten, jederzeit kündbar</li>
   </ul>
@@ -289,7 +289,7 @@ function tips(m){
       const cur=proj(c,m), avg=prior.map(x=>sums(x).by[c]||0).reduce((a,b)=>a+b,0)/prior.length;
       if(avg>20&&cur>avg*1.25&&cur-avg>20){
         out.push({ic:'📈',t:`${c}: ${Math.round((cur/avg-1)*100)} % über Ihrem Schnitt`,
-          p:`Sie liegen bei ca. ${eur(cur)} im Monat, sonst bei ${eur(avg)}. Kommen Sie zurück auf Ihren üblichen Wert, bleibt das Geld bei Ihnen.`,save:(cur-avg)*12});
+          p:`Sie liegen bei ca. ${eur(cur)} im Monat, sonst bei ${eur(avg)}. Kommen Sie zurück auf Ihren üblichen Wert, bleibt das Geld bei Ihnen.`,save:cur-avg});
       }
     });
   }
@@ -297,20 +297,23 @@ function tips(m){
   if(small.length>=6){
     const sum=small.reduce((x,t)=>x-t.amt,0)*scale, avg=sum/(small.length*scale);
     out.push({ic:'☕',t:`${small.length} kleine Käufe im Café`,
-      p:`Im Schnitt ${eur2(avg)} pro Kauf, zusammen ca. ${eur(sum)} im Monat. Nur jeden zweiten Kauf zu ersparen, schafft spürbar Luft.`,save:sum/2*12});
+      p:`Im Schnitt ${eur2(avg)} pro Kauf, zusammen ca. ${eur(sum)} im Monat. Nur jeden zweiten Kauf zu ersparen, schafft spürbar Luft.`,save:sum/2});
   }
   const abos=recurring().filter(r=>r.cat==='Abos & Medien');
   if(abos.length>=2){
-    const tot=abos.reduce((x,r)=>x+r.avg,0)*12, top=abos[0];
-    out.push({ic:'🔁',t:`${abos.length} laufende Abos: ${eur(tot)} pro Jahr`,
-      p:`Am teuersten: ${top.name} mit ${eur2(top.avg)} im Monat. Nutzen Sie wirklich alle? Ein gekündigtes Abo entlastet sofort.`,save:top.avg*12});
+    const tot=abos.reduce((x,r)=>x+r.avg,0), top=abos[0];
+    out.push({ic:'🔁',t:`${abos.length} laufende Abos: ${eur(tot)} pro Monat`,
+      p:`Am teuersten: ${top.name} mit ${eur2(top.avg)} im Monat. Nutzen Sie wirklich alle? Ein gekündigtes Abo entlastet sofort.`,save:top.avg});
   }
   if(f.inc>0){
     const rate=f.saldo/f.inc;
     if(rate<0.1) out.push({ic:'🎯',t:`Sparquote nur ${Math.max(0,Math.round(rate*100))} %`,
-      p:`Richtwert sind 10 bis 20 % des Einkommens. Richten Sie am Gehaltstag einen Dauerauftrag ein, bevor das Geld anderweitig verschwindet.`,save:Math.max(0,(0.1*f.inc-f.saldo))*12});
+      p:`Richtwert sind 10 bis 20 % des Einkommens. Richten Sie am Gehaltstag einen Dauerauftrag ein, bevor das Geld anderweitig verschwindet.`,save:Math.max(0,0.1*f.inc-f.saldo)});
     else out.push({ic:'🏆',t:`Starke Sparquote: ${Math.round(rate*100)} %`,p:`Sie legen ${eur(f.saldo)} zurück. Legen Sie das Geld sinnvoll an, statt es auf dem Girokonto liegen zu lassen.`,save:0});
   }
+  /* Café-Käufe sind Teil der Kategorie "Restaurants & Café": nicht doppelt in die Summe zählen */
+  const cafe=out.find(t=>t.ic==='☕');
+  if(cafe&&out.some(t=>t.t.startsWith('Restaurants & Café'))){cafe.save=0;cafe.p+=' (Die Ersparnis steckt schon im Tipp zu Restaurants & Café.)';}
   return out.sort((a,b)=>b.save-a.save);
 }
 
@@ -365,7 +368,7 @@ function vHome(){
     <div class="card kpi"><div class="lbl">Einnahmen</div><div class="val pos">${eur(s.inc)}</div></div>
     <div class="card kpi"><div class="lbl">Ausgaben</div><div class="val">${eur(s.exp)}</div></div>
   </div>
-  ${sv>0?`<div class="card total" onclick="go('tips')" style="cursor:pointer"><div class="row"><div><div class="gold sm" style="font-weight:700">SPARPOTENZIAL</div><div class="big gold">${eur(sv)}</div><div class="mute sm">pro Jahr · ${tp.filter(t=>t.save>0).length} Tipps für Sie</div></div><div style="font-size:34px">✦</div></div></div>`:''}
+  ${sv>0?`<div class="card total" onclick="go('tips')" style="cursor:pointer"><div class="row"><div><div class="gold sm" style="font-weight:700">SPARPOTENZIAL</div><div class="big gold">${eur(sv)}</div><div class="mute sm">pro Monat · ${tp.filter(t=>t.save>0).length} Tipps für Sie</div></div><div style="font-size:34px">✦</div></div></div>`:''}
   ${budgetCard(S.month)}${goalsCard(false)}
   <h2>Wohin geht das Geld?</h2><div class="card">${donut(s.by)||'<p class="mute">Keine Ausgaben in diesem Monat.</p>'}</div>
   <h2>Verlauf</h2><div class="card">${trend(S.month)||'<p class="mute">Für den Verlauf brauchen wir mindestens zwei Monate.</p>'}</div>`;
@@ -386,14 +389,14 @@ function vTips(){
   if(!S.tx.length) return empty();
   const tp=tips(S.month), sv=tp.reduce((x,t)=>x+t.save,0), rec=recurring();
   const free=2;
-  let h=monthBar()+`<div class="card total"><div class="gold sm" style="font-weight:700">SPARPOTENZIAL PRO JAHR</div><div class="big gold">${eur(sv)}</div>
+  let h=monthBar()+`<div class="card total"><div class="gold sm" style="font-weight:700">SPARPOTENZIAL PRO MONAT</div><div class="big gold">${eur(sv)}</div>
     <div class="mute sm">Berechnet aus Ihren eigenen Ausgaben. Keine Provisionen, keine Vertragsvermittlung: Wir verdienen nichts an Ihren Wechseln.</div></div>`;
   h+='<h2>Ihre Tipps</h2>';
   h+=tp.map((t,i)=>{const lock=!S.premium&&i>=free;
     return `<div class="card tip ${lock?'locked':''}" ${lock?'onclick="openPaywall()" style="cursor:pointer"':''}>${lock?'<span class="lockmsg">🔒 Premium</span>':''}
-      <h3><span class="ic">${t.ic}</span> ${esc(t.t)}</h3><p class="mute">${esc(t.p)}</p>${t.save>0?`<span class="save">bis zu ${eur(t.save)} pro Jahr</span>`:''}</div>`;}).join('')||'<p class="mute">Noch keine Tipps. Erfassen Sie ein paar Wochen lang Ihre Ausgaben, dann werden sie genauer.</p>';
+      <h3><span class="ic">${t.ic}</span> ${esc(t.t)}</h3><p class="mute">${esc(t.p)}</p>${t.save>0?`<span class="save">bis zu ${eur(t.save)} pro Monat</span>`:''}</div>`;}).join('')||'<p class="mute">Noch keine Tipps. Erfassen Sie ein paar Wochen lang Ihre Ausgaben, dann werden sie genauer.</p>';
   h+='<h2>Abo- und Vertrags-Radar</h2>';
-  if(!S.premium) h+=`<div class="card tip locked" onclick="openPaywall()" style="cursor:pointer"><span class="lockmsg">🔒 Premium</span><p class="mute">${rec.length} wiederkehrende Zahlungen erkannt, zusammen ${eur(rec.reduce((x,r)=>x+r.avg,0)*12)} pro Jahr.</p></div>`;
+  if(!S.premium) h+=`<div class="card tip locked" onclick="openPaywall()" style="cursor:pointer"><span class="lockmsg">🔒 Premium</span><p class="mute">${rec.length} wiederkehrende Zahlungen erkannt, zusammen ${eur(rec.reduce((x,r)=>x+r.avg,0))} pro Monat.</p></div>`;
   else h+=`<div class="card">${rec.map(r=>`<div class="tx"><span class="dot" style="background:${CATS[r.cat].c}"></span><div class="d"><div class="t1">${esc(r.name)}</div><div class="mute sm">ca. am ${r.day}. · seit ${r.months} Monaten</div></div><div class="amt">${eur2(r.avg)}<div class="mute sm" style="text-align:right;font-weight:400">${eur(r.avg*12)}/Jahr</div></div></div>`).join('')||'<p class="mute">Keine wiederkehrenden Zahlungen erkannt.</p>'}</div>`;
   if(!S.premium) h+=`<button class="btn" onclick="openPaywall()">Alle Tipps freischalten</button>`;
   return h;
