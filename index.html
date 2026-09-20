@@ -157,6 +157,18 @@ ul.ck li:before{content:"✓ ";color:var(--gold);font-weight:800}
 .empty h2{justify-content:center}
 .empty h2::before{display:none}
 .note{font-size:12px;color:var(--mute);margin-top:8px}
+/* Kündigungsbutton (§ 312k BGB): dauerhaft sichtbar unter der Kopfzeile */
+.killbar{border-top:1px solid var(--line);background:rgba(229,115,92,.09)}
+.killbar button{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:36px;background:none;border:0;color:#F5B0A1;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.01em;transition:all .2s}
+.killbar button:hover{color:#fff;background:rgba(229,115,92,.2)}
+.killbar button:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.btn.danger{background:linear-gradient(90deg,#E5735C,#F08C74);box-shadow:0 8px 30px -8px rgba(229,115,92,.6)}
+.btn.danger:hover{box-shadow:0 14px 40px -6px rgba(229,115,92,.75)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:14px}
+.kv dt{color:var(--mute)} .kv dd{font-weight:600;word-break:break-word}
+.radio{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:16px;margin-top:8px;cursor:pointer;background:rgba(255,255,255,.04);transition:all .2s;font-size:14px}
+.radio:hover{border-color:rgba(201,170,34,.5)}
+.radio input{margin-top:3px;accent-color:#C9AA22;width:18px;height:18px;flex:none}
 .legal{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:6px}
 .legal a{color:var(--mute);font-size:13px;text-decoration:none;transition:color .2s}
 .legal a:hover{color:var(--gold)}
@@ -169,7 +181,8 @@ ul.ck li:before{content:"✓ ";color:var(--gold);font-weight:800}
 <header><div class="wrap">
   <div class="logo"><span class="coin">G</span><span>Gold<b>stück</b></span></div>
   <div class="pill" id="premPill" onclick="openPaywall()" role="button" tabindex="0">★ Premium</div>
-</div></header>
+</div>
+<div class="killbar"><button type="button" onclick="openCancel()">Verträge hier kündigen <span aria-hidden="true">›</span></button></div></header>
 
 <main class="wrap" id="app"></main>
 
@@ -188,6 +201,8 @@ ul.ck li:before{content:"✓ ";color:var(--gold);font-weight:800}
 <div class="modal" id="sm" onclick="if(event.target===this)closeStmt()"><div class="sheet" id="ssheet"></div></div>
 
 <div class="modal" id="gm" onclick="if(event.target===this)closeGoal()"><div class="sheet" id="gsheet"></div></div>
+
+<div class="modal" id="cm" onclick="if(event.target===this)closeCancel()"><div class="sheet" id="csheet"></div></div>
 
 <div class="modal" id="dm" onclick="if(event.target===this)closeDecide()"><div class="sheet" id="dsheet"></div></div>
 
@@ -232,7 +247,7 @@ const EXP_CATS = CAT_NAMES.filter(c=>c!=='Einkommen');
 const FREE_SCANS = 5;
 
 /* ---------- Zustand & Speicher ---------- */
-let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
+let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
@@ -243,8 +258,8 @@ function trialInfo(){
 }
 /* S.premium gilt als aktiv, wenn gekauft (paid) oder die Testphase noch läuft */
 Object.defineProperty(S,'premium',{get(){return S.paid||trialInfo().phase!=='ended';},set(v){S.paid=!!v;}});
-function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||'null'); if(j){S.tx=j.tx||[];S.rules=j.rules||{};S.rec=j.rec||[];S.scans=j.scans||{};S.stmts=j.stmts||{};S.budgets=j.budgets||{};S.goals=j.goals||[];S.paid=!!j.paid;S.trialStart=j.trialStart||null;S.choice=j.choice||null;}}catch(e){}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify({tx:S.tx,rules:S.rules,rec:S.rec,scans:S.scans,stmts:S.stmts,budgets:S.budgets,goals:S.goals,paid:S.paid,trialStart:S.trialStart,choice:S.choice}))}catch(e){toast('Speichern nicht möglich (Speicher voll oder gesperrt)')}}
+function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||'null'); if(j){S.tx=j.tx||[];S.rules=j.rules||{};S.rec=j.rec||[];S.scans=j.scans||{};S.stmts=j.stmts||{};S.budgets=j.budgets||{};S.goals=j.goals||[];S.paid=!!j.paid;S.trialStart=j.trialStart||null;S.choice=j.choice||null;S.cancels=j.cancels||[];}}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({tx:S.tx,rules:S.rules,rec:S.rec,scans:S.scans,stmts:S.stmts,budgets:S.budgets,goals:S.goals,paid:S.paid,trialStart:S.trialStart,choice:S.choice,cancels:S.cancels}))}catch(e){toast('Speichern nicht möglich (Speicher voll oder gesperrt)')}}
 
 /* ---------- Helfer ---------- */
 const eur=(n,d=0)=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',minimumFractionDigits:d,maximumFractionDigits:d}).format(n);
@@ -530,7 +545,9 @@ function saveGoal(){
 function delGoal(id){if(confirm('Sparziel löschen?')){S.goals=S.goals.filter(g=>g.id!==id);save();render(true);}}
 
 function vMore(){
-  return `<h2>Kontoauszug analysieren</h2><div class="card"><div class="row"><div><b>Kontoauszug hochladen</b><div class="mute sm">PDF oder CSV aus dem Online-Banking. Einnahmen und Kategorien erkennt die App selbst.</div></div></div>
+  return `<div class="card" style="border-color:rgba(229,115,92,.45);background:linear-gradient(180deg,rgba(229,115,92,.12),rgba(255,255,255,.02));margin-top:16px"><div class="row"><div><b>Vertrag beenden?</b><div class="mute sm">Sie können jederzeit kündigen, ohne Anmeldung und in wenigen Schritten.</div></div></div>
+   <button class="btn danger" style="margin-top:12px" onclick="openCancel()">Verträge hier kündigen</button></div>
+  <h2>Kontoauszug analysieren</h2><div class="card"><div class="row"><div><b>Kontoauszug hochladen</b><div class="mute sm">PDF oder CSV aus dem Online-Banking. Einnahmen und Kategorien erkennt die App selbst.</div></div></div>
    <button class="btn" style="margin-top:12px" onclick="openStatement()">🏦 Kontoauszug hochladen</button>
    <p class="note">${S.premium?'Unbegrenzt.':`${Math.max(0,FREE_STMTS-stmtsUsed())} von ${FREE_STMTS} Gratis-Auszügen in diesem Monat übrig.`}</p></div>
   ${goalsCard(true)}<div class="btns" style="margin-top:12px"><button class="btn ghost" onclick="openGoal('new')">+ Neues Sparziel ${!S.premium&&S.goals.length>=FREE_GOALS?'🔒':''}</button></div>
@@ -892,6 +909,89 @@ function stImport(){
   toast(`${R.length} Buchungen übernommen · ${mLabel(top)}`);
 }
 
+/* ---------- Kündigung (Kündigungsbutton nach § 312k BGB) ---------- */
+const CONTRACTS=['Goldstück Premium – monatlich','Goldstück Premium – jährlich','Kostenlose Testphase / Basis-Version'];
+const OP_MAIL='griesshammersteven@gmail.com';
+const fmtDT=d=>d.toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'})+' Uhr';
+const fmtD=s=>s.slice(8)+'.'+s.slice(5,7)+'.'+s.slice(0,4);
+function openCancel(){
+  closePaywall();closeDecide();
+  S.cx={step:1,name:'',email:'',contract:S.paid?CONTRACTS[0]:CONTRACTS[0],cid:'',kind:'next',when:'',reason:'',err:''};
+  renderCancel(); document.getElementById('cm').classList.add('show');
+}
+function closeCancel(){
+  document.getElementById('cm').classList.remove('show'); S.cx=null;
+  if(location.hash==='#kuendigen') history.replaceState(null,'',location.pathname+location.search);
+}
+const kindText=c=>c.kind==='next'?'ordentlich, zum nächstmöglichen Zeitpunkt':c.kind==='date'?`ordentlich, zum ${c.when?fmtD(c.when):'…'}`:`außerordentlich (fristlos), Grund: ${c.reason}`;
+function renderCancel(){
+  const C=S.cx, box=document.getElementById('csheet'); if(!C||!box) return;
+  const head=(t)=>`<div class="row" style="margin-bottom:8px"><h3>${t}</h3><button class="del" style="font-size:20px" onclick="closeCancel()" aria-label="Schließen">✕</button></div>`;
+  if(C.step===1){
+    box.innerHTML=head('Verträge kündigen')+`
+     <p class="mute sm">Sie brauchen dafür kein Konto. Bitte machen Sie die folgenden Angaben. Im nächsten Schritt prüfen Sie alles und kündigen verbindlich.</p>
+     <label class="fl">Ihr Name *</label><input class="f" value="${esc(C.name)}" oninput="S.cx.name=this.value" autocomplete="name">
+     <label class="fl">Ihre E-Mail-Adresse * (für die Bestätigung)</label><input class="f" type="email" inputmode="email" value="${esc(C.email)}" oninput="S.cx.email=this.value" autocomplete="email">
+     <label class="fl">Welchen Vertrag möchten Sie kündigen? *</label>
+     <select class="f" onchange="S.cx.contract=this.value">${CONTRACTS.map(c=>`<option ${c===C.contract?'selected':''}>${c}</option>`).join('')}</select>
+     <label class="fl">Vertrags- oder Bestellnummer (optional)</label><input class="f" placeholder="z. B. Bestellnummer aus Ihrem Store" value="${esc(C.cid)}" oninput="S.cx.cid=this.value">
+     <label class="fl">Art und Zeitpunkt der Kündigung *</label>
+     <label class="radio"><input type="radio" name="kind" ${C.kind==='next'?'checked':''} onchange="cxKind('next')"><span><b>Zum nächstmöglichen Zeitpunkt</b><br><span class="mute sm">Ordentliche Kündigung zum Ende des laufenden Abrechnungszeitraums</span></span></label>
+     <label class="radio"><input type="radio" name="kind" ${C.kind==='date'?'checked':''} onchange="cxKind('date')"><span><b>Zu einem bestimmten Datum</b><br><span class="mute sm">Ordentliche Kündigung, sofern zu diesem Termin möglich</span></span></label>
+     ${C.kind==='date'?`<input class="f" type="date" min="${today()}" value="${esc(C.when)}" onchange="S.cx.when=this.value" style="margin-top:8px" aria-label="Kündigungsdatum">`:''}
+     <label class="radio"><input type="radio" name="kind" ${C.kind==='extra'?'checked':''} onchange="cxKind('extra')"><span><b>Außerordentlich (fristlos)</b><br><span class="mute sm">Nur bei wichtigem Grund, den Sie unten angeben</span></span></label>
+     ${C.kind==='extra'?`<input class="f" placeholder="Grund der außerordentlichen Kündigung" value="${esc(C.reason)}" oninput="S.cx.reason=this.value" style="margin-top:8px">`:''}
+     ${C.err?`<div class="rcpt" style="border-color:var(--neg)">${esc(C.err)}</div>`:''}
+     <button class="btn" style="margin-top:20px" onclick="cxNext()">Weiter zur Bestätigung</button>`;
+  } else if(C.step===2){
+    box.innerHTML=head('Bitte bestätigen')+`
+     <p class="mute sm">Prüfen Sie Ihre Angaben. Mit „Jetzt kündigen“ geben Sie Ihre Kündigung verbindlich ab.</p>
+     <dl class="kv card" style="margin-top:14px"><dt>Name</dt><dd>${esc(C.name)}</dd><dt>E-Mail</dt><dd>${esc(C.email)}</dd><dt>Vertrag</dt><dd>${esc(C.contract)}</dd>${C.cid?`<dt>Nummer</dt><dd>${esc(C.cid)}</dd>`:''}<dt>Kündigung</dt><dd>${esc(kindText(C))}</dd></dl>
+     <button class="btn danger" onclick="cxConfirm()">Jetzt kündigen</button>
+     <button class="btn ghost" style="margin-top:10px" onclick="S.cx.step=1;renderCancel()">Zurück und ändern</button>`;
+  } else {
+    const r=C.rec;
+    box.innerHTML=head('Kündigung erfasst')+`
+     <div class="rcpt" style="margin-top:6px"><b>✅ Ihre Kündigung wurde erfasst.</b><br><span class="sm">Eingang: ${esc(fmtDT(new Date(r.ts)))}<br>Referenz: <b>${esc(r.ref)}</b></span></div>
+     <dl class="kv card" style="margin-top:14px"><dt>Name</dt><dd>${esc(r.name)}</dd><dt>Vertrag</dt><dd>${esc(r.contract)}</dd>${r.cid?`<dt>Nummer</dt><dd>${esc(r.cid)}</dd>`:''}<dt>Kündigung</dt><dd>${esc(kindText(r))}</dd></dl>
+     <div class="rcpt" style="border-color:var(--gold)"><b>Noch ein Schritt:</b> Diese Version speichert Ihre Kündigung nur auf Ihrem Gerät. Tippen Sie auf „Per E-Mail absenden“, damit sie auch beim Anbieter ankommt. Sie erhalten dabei eine Kopie.</div>
+     <button class="btn" style="margin-top:14px" onclick="cxMail()">Per E-Mail absenden</button>
+     <button class="btn ghost" style="margin-top:10px" onclick="cxDownload()">Bestätigung speichern (Textdatei)</button>
+     <p class="note" style="margin-top:14px">Haben Sie Premium über Apple oder Google abonniert? Beenden Sie das Abo bitte zusätzlich im Store, sonst wird weiter abgebucht. App Store: Einstellungen › Ihr Name › Abonnements. Google Play: Profilbild › Zahlungen und Abos › Abos.</p>
+     <button class="btn ghost" style="margin-top:10px" onclick="closeCancel()">Schließen</button>`;
+  }
+}
+function cxKind(k){S.cx.kind=k;S.cx.err='';renderCancel();}
+function cxNext(){
+  const C=S.cx; C.err='';
+  if(!C.name.trim()) C.err='Bitte geben Sie Ihren Namen an.';
+  else if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(C.email.trim())) C.err='Bitte geben Sie eine gültige E-Mail-Adresse an.';
+  else if(C.kind==='date'&&(!C.when||C.when<today())) C.err='Bitte wählen Sie ein Datum ab heute.';
+  else if(C.kind==='extra'&&!C.reason.trim()) C.err='Bitte nennen Sie den Grund der außerordentlichen Kündigung.';
+  if(C.err){renderCancel();return;}
+  C.step=2; renderCancel();
+}
+function cxConfirm(){
+  const C=S.cx, now=new Date();
+  const rec={ref:'GS-'+today().replace(/-/g,'')+'-'+Math.random().toString(36).slice(2,7).toUpperCase(),ts:now.toISOString(),name:C.name.trim(),email:C.email.trim(),contract:C.contract,cid:C.cid.trim(),kind:C.kind,when:C.when,reason:C.reason.trim()};
+  S.cancels.push(rec);
+  /* Wirkung in dieser Version: Premium endet, die App wechselt zur Basis-Version. Daten bleiben erhalten. */
+  if(rec.contract.startsWith('Goldstück Premium')){S.paid=false;S.choice='basic';}
+  else{const d=new Date();d.setDate(d.getDate()-TRIAL_DAYS);S.trialStart=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;S.choice='basic';}
+  save(); C.rec=rec; C.step=3; renderCancel(); render(true);
+}
+function cxText(r){
+  return `Kündigung – Goldstück\n\nReferenz: ${r.ref}\nEingang (Gerätezeit): ${fmtDT(new Date(r.ts))}\n\nName: ${r.name}\nE-Mail: ${r.email}\nVertrag: ${r.contract}\n${r.cid?`Vertrags-/Bestellnummer: ${r.cid}\n`:''}Kündigung: ${kindText(r)}\n\nHiermit kündige ich den oben genannten Vertrag. Bitte bestätigen Sie mir den Eingang und den Zeitpunkt der Beendigung in Textform an die angegebene E-Mail-Adresse.\n`;
+}
+function cxMail(){
+  const r=S.cx.rec, u=`mailto:${OP_MAIL}?cc=${encodeURIComponent(r.email)}&subject=${encodeURIComponent('Kündigung '+r.ref)}&body=${encodeURIComponent(cxText(r))}`;
+  location.href=u;
+}
+function cxDownload(){
+  const r=S.cx.rec, a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['﻿'+cxText(r)],{type:'text/plain;charset=utf-8'})); a.download=`kuendigung-${r.ref}.txt`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
 /* ---------- Aktionen ---------- */
 function mv(d){const ms=months(),i=ms.indexOf(S.month)+d;if(ms[i]){S.month=ms[i];render(true);}}
 function go(t){S.tab=t;render();window.scrollTo(0,0);}
@@ -954,6 +1054,9 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.t)
 load(); autoPost();
 if(!S.trialStart){S.trialStart=today();save();}   /* Testphase startet beim ersten Öffnen */
 render();
+/* Direktlink zur Kündigung, z. B. von der Website: …/#kuendigen */
+if(location.hash==='#kuendigen') setTimeout(openCancel,250);
+window.addEventListener('hashchange',()=>{if(location.hash==='#kuendigen')openCancel();});
 {const t=trialInfo(); if(!S.paid&&!S.choice&&t.phase!=='trial') setTimeout(openDecide,600);}   /* ab Tag 42 einmal pro Start nachfragen */
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
