@@ -294,6 +294,7 @@ const CATS = {
   'Mobilität':{c:'#57C2E0',fixed:false,ic:'car',kw:['shell','aral','esso','tankstelle','jet ','db ','bahn','deutsche bahn','uber','tier ','parken','kfz','vvs','bvg','mvv','flixbus']},
   'Freizeit & Shopping':{c:'#C9AA22',fixed:false,ic:'bag',kw:['amazon','zalando','ebay','kino','ikea','otto','media markt','saturn','steam','playstation','hotel','booking','airbnb','ryanair','lufthansa','h&m']},
   'Gesundheit':{c:'#3FB8AF',fixed:false,ic:'heart',kw:['apotheke','arzt','zahnarzt','optiker','physio']},
+  'Bargeld':{c:'#A3B18A',fixed:false,ic:'coins',kw:['bargeldabhebung','geldautomat','abhebung','bargeld']},
   'Sonstiges':{c:'#8A8F98',fixed:false,ic:'package',kw:[]}
 };
 const CAT_NAMES = Object.keys(CATS);
@@ -304,7 +305,7 @@ const FREE_SCANS = 5;
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], lastBackup:null, bkSnooze:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-20.5';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-20.6';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -922,7 +923,17 @@ function finishRow(d,desc0,v,sign,many){
   let guess=false, amt;
   if(sign===0){ guess=true; amt=INC_KW.test(desc0)?v:-v; } else amt=sign*v;
   /* Buchungen zwischen eigenen Konten würden sonst als Einnahme UND Ausgabe zählen: in der Vorschau vorab abgewählt */
-  return {d,desc,amt:Math.round(amt*100)/100,cat:categorize(desc,amt),guess:guess||false,many:!!many,transfer:/umbuchung|eigen(er)?\s?(ü|ue)bertrag|kontoausgleich/i.test(desc0)};
+  return {d,desc,amt:Math.round(amt*100)/100,cat:categorize(desc,amt),guess:guess||false,many:!!many,transfer:/umbuchung|eigen(er)?\s?(ü|ue)bertrag|kontoausgleich/i.test(desc0)&&!/bargeld|abhebung|geldautomat/i.test(desc0)};
+}
+/* Storno/Rückbuchung: Steht dieselbe Summe mit umgekehrtem Vorzeichen kurz davor, heben sich beide auf und werden abgewählt */
+const REV_KW=/r(ü|ue)ckgabe|storno|r(ü|ue)ckbuchung|mangels deckung|nicht eingel(ö|oe)st|retoure/i;
+function markReversals(rows){
+  const dayNum=d=>Math.round(new Date(d+'T00:00:00')/86400000);
+  rows.forEach((r,i)=>{
+    if(r.reversal||!REV_KW.test(r.raw||r.desc)) return;
+    const j=rows.findIndex((o,k)=>k!==i&&!o.reversal&&Math.abs(o.amt+r.amt)<0.005&&o.amt!==r.amt&&dayNum(o.d)<=dayNum(r.d)&&dayNum(r.d)-dayNum(o.d)<=10&&!REV_KW.test(o.raw||o.desc));
+    if(j>=0){r.reversal=true;rows[j].reversal=true;r.transfer=true;rows[j].transfer=true;}
+  });
 }
 /* CSV-Export aus dem Online-Banking */
 function csvParse(text){
@@ -981,6 +992,7 @@ async function onStmt(file){
       if(rows===null) throw new Error('cols');
     }
     if(!rows.length) throw new Error('empty');
+    markReversals(rows);
     const seen=new Set(S.tx.map(t=>t.d+'|'+t.amt+'|'+t.desc));
     rows.forEach((r,i)=>{r.i=i;r.dup=seen.has(r.d+'|'+r.amt+'|'+r.desc);r.inc=!r.dup&&!r.transfer;});
     S.st={rows,name:file.name};
@@ -1002,9 +1014,9 @@ function renderStmt(){
    <div class="grid2" style="margin:12px 0"><div class="card kpi" style="margin:0"><div class="lbl">Einnahmen</div><div class="val pos">${eur(T.inc)}</div></div><div class="card kpi" style="margin:0"><div class="lbl">Ausgaben</div><div class="val">${eur(T.exp)}</div></div></div>
    ${guess?`<div class="rcpt" style="margin:0 0 12px">${ic('alert')} Bei ${guess} Buchungen war das Vorzeichen nicht eindeutig. Tippen Sie auf den Betrag, um zwischen Einnahme und Ausgabe zu wechseln.</div>`:''}
    ${dups?`<p class="note" style="margin:0 0 8px">${dups} bereits vorhandene Buchungen sind abgewählt.</p>`:''}
-   ${trans?`<p class="note" style="margin:0 0 8px">${trans} Umbuchungen zwischen eigenen Konten sind abgewählt, damit sie Einnahmen und Ausgaben nicht doppelt zählen. Sie können sie bei Bedarf anwählen.</p>`:''}
+   ${trans?`<p class="note" style="margin:0 0 8px">${trans} Umbuchungen und Stornos sind abgewählt, damit sie Einnahmen und Ausgaben nicht doppelt zählen bzw. sich aufheben. Sie können sie bei Bedarf anwählen. Bargeldabhebungen zählen als Ausgabe.</p>`:''}
    <div class="card" style="padding:4px 14px;max-height:46vh;overflow:auto">${st.rows.map((r,i)=>`<div class="tx" style="${r.inc?'':'opacity:.45'}"><input type="checkbox" style="width:20px;height:20px;accent-color:#C9AA22;flex:none" ${r.inc?'checked':''} onchange="stToggle(${i})" aria-label="Übernehmen">
-     <div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">${r.d.slice(8)}.${r.d.slice(5,7)}. <select onchange="stCat(${i},this.value)" aria-label="Kategorie">${CAT_NAMES.map(c=>`<option ${c===r.cat?'selected':''}>${c}</option>`).join('')}</select>${r.guess?' <span class="gold">Vorzeichen prüfen</span>':''}${r.transfer?' <span class="gold">Umbuchung</span>':''}</div></div>
+     <div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">${r.d.slice(8)}.${r.d.slice(5,7)}. <select onchange="stCat(${i},this.value)" aria-label="Kategorie">${CAT_NAMES.map(c=>`<option ${c===r.cat?'selected':''}>${c}</option>`).join('')}</select>${r.guess?' <span class="gold">Vorzeichen prüfen</span>':''}${r.transfer?` <span class="gold">${r.reversal?'Storno':'Umbuchung'}</span>`:''}</div></div>
      <button class="amt ${r.amt>0?'pos':''}" style="background:none;border:0;font-size:15px;cursor:pointer;color:${r.amt>0?'':'var(--text)'}" onclick="stFlip(${i})" aria-label="Vorzeichen wechseln">${r.amt>0?'+':''}${eur2(r.amt)}</button></div>`).join('')}</div>
    <button class="btn" style="margin-top:16px" ${T.n?'':'disabled'} onclick="stImport()">${T.n} Buchungen übernehmen</button>
    <p class="note">Ihr Kontoauszug wird nur auf diesem Gerät verarbeitet und nicht hochgeladen oder gespeichert.</p>`;
