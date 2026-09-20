@@ -39,7 +39,7 @@ main{position:relative;z-index:1}
 .glow i:first-child{left:50%;top:-12%;width:min(900px,140vw);height:520px;transform:translateX(-50%);background:rgba(201,170,34,.10);filter:blur(140px)}
 .glow i:last-child{right:-12%;bottom:-10%;width:min(520px,100vw);height:420px;background:rgba(99,102,241,.10);filter:blur(140px)}
 
-header{position:sticky;top:0;z-index:5;background:rgba(11,12,15,.72);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-bottom:1px solid var(--line)}
+header{padding-top:env(safe-area-inset-top);position:sticky;top:0;z-index:5;background:rgba(11,12,15,.72);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-bottom:1px solid var(--line)}
 header .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
 .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.2px}
 .logo b{color:var(--gold)}
@@ -175,6 +175,16 @@ ul.ck li:before{content:"";position:absolute;left:0;top:.62em;width:16px;height:
 .radio:hover{border-color:rgba(201,170,34,.5)}
 .radio input{margin-top:3px;accent-color:#C9AA22;width:18px;height:18px;flex:none}
 svg.i{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.22em;flex:none}
+/* Klickbare Diagramme und Listen */
+.click{cursor:pointer}
+.legend .li.click{padding:11px 8px;margin:0 -8px;border-radius:12px;transition:background .2s}
+.legend .li.click:hover,.legend .li.click:focus-visible{background:rgba(255,255,255,.06);outline:none}
+.legend .li svg.i{width:16px;height:16px;flex:none}
+.donut .seg{cursor:pointer;transition:stroke-width .2s}
+.donut .seg:hover,.donut .seg:focus{stroke-width:27;outline:none}
+.trend .tb{cursor:pointer;outline:none}
+.trend .tb:hover rect{opacity:1}
+.kpi.click:focus-visible,.click:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .tip .ic svg.i{width:20px;height:20px;color:var(--gold);vertical-align:0}
 .chip svg.i{width:15px;height:15px;vertical-align:-3px}
 .empty .big svg.i{width:54px;height:54px;stroke-width:1.5}
@@ -218,6 +228,8 @@ svg.i{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.22em;flex
 <div class="modal" id="sm" onclick="if(event.target===this)closeStmt()"><div class="sheet" id="ssheet"></div></div>
 
 <div class="modal" id="gm" onclick="if(event.target===this)closeGoal()"><div class="sheet" id="gsheet"></div></div>
+
+<div class="modal" id="lm" onclick="if(event.target===this)closeList()"><div class="sheet" id="lsheet"></div></div>
 
 <div class="modal" id="cm" onclick="if(event.target===this)closeCancel()"><div class="sheet" id="csheet"></div></div>
 
@@ -424,11 +436,11 @@ function donut(by){
   if(!tot) return '';
   const R=54,C=2*Math.PI*R; let off=0, arcs='';
   ent.forEach(([c,v])=>{const len=v/tot*C;
-    arcs+=`<circle r="${R}" cx="80" cy="80" fill="none" stroke="${CATS[c].c}" stroke-width="22" stroke-dasharray="${Math.max(len-2,0.1)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 80 80)"/>`; off+=len;});
-  const svg=`<svg viewBox="0 0 160 160" style="max-width:190px;margin:0 auto" role="img" aria-label="Ausgaben nach Kategorie">${arcs}
+    arcs+=`<circle class="seg" data-c="${c}" role="button" tabindex="0" aria-label="${c}: ${eur(v)}, Buchungen anzeigen" onclick="openList('cat',this.dataset.c)" onkeydown="if(event.key==='Enter')openList('cat',this.dataset.c)" r="${R}" cx="80" cy="80" fill="none" stroke="${CATS[c].c}" stroke-width="22" stroke-dasharray="${Math.max(len-2,0.1)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 80 80)"/>`; off+=len;});
+  const svg=`<svg viewBox="0 0 160 160" class="donut" style="max-width:190px;margin:0 auto" aria-label="Ausgaben nach Kategorie. Tippen Sie auf einen Abschnitt, um die Buchungen zu sehen.">${arcs}
     <text x="80" y="76" text-anchor="middle" fill="#9AA1AD" font-size="9">Ausgaben</text>
     <text x="80" y="94" text-anchor="middle" fill="#F2F3F5" font-size="15" font-weight="800">${eur(tot)}</text></svg>`;
-  const leg=ent.map(([c,v])=>`<div class="li"><span class="dot" style="background:${CATS[c].c}"></span><span class="n">${c}</span><span class="mute sm">${Math.round(v/tot*100)} %</span><b>${eur(v)}</b></div>`).join('');
+  const leg=ent.map(([c,v])=>`<div class="li click" data-c="${c}" role="button" tabindex="0" onclick="openList('cat',this.dataset.c)" onkeydown="if(event.key==='Enter')openList('cat',this.dataset.c)"><span class="dot" style="background:${CATS[c].c}"></span><span class="n">${c}</span><span class="mute sm">${Math.round(v/tot*100)} %</span><b>${eur(v)}</b>${ic('chevR','mute')}</div>`).join('');
   return svg+`<div class="legend" style="margin-top:12px">${leg}</div>`;
 }
 function trend(m){
@@ -436,10 +448,13 @@ function trend(m){
   const d=ms.map(x=>({m:x,...sums(x)})), max=Math.max(...d.map(x=>Math.max(x.inc,x.exp)),1);
   const W=320,H=150,pl=6,bw=16,gap=(W-pl*2)/d.length; let g='';
   d.forEach((x,i)=>{const cx=pl+gap*i+gap/2, hi=x.inc/max*110, he=x.exp/max*110;
-    g+=`<rect x="${cx-bw-1}" y="${118-hi}" width="${bw}" height="${hi}" rx="4" fill="#4CC38A"/>
-        <rect x="${cx+1}" y="${118-he}" width="${bw}" height="${he}" rx="4" fill="#C9AA22"/>
-        <text x="${cx}" y="136" text-anchor="middle" fill="#9AA1AD" font-size="10">${mShort(x.m)}</text>`;});
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Einnahmen und Ausgaben der letzten Monate">${g}</svg>
+    const sel=x.m===m;
+    g+=`<g class="tb" role="button" tabindex="0" aria-label="${mLabel(x.m)} anzeigen" onclick="setMonth('${x.m}')" onkeydown="if(event.key==='Enter')setMonth('${x.m}')">
+        <rect x="${cx-gap/2}" y="0" width="${gap}" height="${H}" fill="transparent"/>
+        <rect x="${cx-bw-1}" y="${118-hi}" width="${bw}" height="${hi}" rx="4" fill="#4CC38A" opacity="${sel?1:.55}"/>
+        <rect x="${cx+1}" y="${118-he}" width="${bw}" height="${he}" rx="4" fill="#C9AA22" opacity="${sel?1:.55}"/>
+        <text x="${cx}" y="136" text-anchor="middle" fill="${sel?'#C9AA22':'#9AA1AD'}" font-size="10" font-weight="${sel?700:400}">${mShort(x.m)}</text></g>`;});
+  return `<svg viewBox="0 0 ${W} ${H}" class="trend" aria-label="Einnahmen und Ausgaben der letzten Monate. Tippen Sie auf einen Monat, um ihn anzuzeigen.">${g}</svg>
     <div class="row sm mute" style="justify-content:center;gap:18px"><span><span class="dot" style="background:#4CC38A;display:inline-block"></span> Einnahmen</span><span><span class="dot" style="background:#C9AA22;display:inline-block"></span> Ausgaben</span></div>`;
 }
 
@@ -466,10 +481,10 @@ function vHome(){
     ${f.open?`<div class="note">Stand Tag ${f.day}: bisher ${eur(s.exp)} ausgegeben. Die Prognose rechnet Ihr bisheriges Tempo und noch fehlende Fixkosten ein.</div>`:''}
   </div>
   <div class="grid2">
-    <div class="card kpi"><div class="lbl">Einnahmen</div><div class="val pos">${eur(s.inc)}</div></div>
-    <div class="card kpi"><div class="lbl">Ausgaben</div><div class="val">${eur(s.exp)}</div></div>
+    <div class="card kpi click" role="button" tabindex="0" onclick="openList('inc')" onkeydown="if(event.key==='Enter')openList('inc')"><div class="lbl">Einnahmen</div><div class="val pos">${eur(s.inc)}</div></div>
+    <div class="card kpi click" role="button" tabindex="0" onclick="openList('exp')" onkeydown="if(event.key==='Enter')openList('exp')"><div class="lbl">Ausgaben</div><div class="val">${eur(s.exp)}</div></div>
   </div>
-  ${sv>0?`<div class="card total" onclick="go('tips')" style="cursor:pointer"><div class="row"><div><div class="gold sm" style="font-weight:700">SPARPOTENZIAL</div><div class="big gold">${eur(sv)}</div><div class="mute sm">pro Monat · ${tp.filter(t=>t.save>0).length} Tipps für Sie</div></div><div class="gold" style="font-size:34px">${ic('sparkles')}</div></div></div>`:''}
+  ${sv>0?`<div class="card total" onclick="go('tips')" style="cursor:pointer"><div class="row"><div><div class="gold sm" style="font-weight:700">SPARPOTENZIAL</div><div class="big gold">${eur(sv)}</div><div class="mute sm">pro Monat · ${tp.filter(t=>t.save>0).length===1?'1 Tipp':tp.filter(t=>t.save>0).length+' Tipps'} für Sie</div></div><div class="gold" style="font-size:34px">${ic('sparkles')}</div></div></div>`:''}
   ${budgetCard(S.month)}${goalsCard(false)}
   <h2>Wohin geht das Geld?</h2><div class="card">${donut(s.by)||'<p class="mute">Keine Ausgaben in diesem Monat.</p>'}</div>
   <h2>Verlauf</h2><div class="card">${trend(S.month)||'<p class="mute">Für den Verlauf brauchen wir mindestens zwei Monate.</p>'}</div>`;
@@ -507,9 +522,9 @@ function scansLeft(){return Math.max(0,FREE_SCANS-(S.scans[mk(today())]||0));}
 function budgetCard(m){
   const b=Object.entries(S.budgets).filter(([,v])=>v>0); if(!b.length) return '';
   const s=sums(m);
-  return `<h2>Budgets</h2><div class="card" onclick="go('more')" style="cursor:pointer">${b.map(([c,lim])=>{
+  return `<h2>Budgets</h2><div class="card">${b.map(([c,lim])=>{
     const sp=s.by[c]||0, pct=sp/lim*100, col=pct>100?'var(--neg)':pct>=80?'#E8A04C':'';
-    return `<div style="margin-bottom:14px"><div class="row"><span><span class="dot" style="background:${CATS[c].c};display:inline-block"></span> ${c}</span><b>${eur(sp)} <span class="mute sm" style="font-weight:400">von ${eur(lim)}</span></b></div>
+    return `<div class="click" data-c="${c}" role="button" tabindex="0" onclick="openList('cat',this.dataset.c)" onkeydown="if(event.key==='Enter')openList('cat',this.dataset.c)" style="margin-bottom:14px"><div class="row"><span><span class="dot" style="background:${CATS[c].c};display:inline-block"></span> ${c}</span><b>${eur(sp)} <span class="mute sm" style="font-weight:400">von ${eur(lim)}</span></b></div>
       <div class="bar" style="margin:6px 0 2px"><i style="width:${Math.min(100,pct)}%;${col?`background:${col}`:''}"></i></div>
       <div class="sm ${pct>100?'neg':'mute'}">${pct>100?`${eur(sp-lim)} über dem Budget`:`noch ${eur(lim-sp)} übrig`}</div></div>`;}).join('')}</div>`;
 }
@@ -929,6 +944,32 @@ function stImport(){
   S.stmts[mk(today())]=stmtsUsed()+1; save(); closeStmt(); S.month=top; S.tab='home'; render(); window.scrollTo(0,0);
   toast(`${R.length} Buchungen übernommen · ${mLabel(top)}`);
 }
+
+/* ---------- Buchungen zu Diagramm, Kategorie und Kennzahlen anzeigen ---------- */
+function setMonth(m){S.month=m;render(true);}
+function openList(kind,key){
+  const m=S.month, all=monthTx(m);
+  let list,title,ico,color;
+  if(kind==='cat'){list=all.filter(t=>t.cat===key);title=key;ico=CATS[key].ic;color=CATS[key].c;}
+  else if(kind==='inc'){list=all.filter(t=>t.amt>0);title='Einnahmen';ico='wallet';color='#4CC38A';}
+  else{list=all.filter(t=>t.amt<0);title='Ausgaben';ico='receipt';color='#C9AA22';}
+  list=list.slice().sort((a,b)=>b.d.localeCompare(a.d)||a.amt-b.amt);
+  const sum=list.reduce((x,t)=>x+t.amt,0), spend=(kind==='inc')?sum:-sum, exp=sums(m).exp;
+  const share=(kind==='cat'&&key!=='Einkommen'&&exp>0)?Math.round(spend/exp*100):null;
+  document.getElementById('lsheet').innerHTML=`
+   <div class="row" style="margin-bottom:6px"><h3 style="display:flex;align-items:center;gap:10px">${ic(ico,'',`color:${color}`)} ${esc(title)}</h3><button class="del" style="font-size:20px" onclick="closeList()" aria-label="Schließen">${ic('x')}</button></div>
+   <p class="mute sm">${mLabel(m)} · ${list.length} ${list.length===1?'Buchung':'Buchungen'}</p>
+   <div class="grid2" style="margin:14px 0 4px"><div class="card kpi" style="margin:0"><div class="lbl">Summe</div><div class="val ${kind==='inc'?'pos':''}">${eur(spend)}</div></div>
+    <div class="card kpi" style="margin:0"><div class="lbl">${share!==null?'Anteil an den Ausgaben':'Durchschnitt pro Buchung'}</div><div class="val">${share!==null?share+' %':eur(list.length?spend/list.length:0)}</div></div></div>
+   <div class="card" style="padding:4px 16px;margin-top:14px">${list.map(t=>`<div class="tx"><span class="dot" style="background:${CATS[t.cat].c}"></span>
+     <div class="d"><div class="t1">${esc(t.desc)}${t.items?' '+ic('receipt'):''}</div><div class="mute sm">${t.d.slice(8)}.${t.d.slice(5,7)}.${kind!=='cat'?' · '+esc(t.cat):''}</div>
+     ${t.items?`<ul class="items">${t.items.map(i=>`<li><span>${esc(i.n)}</span><span>${eur2(i.p)}</span></li>`).join('')}</ul>`:''}</div>
+     <div class="amt ${t.amt>0?'pos':''}">${t.amt>0?'+':''}${eur2(t.amt)}</div>
+     <button class="del" onclick="listEdit('${t.id}')" aria-label="Bearbeiten">${ic('pencil')}</button></div>`).join('')||'<p class="mute" style="padding:14px 0">Keine Buchungen.</p>'}</div>`;
+  document.getElementById('lm').classList.add('show');
+}
+function closeList(){document.getElementById('lm').classList.remove('show');}
+function listEdit(id){closeList();openEdit(id);}
 
 /* ---------- Kündigung (Kündigungsbutton nach § 312k BGB) ---------- */
 const CONTRACTS=['Goldstück Premium – monatlich','Goldstück Premium – jährlich','Kostenlose Testphase / Basis-Version'];
