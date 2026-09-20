@@ -197,6 +197,20 @@ svg.i{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.22em;flex
 .rcpt b svg.i,.rcpt svg.i{color:var(--gold);width:1.1em;height:1.1em}
 .btn svg.i{width:18px;height:18px;vertical-align:-4px;margin-right:2px}
 .lockmsg svg.i{width:13px;height:13px;vertical-align:-2px}
+/* Feedback-Formular */
+textarea.f{width:100%;background:rgba(255,255,255,.05);color:var(--text);border:1px solid var(--line);border-radius:16px;padding:13px 14px;font-size:15px;resize:vertical;min-height:100px;transition:border-color .2s,box-shadow .2s}
+textarea.f:focus{outline:none;border-color:rgba(201,170,34,.7);box-shadow:0 0 0 3px rgba(201,170,34,.15)}
+.stars{display:flex;gap:2px}
+.stars button{background:none;border:0;color:rgba(255,255,255,.28);padding:4px;cursor:pointer;border-radius:10px;transition:transform .2s,color .2s}
+.stars button:hover{transform:scale(1.12);color:rgba(201,170,34,.7)}
+.stars button.on{color:var(--gold)}
+.stars svg.i{width:34px;height:34px;fill:transparent;transition:fill .2s}
+.stars button.on svg.i{fill:currentColor}
+.nps{display:grid;grid-template-columns:repeat(11,1fr);gap:4px}
+.nps button{background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 0;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.nps button:hover{border-color:rgba(201,170,34,.5)}
+.nps button.on{background:var(--grad);color:#0B0C0F;border-color:transparent}
+details.note summary{color:var(--gold)}
 .update{position:fixed;left:12px;right:12px;bottom:calc(132px + env(safe-area-inset-bottom));z-index:25;max-width:696px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:18px;border:1px solid rgba(201,170,34,.5);background:linear-gradient(180deg,#1c1a10,#14151a);box-shadow:0 12px 40px -10px rgba(0,0,0,.7);font-size:14px}
 .legal{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:6px}
 .legal a{color:var(--mute);font-size:13px;text-decoration:none;transition:color .2s}
@@ -235,6 +249,8 @@ svg.i{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.22em;flex
 
 <input type="file" id="bfile" accept=".json,application/json" hidden onchange="onBackup(this.files[0]);this.value=''">
 <div class="modal" id="bm" onclick="if(event.target===this)closeBackup()"><div class="sheet" id="bsheet"></div></div>
+
+<div class="modal" id="fm" onclick="if(event.target===this)closeFeedback()"><div class="sheet" id="fsheet"></div></div>
 
 <div class="modal" id="cm" onclick="if(event.target===this)closeCancel()"><div class="sheet" id="csheet"></div></div>
 
@@ -285,10 +301,10 @@ const EXP_CATS = CAT_NAMES.filter(c=>c!=='Einkommen');
 const FREE_SCANS = 5;
 
 /* ---------- Zustand & Speicher ---------- */
-let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], lastBackup:null, bkSnooze:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
+let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], lastBackup:null, bkSnooze:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-20.3';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-20.4';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -297,8 +313,8 @@ function trialInfo(){
 }
 /* S.premium gilt als aktiv, wenn gekauft (paid) oder die Testphase noch läuft */
 Object.defineProperty(S,'premium',{get(){return S.paid||trialInfo().phase!=='ended';},set(v){S.paid=!!v;}});
-function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||'null'); if(j){S.tx=j.tx||[];S.rules=j.rules||{};S.rec=j.rec||[];S.scans=j.scans||{};S.stmts=j.stmts||{};S.budgets=j.budgets||{};S.goals=j.goals||[];S.paid=!!j.paid;S.trialStart=j.trialStart||null;S.choice=j.choice||null;S.cancels=j.cancels||[];S.lastBackup=j.lastBackup||null;S.bkSnooze=j.bkSnooze||null;}}catch(e){}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify({tx:S.tx,rules:S.rules,rec:S.rec,scans:S.scans,stmts:S.stmts,budgets:S.budgets,goals:S.goals,paid:S.paid,trialStart:S.trialStart,choice:S.choice,cancels:S.cancels,lastBackup:S.lastBackup,bkSnooze:S.bkSnooze}))}catch(e){toast('Speichern nicht möglich (Speicher voll oder gesperrt)')}}
+function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||'null'); if(j){S.tx=j.tx||[];S.rules=j.rules||{};S.rec=j.rec||[];S.scans=j.scans||{};S.stmts=j.stmts||{};S.budgets=j.budgets||{};S.goals=j.goals||[];S.paid=!!j.paid;S.trialStart=j.trialStart||null;S.choice=j.choice||null;S.cancels=j.cancels||[];S.lastBackup=j.lastBackup||null;S.bkSnooze=j.bkSnooze||null;S.fb=Object.assign(S.fb,j.fb||{});}}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({tx:S.tx,rules:S.rules,rec:S.rec,scans:S.scans,stmts:S.stmts,budgets:S.budgets,goals:S.goals,paid:S.paid,trialStart:S.trialStart,choice:S.choice,cancels:S.cancels,lastBackup:S.lastBackup,bkSnooze:S.bkSnooze,fb:S.fb}))}catch(e){toast('Speichern nicht möglich (Speicher voll oder gesperrt)')}}
 
 /* ---------- Helfer ---------- */
 const eur=(n,d=0)=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',minimumFractionDigits:d,maximumFractionDigits:d}).format(n);
@@ -479,7 +495,7 @@ function vHome(){
   if(!S.tx.length) return empty();
   const s=sums(S.month), f=forecast(S.month), pct=f.inc?Math.min(100,f.exp/f.inc*100):0, over=f.exp>f.inc;
   const tp=tips(S.month), sv=tp.reduce((x,t)=>x+t.save,0);
-  return trialBanner()+backupBanner()+monthBar()+`
+  return trialBanner()+(fbBanner()||backupBanner())+monthBar()+`
   <div class="card"><div class="mute sm">${f.open?'Voraussichtlich am Monatsende':'Saldo im Monat'}</div>
     <div class="big ${f.saldo>=0?'pos':'neg'}">${f.saldo>=0?'+':''}${eur(f.saldo)}</div>
     <div class="bar"><i class="${over?'over':''}" style="width:${pct}%"></i></div>
@@ -589,6 +605,9 @@ function delGoal(id){if(confirm('Sparziel löschen?')){S.goals=S.goals.filter(g=
 function vMore(){
   return `<div class="card" style="border-color:rgba(229,115,92,.45);background:linear-gradient(180deg,rgba(229,115,92,.12),rgba(255,255,255,.02));margin-top:16px"><div class="row"><div><b>Vertrag beenden?</b><div class="mute sm">Sie können jederzeit kündigen, ohne Anmeldung und in wenigen Schritten.</div></div></div>
    <button class="btn danger" style="margin-top:12px" onclick="openCancel()">Verträge hier kündigen</button></div>
+  <div class="card"><div><b>Ihre Meinung zählt</b><div class="mute sm">Was gefällt Ihnen, was fehlt, was funktioniert nicht? Ihr Feedback macht Monatsklar besser.</div></div>
+   <button class="btn" style="margin-top:12px" onclick="openFeedback()">Feedback geben</button>
+   <label class="chk" style="margin-top:12px"><input type="checkbox" ${S.fb.off?'':'checked'} onchange="S.fb.off=!this.checked;save()"> Gelegentlich nach Feedback fragen</label></div>
   <h2>Kontoauszug analysieren</h2><div class="card"><div class="row"><div><b>Kontoauszug hochladen</b><div class="mute sm">PDF oder CSV aus dem Online-Banking. Einnahmen und Kategorien erkennt die App selbst.</div></div></div>
    <button class="btn" style="margin-top:12px" onclick="openStatement()">${ic('landmark')} Kontoauszug hochladen</button>
    <p class="note">${S.premium?'Unbegrenzt.':`${Math.max(0,FREE_STMTS-stmtsUsed())} von ${FREE_STMTS} Gratis-Auszügen in diesem Monat übrig.`}</p></div>
@@ -670,7 +689,7 @@ function saveForm(){
   if(F.items&&F.items.length) t.items=F.items;
   if(F.desc.trim()&&F.catManual) S.rules[key(desc)]=F.cat;
   if(F.rep) S.rec.push({id:uid(),desc,amt,cat:F.cat,day:Math.min(+F.date.slice(8),28),from:mk(F.date)}), t.recId=S.rec[S.rec.length-1].id;
-  S.tx.push(t); save();
+  S.tx.push(t); if(F.rcpt) fbTrigger('scan'); save();
   S.month=mk(F.date); closeAdd(); render(); toast(`${amt>0?'Einnahme':'Ausgabe'} gespeichert: ${eur2(Math.abs(amt))}`);
 }
 function autoPost(){
@@ -949,7 +968,7 @@ function stImport(){
   const R=S.st.rows.filter(r=>r.inc); if(!R.length) return;
   R.forEach(r=>S.tx.push({id:uid(),d:r.d,desc:r.desc,amt:r.amt,cat:r.cat}));
   const cnt={}; R.forEach(r=>cnt[mk(r.d)]=(cnt[mk(r.d)]||0)+1); const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0][0];
-  S.stmts[mk(today())]=stmtsUsed()+1; save(); closeStmt(); S.month=top; S.tab='home'; render(); window.scrollTo(0,0);
+  S.stmts[mk(today())]=stmtsUsed()+1; fbTrigger('stmt'); save(); closeStmt(); S.month=top; S.tab='home'; render(); window.scrollTo(0,0);
   toast(`${R.length} Buchungen übernommen · ${mLabel(top)}`);
 }
 
@@ -1192,6 +1211,120 @@ function trialBanner(){
   return '';
 }
 let tt;function toast(m){let e=document.getElementById('toast');if(!e){e=document.createElement('div');e.id='toast';e.style.cssText='position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:#F2F3F5;color:#111;padding:10px 16px;border-radius:12px;font-weight:600;font-size:13px;z-index:30;max-width:90%;text-align:center';document.body.appendChild(e);}e.textContent=m;e.style.display='block';clearTimeout(tt);tt=setTimeout(()=>e.style.display='none',2800);}
+
+/* ---------- Feedback ---------- */
+/* Ziel: erfahren, was nicht funktioniert und was fehlt. Nichts wird automatisch gesendet: Der Nutzer schickt das Feedback selbst per E-Mail ab
+   (kein Server, kein Fremdanbieter). Technische Angaben sind freiwillig, sichtbar und enthalten nie Buchungsinhalte. */
+const FB_KINDS={
+  scan:{q:'Sie haben gerade einen Kassenzettel gescannt. Wie gut wurde er erkannt?',topic:'Kassenzettel-Scan',errs:['Händler','Datum','Summe','Positionen','Kategorie']},
+  stmt:{q:'Sie haben gerade einen Kontoauszug importiert. Wie gut wurde er erkannt?',topic:'Kontoauszug-Import',errs:['Buchungen fehlen','Datum','Betrag','Einnahme/Ausgabe vertauscht','Beschreibung','Kategorie']},
+};
+const FB_CATS={problem:'Problem melden',idee:'Idee',lob:'Lob',frage:'Frage'};
+function fbTrigger(kind){if(!S.fb.off&&!S.fb.done[kind]){S.fb.pending[kind]=true;save();}}
+function fbDue(){
+  const F=S.fb; if(F.off) return null;
+  if(Object.values(F.asked).some(d=>d&&daysSince(d)<3)) return null;      /* höchstens alle 3 Tage eine Frage */
+  const ok=k=>!F.done[k]&&!(F.snooze[k]&&F.snooze[k]>today());
+  if(F.pending.scan&&ok('scan')) return 'scan';
+  if(F.pending.stmt&&ok('stmt')) return 'stmt';
+  if(ok('general')&&S.trialStart&&daysSince(S.trialStart)>=7&&S.tx.length>=10) return 'general';
+  return null;
+}
+function fbBanner(){
+  const k=fbDue(); if(!k) return '';
+  const wrap=(inner)=>`<div class="card" style="margin-top:14px;padding:14px 16px;border-color:rgba(201,170,34,.4)">${inner}</div>`;
+  if(k==='general') return wrap(`<div class="sm"><b>Wie gefällt Ihnen Monatsklar?</b></div><div class="mute sm" style="margin:6px 0 12px">Sie nutzen die App jetzt seit einer Woche. Zwei Minuten Feedback helfen uns, sie besser zu machen.</div><div class="btns"><button class="btn sm" onclick="openFeedback({ask:'general'})">Feedback geben</button><button class="btn ghost sm" onclick="fbLater('general')">Nicht jetzt</button></div>`);
+  return wrap(`<div class="sm"><b>${FB_KINDS[k].q}</b></div><div class="btns" style="margin-top:12px"><button class="btn sm" onclick="fbAnswer('${k}','ok')">Alles richtig</button><button class="btn ghost sm" onclick="fbAnswer('${k}','minor')">Kleine Fehler</button><button class="btn ghost sm" onclick="fbAnswer('${k}','major')">Viele Fehler</button></div><div style="margin-top:10px"><button class="del sm" style="padding-left:0" onclick="fbLater('${k}')">Nicht jetzt</button></div>`);
+}
+function fbAnswer(kind,v){
+  S.fb.answers.push({k:kind,v,ts:today()}); S.fb.done[kind]=true; S.fb.pending[kind]=false; S.fb.asked[kind]=today(); save();
+  if(v==='ok'){render(true);toast('Danke für Ihre Rückmeldung!');return;}
+  render(true); openFeedback({ask:kind,cat:'problem',topic:FB_KINDS[kind].topic,detail:v});
+}
+function fbLater(kind){const d=new Date();d.setDate(d.getDate()+7);S.fb.snooze[kind]=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;S.fb.asked[kind]=today();save();render(true);}
+function openFeedback(pre={}){
+  S.ff={rating:0,nps:null,cat:pre.cat||'idee',text:'',errs:[],topic:pre.topic||'',ask:pre.ask||'',detail:pre.detail||'',reply:false,email:'',tech:true,err:''};
+  renderFeedback(); document.getElementById('fm').classList.add('show');
+}
+function closeFeedback(){document.getElementById('fm').classList.remove('show');S.ff=null;}
+function browserName(){
+  const m=navigator.userAgent.match(/(Edg|CriOS|Chrome|FxiOS|Firefox|Version)\/(\d+)/); if(!m) return 'unbekannt';
+  const n={Edg:'Edge',CriOS:'Chrome (iOS)',Chrome:'Chrome',FxiOS:'Firefox (iOS)',Firefox:'Firefox',Version:'Safari'}[m[1]];
+  return `${n} ${m[2]}`;
+}
+function techInfo(){
+  const n=Object.values(S.scans).reduce((a,b)=>a+b,0), st=Object.values(S.stmts).reduce((a,b)=>a+b,0), ti=trialInfo();
+  return [
+    ['App-Version',APP_VERSION],
+    ['Installiert als App',window.matchMedia('(display-mode: standalone)').matches||navigator.standalone?'ja':'nein (Browser)'],
+    ['Gerät/Browser',(navigator.userAgent.match(/\(([^)]*)\)/)||[,''])[1].slice(0,60)+' · '+browserName()],
+    ['Bildschirm',`${innerWidth}×${innerHeight}`],['Sprache',navigator.language],
+    ['Tage seit Start',S.trialStart?String(daysSince(S.trialStart)):'?'],
+    ['Buchungen',String(S.tx.length)],['Kassenzettel-Scans',String(n)],['Kontoauszug-Importe',String(st)],
+    ['Budgets / Sparziele',`${Object.keys(S.budgets).length} / ${S.goals.length}`],['Kategorie-Korrekturen',String(Object.keys(S.rules).length)],
+    ['Status',S.paid?'Premium (Demo)':ti.phase==='ended'?'Basis':`Testphase (Tag ${ti.day+1} von ${TRIAL_DAYS})`],
+  ];
+}
+function feedbackText(){
+  const f=S.ff, L=[];
+  L.push('Feedback zu Monatsklar','');
+  if(f.rating) L.push(`Bewertung: ${f.rating} von 5`);
+  if(f.nps!==null) L.push(`Weiterempfehlung: ${f.nps} von 10`);
+  L.push(`Art: ${FB_CATS[f.cat]}`);
+  if(f.topic) L.push(`Bereich: ${f.topic}${f.detail==='major'?' (viele Fehler)':f.detail==='minor'?' (kleine Fehler)':''}`);
+  if(f.errs.length) L.push(`Betroffen: ${f.errs.join(', ')}`);
+  if(f.text.trim()) L.push('','Nachricht:',f.text.trim());
+  if(f.reply&&f.email.trim()) L.push('',`Antwort erwünscht an: ${f.email.trim()}`);
+  const A=S.fb.answers; if(A.length){
+    const sum={}; A.forEach(a=>{const key=(FB_KINDS[a.k]||{}).topic||a.k;sum[key]=sum[key]||{ok:0,minor:0,major:0};sum[key][a.v]++;});
+    L.push('','Kurzantworten:',...Object.entries(sum).map(([k,v])=>`- ${k}: ${v.ok}× richtig, ${v.minor}× kleine Fehler, ${v.major}× viele Fehler`));
+  }
+  if(f.tech) L.push('','Technische Angaben (freiwillig, keine Buchungsinhalte):',...techInfo().map(([k,v])=>`- ${k}: ${v}`));
+  return L.join('\n');
+}
+function renderFeedback(){
+  const f=S.ff, box=document.getElementById('fsheet'); if(!f||!box) return;
+  const kind=FB_KINDS[f.ask];
+  box.innerHTML=`<div class="row" style="margin-bottom:6px"><h3>Ihr Feedback</h3><button class="del" style="font-size:20px" onclick="closeFeedback()" aria-label="Schließen">${ic('x')}</button></div>
+   <p class="mute sm">Danke, dass Sie sich Zeit nehmen. Jede Rückmeldung wird gelesen.</p>
+   <label class="fl">Wie zufrieden sind Sie mit Monatsklar?</label>
+   <div class="stars" role="radiogroup" aria-label="Bewertung">${[1,2,3,4,5].map(n=>`<button type="button" class="${f.rating>=n?'on':''}" role="radio" aria-checked="${f.rating===n}" aria-label="${n} von 5" onclick="ffSet('rating',${n===f.rating?0:n})">${ic('star')}</button>`).join('')}</div>
+   <label class="fl">Worum geht es?</label>
+   <div class="chips">${Object.entries(FB_CATS).map(([k,l])=>`<button type="button" class="chip ${f.cat===k?'on':''}" onclick="ffSet('cat','${k}')">${l}</button>`).join('')}</div>
+   ${kind?`<label class="fl">Was war falsch? (${esc(kind.topic)})</label><div class="chips">${kind.errs.map(e=>`<button type="button" class="chip ${f.errs.includes(e)?'on':''}" onclick="ffErr('${e}')">${e}</button>`).join('')}</div>`:''}
+   <label class="fl">${f.cat==='problem'?'Was ist passiert? Was haben Sie erwartet?':f.cat==='idee'?'Was sollen wir verbessern oder ergänzen?':f.cat==='lob'?'Was gefällt Ihnen besonders?':'Ihre Frage'}</label>
+   <textarea class="f" rows="4" maxlength="1000" placeholder="Ihre Nachricht …" oninput="S.ff.text=this.value">${esc(f.text)}</textarea>
+   <label class="fl">Würden Sie Monatsklar weiterempfehlen? (0 = nein, 10 = auf jeden Fall)</label>
+   <div class="nps">${Array.from({length:11},(_,n)=>`<button type="button" class="${f.nps===n?'on':''}" aria-label="${n} von 10" onclick="ffSet('nps',${f.nps===n?'null':n})">${n}</button>`).join('')}</div>
+   <label class="chk"><input type="checkbox" ${f.reply?'checked':''} onchange="ffSet('reply',this.checked)"> Ich möchte eine Antwort</label>
+   ${f.reply?`<input class="f" type="email" inputmode="email" placeholder="Ihre E-Mail-Adresse" value="${esc(f.email)}" oninput="S.ff.email=this.value" style="margin-top:8px" autocomplete="email">`:''}
+   <label class="chk"><input type="checkbox" ${f.tech?'checked':''} onchange="ffSet('tech',this.checked)"> Technische Angaben mitsenden</label>
+   <details class="note" style="margin:6px 0 0 30px"><summary style="cursor:pointer">Was wird mitgesendet?</summary><div style="margin-top:6px">${techInfo().map(([k,v])=>`${esc(k)}: ${esc(v)}`).join('<br>')}<br><b>Nie:</b> Beträge, Beschreibungen oder andere Inhalte Ihrer Buchungen.</div></details>
+   ${f.err?`<div class="rcpt" style="border-color:var(--neg)">${esc(f.err)}</div>`:''}
+   <button class="btn" style="margin-top:18px" onclick="ffSend()">Per E-Mail senden</button>
+   <button class="btn ghost" style="margin-top:10px" onclick="ffCopy()">Text kopieren</button>
+   <p class="note">Ihr E-Mail-Programm öffnet sich mit dem fertigen Text, Sie senden ihn selbst ab. Es werden keine Daten im Hintergrund übertragen.</p>`;
+}
+function ffSet(k,v){S.ff[k]=v;S.ff.err='';const t=document.querySelector('#fsheet textarea');if(t)S.ff.text=t.value;const m=document.querySelector('#fsheet input[type=email]');if(m)S.ff.email=m.value;renderFeedback();}
+function ffErr(e){const a=S.ff.errs,i=a.indexOf(e);i>=0?a.splice(i,1):a.push(e);ffSet('errs',a);}
+function ffValid(){
+  const f=S.ff; if(!f.rating&&!f.text.trim()&&f.nps===null&&!f.errs.length){f.err='Bitte geben Sie eine Bewertung oder eine Nachricht an.';renderFeedback();return false;}
+  if(f.reply&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())){f.err='Bitte geben Sie eine gültige E-Mail-Adresse für die Antwort an.';renderFeedback();return false;}
+  return true;
+}
+function ffDone(){S.fb.sent=(S.fb.sent||0)+1;S.fb.done.general=true;if(S.ff.ask){S.fb.done[S.ff.ask]=true;S.fb.pending[S.ff.ask]=false;}S.fb.asked[S.ff.ask||'general']=today();save();}
+function ffSend(){
+  const t=document.querySelector('#fsheet textarea');if(t)S.ff.text=t.value; if(!ffValid()) return;
+  const f=S.ff, sub=`Monatsklar Feedback${f.rating?` (${f.rating}/5`:' ('}${f.rating?', ':''}${FB_CATS[f.cat]})`;
+  ffDone(); location.href=`mailto:${OP_MAIL}?subject=${encodeURIComponent(sub)}&body=${encodeURIComponent(feedbackText())}`;
+  closeFeedback(); render(true); toast('Danke! Bitte senden Sie die E-Mail noch ab.');
+}
+async function ffCopy(){
+  const t=document.querySelector('#fsheet textarea');if(t)S.ff.text=t.value; if(!ffValid()) return;
+  const txt=feedbackText();
+  try{await navigator.clipboard.writeText(txt);ffDone();closeFeedback();render(true);toast(`Kopiert. Senden Sie den Text an ${OP_MAIL}`);}
+  catch(e){S.ff.err='Kopieren war nicht möglich. Bitte nutzen Sie „Per E-Mail senden“.';renderFeedback();}
+}
 
 /* ---------- Update-Hinweis ---------- */
 /* Die App startet aus dem Zwischenspeicher (schnell). Im Hintergrund prüft sie, ob eine neuere Version online ist. */
