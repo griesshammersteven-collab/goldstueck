@@ -286,7 +286,7 @@ const ic=(n,cls='',style='')=>`<svg class="i ${cls}" viewBox="0 0 24 24" fill="n
 /* ---------- Kategorien ---------- */
 const CATS = {
   'Einkommen':{c:'#4CC38A',fixed:false,ic:'wallet',kw:[]},
-  'Wohnen':{c:'#5B8DEF',fixed:true,ic:'home',kw:['miete','wohnung','hausgeld','strom','stadtwerke','gas ','nebenkosten','vattenfall','eon','internet','telekom','vodafone','o2 ']},
+  'Wohnen':{c:'#5B8DEF',fixed:true,ic:'home',kw:['darlehen','tilgung','baufinanz','hypothek','miete','wohnung','hausgeld','strom','stadtwerke','gas ','nebenkosten','vattenfall','eon','internet','telekom','vodafone','o2 ']},
   'Versicherungen':{c:'#9B7FE0',fixed:true,ic:'shield',kw:['versicherung','allianz','huk','axa','signal iduna','haftpflicht','krankenkasse','tk ','aok']},
   'Abos & Medien':{c:'#E07FA8',fixed:false,ic:'repeat',kw:['netflix','spotify','disney','prime video','amazon prime','dazn','fitness','gym','mcfit','apple.com','google play','zeitung','abo','handy','mobilfunk','youtube']},
   'Lebensmittel':{c:'#6CC17B',fixed:false,ic:'cart',kw:['rewe','edeka','lidl','aldi','kaufland','penny','netto','dm ','rossmann','markt','supermarkt','bäckerei','metzger','denn','alnatura','globus']},
@@ -304,7 +304,7 @@ const FREE_SCANS = 5;
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], lastBackup:null, bkSnooze:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-20.4';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-20.5';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -744,13 +744,14 @@ function loadPdfJs(){
 async function pdfRead(file,maxPages=3){
   await loadPdfJs();
   const pdf=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
-  let text='';
+  let text=''; const all=[];   /* all: Zeilen mit Position jedes Textstücks, für Tabellen mit Spalten (Ausgaben/Einnahmen) */
   for(let p=1;p<=Math.min(pdf.numPages,maxPages);p++){
     const tc=await (await pdf.getPage(p)).getTextContent(), rows=[];
-    tc.items.forEach(it=>{if(!it.str.trim())return;const y=Math.round(it.transform[5]/4),x=it.transform[4];let r=rows.find(r=>Math.abs(r.y-y)<=1);if(!r){r={y,it:[]};rows.push(r);}r.it.push({x,s:it.str});});
-    text+=rows.sort((a,b)=>b.y-a.y).map(r=>r.it.sort((a,b)=>a.x-b.x).map(i=>i.s).join('  ')).join('\n')+'\n';
+    tc.items.forEach(it=>{if(!it.str.trim())return;const y=Math.round(it.transform[5]/4),x=it.transform[4];let r=rows.find(r=>Math.abs(r.y-y)<=1);if(!r){r={y,it:[]};rows.push(r);}r.it.push({x,w:it.width,s:it.str});});
+    rows.sort((a,b)=>b.y-a.y).forEach(r=>{r.it.sort((a,b)=>a.x-b.x);all.push({p,it:r.it});});
+    text+=rows.map(r=>r.it.map(i=>i.s).join('  ')).join('\n')+'\n';
   }
-  return {pdf,text};
+  return {pdf,text,rows:all};
 }
 async function pdfImage(pdf){
   const page=await pdf.getPage(1), vp=page.getViewport({scale:2.5});
@@ -837,6 +838,8 @@ function openStatement(){
 function cleanDesc(s){
   return s.replace(/\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/g,' ').replace(/\b(EREF|MREF|CRED|SVWZ|KREF|ABWA|IBAN|BIC)\s*[+:.]?\s*\S*/gi,' ')
     .replace(/\b\d{8,}\b/g,' ').replace(/\b(SEPA[- ]?(Basis|Firmen)?[- ]?Lastschrift|Kartenzahlung|Girocard|Debitkarte|Lastschrift|Dauerauftrag|Überweisung|Ueberweisung|Gutschrift|Online[- ]?Banking|Folgelastschrift)\b/gi,' ')
+    /* Füllwörter der Banken, die in fast jeder Zeile stehen */
+    .replace(/\bAUSF(Ü|UE)HRUNG\s+AUFTRAGSNUMMER\b/gi,' ').replace(/\b(Kundenreferenz|Gl(ä|ae)ubiger-?ID|Mandatsreferenz|Mandat|Wertstellung|Rechnungs-?Nr\.?|Buchungsdatum)\s*:?/gi,' ')
     .replace(/\s+/g,' ').trim().slice(0,80);
 }
 const NOISE=/kontostand|übertrag|uebertrag|summe|saldo|habenumsätze|sollumsätze|buchungstag|^seite\b|^blatt\b|kontoauszug|neuer kontostand|alter kontostand/i;
@@ -870,12 +873,56 @@ function parseStatementText(text){
   const hasNeg=raw.some(r=>r.sign<0), hasPos=raw.some(r=>r.sign>0);
   return raw.map(r=>{let s=r.sign; if(s===0){if(hasNeg&&!hasPos)s=1;else if(hasPos&&!hasNeg)s=-1;} return finishRow(r.d,r.desc,r.amt,s,r.many);});
 }
+/* Kontoauszüge mit getrennten Spalten (z. B. Targobank: "Ausgaben" | "Einnahmen" | "Guthaben/Kredit", oder Soll | Haben).
+   Das Vorzeichen ergibt sich aus der Spalte, in der die Zahl steht, und wird mit der Veränderung des Kontostands gegengeprüft. */
+const COL_EXP=/^(Ausgaben|Soll|Belastung(en)?|Lastschrift(en)?)$/i, COL_INC=/^(Einnahmen|Haben|Gutschrift(en)?)$/i, COL_BAL=/^(Saldo|Kontostand|Guthaben|Kredit|Guthaben\/Kredit)/i;
+const AMT_ITEM=/^([+-]?)(\d{1,3}(?:\.\d{3})*,\d{2}|\d+,\d{2})\s?([+-])?$/, WEEKDAY=/^(MO|DI|MI|DO|FR|SA|SO)$/;
+function refYearOf(text){
+  const years={}; (text.match(/\b\d{2}\.\d{2}\.(20\d{2})\b/g)||[]).forEach(d=>{const y=d.slice(-4);years[y]=(years[y]||0)+1;});
+  return +(Object.entries(years).sort((a,b)=>b[1]-a[1])[0]||[String(new Date().getFullYear())])[0];
+}
+function parseStatementColumns(prows,text){
+  const refYear=refYearOf(text); let cols=null, prev=null, prevBal=null, tables=0; const out=[];
+  const amt=s=>{const m=s.trim().match(AMT_ITEM); if(!m) return null; const v=num(m[2]); return isNaN(v)?null:{v,neg:m[1]==='-'||m[3]==='-'};};
+  for(const row of prows){
+    const its=row.it, strs=its.map(i=>i.s.trim());
+    /* Tabellenkopf erkennen: enthält eine Ausgaben- UND eine Einnahmen-Spalte */
+    const ie=its.findIndex(i=>COL_EXP.test(i.s.trim())), ii=its.findIndex(i=>COL_INC.test(i.s.trim()));
+    if(ie>=0&&ii>=0){
+      cols=[{t:'exp',r:its[ie].x+its[ie].w},{t:'inc',r:its[ii].x+its[ii].w}];
+      const ib=its.findIndex((i,k)=>k>Math.max(ie,ii)&&COL_BAL.test(i.s.trim())); if(ib>=0) cols.push({t:'bal',r:its[ib].x+its[ib].w});
+      prev=null; prevBal=null; tables++; continue;
+    }
+    if(!cols) continue;
+    const line=strs.join(' ');
+    const dm=strs[0].match(/^(\d{2})\.(\d{2})\.?(\d{4}|\d{2})?$/);
+    if(dm){
+      const found=[]; its.forEach((it,k)=>{if(k===0) return; const a=amt(it.s); if(!a) return; let best=null,bd=1e9; cols.forEach(c=>{const d=Math.abs((it.x+it.w)-c.r); if(d<bd){bd=d;best=c;}}); if(best&&bd<45) found.push({...a,t:best.t});});
+      const ex=found.find(f=>f.t==='exp'||f.t==='inc'), bal=found.find(f=>f.t==='bal');
+      const balV=bal?(bal.neg?-bal.v:bal.v):null;
+      if(!ex||NOISE.test(line)){ if(balV!==null) prevBal=balV; prev=null; continue; }   /* nur Kontostand (z. B. Anfangssaldo), Fußzeile oder Summe */
+      let sign=ex.t==='inc'?1:-1;
+      if(prevBal!==null&&balV!==null){                                                   /* Gegenprobe über den Kontostand */
+        const delta=balV-prevBal; if(Math.abs(delta+sign*ex.v)<0.01&&Math.abs(delta-sign*ex.v)>0.01) sign=-sign;
+      }
+      if(balV!==null) prevBal=balV;
+      const y=dm[3]?(dm[3].length===2?2000+ +dm[3]:+dm[3]):refYear, mo=+dm[2], d=+dm[1];
+      if(mo<1||mo>12||d<1||d>31){prev=null;continue;}
+      const desc=its.filter((it,k)=>k>0&&!amt(it.s)&&!WEEKDAY.test(it.s.trim())&&!/^\d{2}\.\d{2}\.?(\d{2,4})?$/.test(it.s.trim())).map(i=>i.s.trim()).join(' ');
+      prev={d:`${y}-${pad(mo)}-${pad(d)}`,desc,v:ex.v,sign}; out.push(prev);
+    } else if(prev&&!NOISE.test(line)&&!/^\d{5,12}$/.test(line)&&!/^Seite\b/i.test(line)&&prev.desc.length<240){
+      const has=its.some(i=>amt(i.s)); if(!has) prev.desc+=' '+line;
+    }
+  }
+  return tables?out.map(r=>finishRow(r.d,r.desc,r.v,r.sign,false)):null;
+}
 const INC_KW=/gehalt|lohn\b|bez(ü|ue)ge|rente|honorar|kindergeld|zinsen|dividende|erstattung|r(ü|u)ckzahlung|gutschrift|eingang|erl(ö|oe)s|verg(ü|u)tung/i;
 function finishRow(d,desc0,v,sign,many){
   const desc=cleanDesc(desc0)||'Buchung';
   let guess=false, amt;
   if(sign===0){ guess=true; amt=INC_KW.test(desc0)?v:-v; } else amt=sign*v;
-  return {d,desc,amt:Math.round(amt*100)/100,cat:categorize(desc,amt),guess:guess||false,many:!!many};
+  /* Buchungen zwischen eigenen Konten würden sonst als Einnahme UND Ausgabe zählen: in der Vorschau vorab abgewählt */
+  return {d,desc,amt:Math.round(amt*100)/100,cat:categorize(desc,amt),guess:guess||false,many:!!many,transfer:/umbuchung|eigen(er)?\s?(ü|ue)bertrag|kontoausgleich/i.test(desc0)};
 }
 /* CSV-Export aus dem Online-Banking */
 function csvParse(text){
@@ -923,9 +970,10 @@ async function onStmt(file){
   try{
     let rows;
     if(isPdf(file)){
-      const {text}=await pdfRead(file,40);
+      const {text,rows:pr}=await pdfRead(file,40);
       if(text.replace(/\s/g,'').length<60) throw new Error('scan');
-      rows=parseStatementText(text);
+      rows=parseStatementColumns(pr,text);                       /* Tabellen mit Spalten Ausgaben/Einnahmen bzw. Soll/Haben */
+      if(!rows||!rows.length) rows=parseStatementText(text);     /* sonst: Zeilen mit Vorzeichen im Betrag */
     } else {
       const buf=await file.arrayBuffer(); let t=new TextDecoder('utf-8').decode(buf);
       if(t.includes('\ufffd')) t=new TextDecoder('windows-1252').decode(buf);
@@ -934,7 +982,7 @@ async function onStmt(file){
     }
     if(!rows.length) throw new Error('empty');
     const seen=new Set(S.tx.map(t=>t.d+'|'+t.amt+'|'+t.desc));
-    rows.forEach((r,i)=>{r.i=i;r.dup=seen.has(r.d+'|'+r.amt+'|'+r.desc);r.inc=!r.dup;});
+    rows.forEach((r,i)=>{r.i=i;r.dup=seen.has(r.d+'|'+r.amt+'|'+r.desc);r.inc=!r.dup&&!r.transfer;});
     S.st={rows,name:file.name};
   }catch(e){
     const m={offline:'Die PDF-Bibliothek konnte nicht geladen werden. Bitte Internetverbindung prüfen (nur beim ersten Mal nötig).',scan:'Dieses PDF enthält keinen lesbaren Text (vermutlich ein Foto oder Scan). Bitte laden Sie den Kontoauszug als PDF oder CSV direkt aus Ihrem Online-Banking herunter.',cols:'In der CSV-Datei wurden keine Spalten für Datum und Betrag gefunden.',empty:'Ich konnte in dieser Datei keine Buchungen erkennen. Bitte versuchen Sie den CSV-Export Ihrer Bank.'}[e&&e.message];
@@ -948,14 +996,15 @@ function renderStmt(){
   const head=`<div class="row" style="margin-bottom:10px"><h3>Kontoauszug analysieren</h3><button class="del" style="font-size:20px" onclick="closeStmt()" aria-label="Schließen">${ic('x')}</button></div>`;
   if(st.busy){box.innerHTML=head+`<div class="rcpt"><span class="spin"></span>${esc(st.msg)}</div>`;return;}
   if(st.err){box.innerHTML=head+`<div class="rcpt" style="border-color:var(--neg)">${esc(st.err)}</div><button class="btn ghost" style="margin-top:14px" onclick="closeStmt()">Schließen</button>`;return;}
-  const T=stTotals(), ds=st.rows.map(r=>r.d).sort(), guess=st.rows.filter(r=>r.guess&&r.inc).length, dups=st.rows.filter(r=>r.dup).length;
+  const T=stTotals(), ds=st.rows.map(r=>r.d).sort(), guess=st.rows.filter(r=>r.guess&&r.inc).length, dups=st.rows.filter(r=>r.dup).length, trans=st.rows.filter(r=>r.transfer&&!r.dup).length;
   box.innerHTML=head+`
    <p class="mute sm">${esc(st.name)} · ${st.rows.length} Buchungen erkannt · ${ds[0].slice(8)}.${ds[0].slice(5,7)}.–${ds[ds.length-1].slice(8)}.${ds[ds.length-1].slice(5,7)}.${ds[ds.length-1].slice(0,4)}</p>
    <div class="grid2" style="margin:12px 0"><div class="card kpi" style="margin:0"><div class="lbl">Einnahmen</div><div class="val pos">${eur(T.inc)}</div></div><div class="card kpi" style="margin:0"><div class="lbl">Ausgaben</div><div class="val">${eur(T.exp)}</div></div></div>
    ${guess?`<div class="rcpt" style="margin:0 0 12px">${ic('alert')} Bei ${guess} Buchungen war das Vorzeichen nicht eindeutig. Tippen Sie auf den Betrag, um zwischen Einnahme und Ausgabe zu wechseln.</div>`:''}
    ${dups?`<p class="note" style="margin:0 0 8px">${dups} bereits vorhandene Buchungen sind abgewählt.</p>`:''}
+   ${trans?`<p class="note" style="margin:0 0 8px">${trans} Umbuchungen zwischen eigenen Konten sind abgewählt, damit sie Einnahmen und Ausgaben nicht doppelt zählen. Sie können sie bei Bedarf anwählen.</p>`:''}
    <div class="card" style="padding:4px 14px;max-height:46vh;overflow:auto">${st.rows.map((r,i)=>`<div class="tx" style="${r.inc?'':'opacity:.45'}"><input type="checkbox" style="width:20px;height:20px;accent-color:#C9AA22;flex:none" ${r.inc?'checked':''} onchange="stToggle(${i})" aria-label="Übernehmen">
-     <div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">${r.d.slice(8)}.${r.d.slice(5,7)}. <select onchange="stCat(${i},this.value)" aria-label="Kategorie">${CAT_NAMES.map(c=>`<option ${c===r.cat?'selected':''}>${c}</option>`).join('')}</select>${r.guess?' <span class="gold">Vorzeichen prüfen</span>':''}</div></div>
+     <div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">${r.d.slice(8)}.${r.d.slice(5,7)}. <select onchange="stCat(${i},this.value)" aria-label="Kategorie">${CAT_NAMES.map(c=>`<option ${c===r.cat?'selected':''}>${c}</option>`).join('')}</select>${r.guess?' <span class="gold">Vorzeichen prüfen</span>':''}${r.transfer?' <span class="gold">Umbuchung</span>':''}</div></div>
      <button class="amt ${r.amt>0?'pos':''}" style="background:none;border:0;font-size:15px;cursor:pointer;color:${r.amt>0?'':'var(--text)'}" onclick="stFlip(${i})" aria-label="Vorzeichen wechseln">${r.amt>0?'+':''}${eur2(r.amt)}</button></div>`).join('')}</div>
    <button class="btn" style="margin-top:16px" ${T.n?'':'disabled'} onclick="stImport()">${T.n} Buchungen übernehmen</button>
    <p class="note">Ihr Kontoauszug wird nur auf diesem Gerät verarbeitet und nicht hochgeladen oder gespeichert.</p>`;
