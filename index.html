@@ -197,6 +197,7 @@ svg.i{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.22em;flex
 .rcpt b svg.i,.rcpt svg.i{color:var(--gold);width:1.1em;height:1.1em}
 .btn svg.i{width:18px;height:18px;vertical-align:-4px;margin-right:2px}
 .lockmsg svg.i{width:13px;height:13px;vertical-align:-2px}
+.update{position:fixed;left:12px;right:12px;bottom:calc(132px + env(safe-area-inset-bottom));z-index:25;max-width:696px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:18px;border:1px solid rgba(201,170,34,.5);background:linear-gradient(180deg,#1c1a10,#14151a);box-shadow:0 12px 40px -10px rgba(0,0,0,.7);font-size:14px}
 .legal{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:6px}
 .legal a{color:var(--mute);font-size:13px;text-decoration:none;transition:color .2s}
 .legal a:hover{color:var(--gold)}
@@ -284,9 +285,10 @@ const EXP_CATS = CAT_NAMES.filter(c=>c!=='Einkommen');
 const FREE_SCANS = 5;
 
 /* ---------- Zustand & Speicher ---------- */
-let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
+let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], lastBackup:null, bkSnooze:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
+const APP_VERSION='2026-09-20.3';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -295,8 +297,8 @@ function trialInfo(){
 }
 /* S.premium gilt als aktiv, wenn gekauft (paid) oder die Testphase noch läuft */
 Object.defineProperty(S,'premium',{get(){return S.paid||trialInfo().phase!=='ended';},set(v){S.paid=!!v;}});
-function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||'null'); if(j){S.tx=j.tx||[];S.rules=j.rules||{};S.rec=j.rec||[];S.scans=j.scans||{};S.stmts=j.stmts||{};S.budgets=j.budgets||{};S.goals=j.goals||[];S.paid=!!j.paid;S.trialStart=j.trialStart||null;S.choice=j.choice||null;S.cancels=j.cancels||[];}}catch(e){}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify({tx:S.tx,rules:S.rules,rec:S.rec,scans:S.scans,stmts:S.stmts,budgets:S.budgets,goals:S.goals,paid:S.paid,trialStart:S.trialStart,choice:S.choice,cancels:S.cancels}))}catch(e){toast('Speichern nicht möglich (Speicher voll oder gesperrt)')}}
+function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||'null'); if(j){S.tx=j.tx||[];S.rules=j.rules||{};S.rec=j.rec||[];S.scans=j.scans||{};S.stmts=j.stmts||{};S.budgets=j.budgets||{};S.goals=j.goals||[];S.paid=!!j.paid;S.trialStart=j.trialStart||null;S.choice=j.choice||null;S.cancels=j.cancels||[];S.lastBackup=j.lastBackup||null;S.bkSnooze=j.bkSnooze||null;}}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({tx:S.tx,rules:S.rules,rec:S.rec,scans:S.scans,stmts:S.stmts,budgets:S.budgets,goals:S.goals,paid:S.paid,trialStart:S.trialStart,choice:S.choice,cancels:S.cancels,lastBackup:S.lastBackup,bkSnooze:S.bkSnooze}))}catch(e){toast('Speichern nicht möglich (Speicher voll oder gesperrt)')}}
 
 /* ---------- Helfer ---------- */
 const eur=(n,d=0)=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',minimumFractionDigits:d,maximumFractionDigits:d}).format(n);
@@ -477,7 +479,7 @@ function vHome(){
   if(!S.tx.length) return empty();
   const s=sums(S.month), f=forecast(S.month), pct=f.inc?Math.min(100,f.exp/f.inc*100):0, over=f.exp>f.inc;
   const tp=tips(S.month), sv=tp.reduce((x,t)=>x+t.save,0);
-  return trialBanner()+monthBar()+`
+  return trialBanner()+backupBanner()+monthBar()+`
   <div class="card"><div class="mute sm">${f.open?'Voraussichtlich am Monatsende':'Saldo im Monat'}</div>
     <div class="big ${f.saldo>=0?'pos':'neg'}">${f.saldo>=0?'+':''}${eur(f.saldo)}</div>
     <div class="bar"><i class="${over?'over':''}" style="width:${pct}%"></i></div>
@@ -600,7 +602,7 @@ function vMore(){
   <h2>Premium</h2>${trialBanner()}<div class="card"><div class="row"><div><b>${S.paid?'Premium aktiv (Demo)':trialInfo().phase!=='ended'?'Premium-Testphase':'Basis-Version'}</b><div class="mute sm">${S.paid?'Alle Funktionen freigeschaltet':trialInfo().phase!=='ended'?`Alle Funktionen frei, noch ${trialInfo().left} Tage`:'Erfassen, Dashboard und Prognose sind kostenlos'}</div></div>
   <button class="btn sm" onclick="${S.paid?'togglePremium(false)':'openPaywall()'}">${S.paid?'Beenden':'Preise'}</button></div></div>
   <h2>Ihre Daten</h2><div class="card"><div><b>${S.tx.length}</b> Buchungen gespeichert<div class="mute sm">Nur lokal auf diesem Gerät. Kassenzettel-Fotos werden nicht gespeichert.</div></div>
-  <div class="rcpt" style="margin-top:14px"><b>${ic('fileText')} Sicherung</b><div class="sm" style="margin-top:4px">Ihre Daten liegen nur auf diesem Gerät. Speichern Sie regelmäßig eine Sicherung, damit nichts verloren geht, z. B. bei einem Gerätewechsel.</div>
+  <div class="rcpt" style="margin-top:14px"><b>${ic('fileText')} Sicherung</b><div class="sm" style="margin-top:4px">Ihre Daten liegen nur auf diesem Gerät. Speichern Sie regelmäßig eine Sicherung, damit nichts verloren geht, z. B. bei einem Gerätewechsel.</div><div class="sm ${S.lastBackup?'':'gold'}" style="margin-top:8px">${S.lastBackup?'Letzte Sicherung: '+fmtD(S.lastBackup):'Noch keine Sicherung angelegt'}</div>
    <div class="btns" style="margin-top:10px"><button class="btn sm" onclick="dlBackup()">Sicherung speichern</button><button class="btn ghost sm" onclick="document.getElementById('bfile').click()">Sicherung einspielen</button></div></div>
   <div class="btns" style="margin-top:14px"><button class="btn ghost sm" onclick="dlCsv()">Exportieren (CSV)</button><button class="btn ghost sm" onclick="loadDemo()">Beispieldaten laden</button><button class="btn ghost sm" onclick="wipe()">Alles löschen</button></div></div>
   <h2>Rechtliches</h2><div class="card"><div class="legal"><a href="info/impressum.html" target="_blank" rel="noopener">Impressum</a><a href="info/datenschutz.html" target="_blank" rel="noopener">Datenschutz</a><a href="info/agb.html" target="_blank" rel="noopener">AGB</a><a href="mailto:griesshammersteven@gmail.com">Kontakt</a></div>
@@ -1073,7 +1075,21 @@ function dlBackup(){
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));
   a.download=`monatsklar-sicherung-${today()}.json`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  S.lastBackup=today(); S.bkSnooze=null; save(); render(true);
   toast(`Sicherung gespeichert (${S.tx.length} Buchungen)`);
+}
+/* Erinnerung: ab 10 Buchungen, wenn nie gesichert wurde oder die letzte Sicherung 30 Tage her ist. "Später" stellt sie 14 Tage zurück. */
+const daysSince=d=>Math.round((new Date(today()+'T00:00:00')-new Date(d+'T00:00:00'))/86400000);
+function backupDue(){
+  if(S.tx.length<10) return false;
+  if(S.bkSnooze&&S.bkSnooze>today()) return false;
+  return !S.lastBackup||daysSince(S.lastBackup)>=30;
+}
+function bkLater(){const d=new Date();d.setDate(d.getDate()+14);S.bkSnooze=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;save();render(true);}
+function backupBanner(){
+  if(!backupDue()) return '';
+  const txt=S.lastBackup?`Ihre letzte Sicherung ist ${daysSince(S.lastBackup)} Tage alt.`:'Sie haben noch keine Sicherung angelegt.';
+  return `<div class="card" style="margin-top:14px;padding:14px 16px;border-color:rgba(201,170,34,.4)"><div class="sm">${ic('fileText')} <b>Zeit für eine Sicherung</b></div><div class="mute sm" style="margin:6px 0 12px">${txt} Ihre Daten liegen nur auf diesem Gerät. Mit einem Tipp sichern Sie sie.</div><div class="btns"><button class="btn sm" onclick="dlBackup()">Jetzt sichern</button><button class="btn ghost sm" onclick="bkLater()">Später erinnern</button></div></div>`;
 }
 /* Die Datei ist unbekannter Herkunft: jedes Feld wird geprüft und bereinigt, bevor etwas übernommen wird */
 function cleanBackup(d){
@@ -1177,6 +1193,35 @@ function trialBanner(){
 }
 let tt;function toast(m){let e=document.getElementById('toast');if(!e){e=document.createElement('div');e.id='toast';e.style.cssText='position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:#F2F3F5;color:#111;padding:10px 16px;border-radius:12px;font-weight:600;font-size:13px;z-index:30;max-width:90%;text-align:center';document.body.appendChild(e);}e.textContent=m;e.style.display='block';clearTimeout(tt);tt=setTimeout(()=>e.style.display='none',2800);}
 
+/* ---------- Update-Hinweis ---------- */
+/* Die App startet aus dem Zwischenspeicher (schnell). Im Hintergrund prüft sie, ob eine neuere Version online ist. */
+let lastUpdCheck=0;
+async function checkUpdate(){
+  if(Date.now()-lastUpdCheck<60*60*1000||!navigator.onLine) return; lastUpdCheck=Date.now();
+  try{
+    const r=await fetch('index.html?nocache='+Date.now(),{cache:'no-store'}); if(!r.ok) return;
+    const m=(await r.text()).match(/const APP_VERSION='([^']+)'/);
+    if(m&&m[1]!==APP_VERSION) showUpdate();
+  }catch(e){}
+}
+function showUpdate(){
+  if(document.getElementById('upd')) return;
+  const e=document.createElement('div'); e.id='upd'; e.className='update'; e.setAttribute('role','status');
+  e.innerHTML=`<span><b>Neue Version verfügbar</b><br><span class="mute sm">Mit einem Tipp aktualisieren.</span></span><button class="btn sm" onclick="applyUpdate()">Aktualisieren</button>`;
+  document.body.appendChild(e);
+}
+async function applyUpdate(){
+  try{
+    const fresh=await fetch('index.html?nocache='+Date.now(),{cache:'no-store'});
+    if('caches' in window&&fresh.ok){
+      const k=(await caches.keys()).find(x=>x.startsWith('monatsklar-'));
+      if(k){const c=await caches.open(k); await c.put(new Request(new URL('index.html',location.href)),fresh.clone()); await c.put(new Request(new URL('./',location.href)),fresh.clone());}
+    }
+  }catch(e){}
+  location.reload();
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible') setTimeout(checkUpdate,1500);});
+
 /* ---------- Render ---------- */
 function render(keepScroll){
   const y=window.scrollY, ms=months();
@@ -1196,6 +1241,7 @@ if(location.hash==='#kuendigen') setTimeout(openCancel,250);
 window.addEventListener('hashchange',()=>{if(location.hash==='#kuendigen')openCancel();});
 {const t=trialInfo(); if(!S.paid&&!S.choice&&t.phase!=='trial') setTimeout(openDecide,600);}   /* ab Tag 42 einmal pro Start nachfragen */
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(()=>{});
+setTimeout(checkUpdate,3000);
 </script>
 </body>
 </html>

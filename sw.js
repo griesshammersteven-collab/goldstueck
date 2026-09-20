@@ -1,5 +1,5 @@
 /* Offline-Cache für die App-Hülle. Nutzerdaten liegen in localStorage, nicht hier. */
-const CACHE = 'monatsklar-v3';
+const CACHE = 'monatsklar-v4';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
@@ -18,6 +18,7 @@ const put = (req, res) => { if (res && res.ok) { const copy = res.clone(); cache
 self.addEventListener('fetch', e => {
   const u = new URL(e.request.url);
   if (e.request.method !== 'GET' || u.origin !== location.origin) return;
+  if (u.searchParams.has('nocache')) return;   /* Update-Prüfung der App: immer direkt vom Server */
   if (u.pathname.includes('/vendor/')) {
     e.respondWith(caches.match(e.request).then(hit => hit || fetch(e.request).then(r => put(e.request, r))));
     return;
