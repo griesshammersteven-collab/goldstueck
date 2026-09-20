@@ -155,7 +155,8 @@ nav button.on::before{content:"";position:absolute;top:0;left:30%;right:30%;heig
 .plan b{display:block;font-size:24px;font-weight:800}
 ul.ck{list-style:none;margin:14px 0}
 ul.ck li{padding:6px 0}
-ul.ck li:before{content:"✓ ";color:var(--gold);font-weight:800}
+ul.ck li{position:relative;padding-left:26px}
+ul.ck li:before{content:"";position:absolute;left:0;top:.62em;width:16px;height:16px;background:var(--gold);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center/contain no-repeat}
 .empty{text-align:center;padding:36px 6px}
 .empty .big{font-size:48px}
 .empty h2{justify-content:center}
@@ -173,6 +174,18 @@ ul.ck li:before{content:"✓ ";color:var(--gold);font-weight:800}
 .radio{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:16px;margin-top:8px;cursor:pointer;background:rgba(255,255,255,.04);transition:all .2s;font-size:14px}
 .radio:hover{border-color:rgba(201,170,34,.5)}
 .radio input{margin-top:3px;accent-color:#C9AA22;width:18px;height:18px;flex:none}
+svg.i{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.22em;flex:none}
+.tip .ic svg.i{width:20px;height:20px;color:var(--gold);vertical-align:0}
+.chip svg.i{width:15px;height:15px;vertical-align:-3px}
+.empty .big svg.i{width:54px;height:54px;stroke-width:1.5}
+.del svg.i{width:18px;height:18px;vertical-align:middle}
+.killbar svg.i{width:14px;height:14px;vertical-align:-2px}
+.monthbar button svg.i{width:18px;height:18px;vertical-align:middle}
+.scanbtn .e svg.i{width:30px;height:30px;color:var(--gold)}
+.pill svg.i{width:13px;height:13px;vertical-align:-2px;fill:currentColor}
+.rcpt b svg.i,.rcpt svg.i{color:var(--gold);width:1.1em;height:1.1em}
+.btn svg.i{width:18px;height:18px;vertical-align:-4px;margin-right:2px}
+.lockmsg svg.i{width:13px;height:13px;vertical-align:-2px}
 .legal{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:6px}
 .legal a{color:var(--mute);font-size:13px;text-decoration:none;transition:color .2s}
 .legal a:hover{color:var(--gold)}
@@ -184,9 +197,9 @@ ul.ck li:before{content:"✓ ";color:var(--gold);font-weight:800}
 <div class="glow" aria-hidden="true"><i></i><i></i></div>
 <header><div class="wrap">
   <div class="logo"><span class="coin">G</span><span>Gold<b>stück</b></span></div>
-  <div class="pill" id="premPill" onclick="openPaywall()" role="button" tabindex="0">★ Premium</div>
+  <div class="pill" id="premPill" onclick="openPaywall()" role="button" tabindex="0">Premium</div>
 </div>
-<div class="killbar"><button type="button" onclick="openCancel()">Verträge hier kündigen <span aria-hidden="true">›</span></button></div></header>
+<div class="killbar"><button type="button" onclick="openCancel()">Verträge hier kündigen <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></div></header>
 
 <main class="wrap" id="app"></main>
 
@@ -233,18 +246,22 @@ ul.ck li:before{content:"✓ ";color:var(--gold);font-weight:800}
 
 <script>
 'use strict';
+/* ---------- Icons (Lucide, inline) ---------- */
+const IC={"sparkles":"<path d=\"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z\"/><path d=\"M20 3v4\"/><path d=\"M22 5h-4\"/><path d=\"M4 17v2\"/><path d=\"M5 18H3\"/>","wallet":"<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\"/><path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\"/>","home":"<path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\"/><path d=\"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/>","shield":"<path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\"/>","repeat":"<path d=\"m17 2 4 4-4 4\"/><path d=\"M3 11v-1a4 4 0 0 1 4-4h14\"/><path d=\"m7 22-4-4 4-4\"/><path d=\"M21 13v1a4 4 0 0 1-4 4H3\"/>","cart":"<circle cx=\"8\" cy=\"21\" r=\"1\"/><circle cx=\"19\" cy=\"21\" r=\"1\"/><path d=\"M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12\"/>","utensils":"<path d=\"M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2\"/><path d=\"M7 2v20\"/><path d=\"M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7\"/>","car":"<path d=\"M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2\"/><circle cx=\"7\" cy=\"17\" r=\"2\"/><path d=\"M9 17h6\"/><circle cx=\"17\" cy=\"17\" r=\"2\"/>","bag":"<path d=\"M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z\"/><path d=\"M3 6h18\"/><path d=\"M16 10a4 4 0 0 1-8 0\"/>","heart":"<path d=\"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z\"/><path d=\"M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27\"/>","package":"<path d=\"M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z\"/><path d=\"M12 22V12\"/><path d=\"m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7\"/><path d=\"m7.5 4.27 9 5.15\"/>","trendUp":"<path d=\"M16 7h6v6\"/><path d=\"m22 7-8.5 8.5-5-5L2 17\"/>","coffee":"<path d=\"M10 2v2\"/><path d=\"M14 2v2\"/><path d=\"M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1\"/><path d=\"M6 2v2\"/>","target":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><circle cx=\"12\" cy=\"12\" r=\"6\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/>","trophy":"<path d=\"M6 9H4.5a2.5 2.5 0 0 1 0-5H6\"/><path d=\"M18 9h1.5a2.5 2.5 0 0 0 0-5H18\"/><path d=\"M4 22h16\"/><path d=\"M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22\"/><path d=\"M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22\"/><path d=\"M18 2H6v7a6 6 0 0 0 12 0V2Z\"/>","landmark":"<path d=\"M10 18v-7\"/><path d=\"M11.12 2.198a2 2 0 0 1 1.76.006l7.866 3.847c.476.233.31.949-.22.949H3.474c-.53 0-.695-.716-.22-.949z\"/><path d=\"M14 18v-7\"/><path d=\"M18 18v-7\"/><path d=\"M3 22h18\"/><path d=\"M6 18v-7\"/>","camera":"<path d=\"M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z\"/><circle cx=\"12\" cy=\"13\" r=\"3\"/>","fileText":"<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\"/><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"/><path d=\"M10 9H8\"/><path d=\"M16 13H8\"/><path d=\"M16 17H8\"/>","receipt":"<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\"/><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8\"/><path d=\"M12 17.5v-11\"/>","pencil":"<path d=\"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z\"/><path d=\"m15 5 4 4\"/>","x":"<path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/>","lock":"<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/>","check":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m9 12 2 2 4-4\"/>","alert":"<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/>","gift":"<rect x=\"3\" y=\"8\" width=\"18\" height=\"4\" rx=\"1\"/><path d=\"M12 8v13\"/><path d=\"M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7\"/><path d=\"M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5\"/>","star":"<path d=\"M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z\"/>","chevL":"<path d=\"m15 18-6-6 6-6\"/>","chevR":"<path d=\"m9 18 6-6-6-6\"/>","coins":"<circle cx=\"8\" cy=\"8\" r=\"6\"/><path d=\"M18.09 10.37A6 6 0 1 1 10.34 18\"/><path d=\"M7 6h1v4\"/><path d=\"m16.71 13.88.7.71-2.82 2.82\"/>"};
+const ic=(n,cls='',style='')=>`<svg class="i ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"${style?` style="${style}"`:''}>${IC[n]||''}</svg>`;
+
 /* ---------- Kategorien ---------- */
 const CATS = {
-  'Einkommen':{c:'#4CC38A',fixed:false,ic:'💶',kw:[]},
-  'Wohnen':{c:'#5B8DEF',fixed:true,ic:'🏠',kw:['miete','wohnung','hausgeld','strom','stadtwerke','gas ','nebenkosten','vattenfall','eon','internet','telekom','vodafone','o2 ']},
-  'Versicherungen':{c:'#9B7FE0',fixed:true,ic:'🛡️',kw:['versicherung','allianz','huk','axa','signal iduna','haftpflicht','krankenkasse','tk ','aok']},
-  'Abos & Medien':{c:'#E07FA8',fixed:false,ic:'🔁',kw:['netflix','spotify','disney','prime video','amazon prime','dazn','fitness','gym','mcfit','apple.com','google play','zeitung','abo','handy','mobilfunk','youtube']},
-  'Lebensmittel':{c:'#6CC17B',fixed:false,ic:'🛒',kw:['rewe','edeka','lidl','aldi','kaufland','penny','netto','dm ','rossmann','markt','supermarkt','bäckerei','metzger','denn','alnatura','globus']},
-  'Restaurants & Café':{c:'#E8A04C',fixed:false,ic:'🍽️',kw:['lieferando','wolt','uber eats','restaurant','café','cafe','starbucks','mcdonald','burger','pizza','bäcker','imbiss','kiosk','kebab','döner']},
-  'Mobilität':{c:'#57C2E0',fixed:false,ic:'🚗',kw:['shell','aral','esso','tankstelle','jet ','db ','bahn','deutsche bahn','uber','tier ','parken','kfz','vvs','bvg','mvv','flixbus']},
-  'Freizeit & Shopping':{c:'#C9AA22',fixed:false,ic:'🛍️',kw:['amazon','zalando','ebay','kino','ikea','otto','media markt','saturn','steam','playstation','hotel','booking','airbnb','ryanair','lufthansa','h&m']},
-  'Gesundheit':{c:'#3FB8AF',fixed:false,ic:'💊',kw:['apotheke','arzt','zahnarzt','optiker','physio']},
-  'Sonstiges':{c:'#8A8F98',fixed:false,ic:'📦',kw:[]}
+  'Einkommen':{c:'#4CC38A',fixed:false,ic:'wallet',kw:[]},
+  'Wohnen':{c:'#5B8DEF',fixed:true,ic:'home',kw:['miete','wohnung','hausgeld','strom','stadtwerke','gas ','nebenkosten','vattenfall','eon','internet','telekom','vodafone','o2 ']},
+  'Versicherungen':{c:'#9B7FE0',fixed:true,ic:'shield',kw:['versicherung','allianz','huk','axa','signal iduna','haftpflicht','krankenkasse','tk ','aok']},
+  'Abos & Medien':{c:'#E07FA8',fixed:false,ic:'repeat',kw:['netflix','spotify','disney','prime video','amazon prime','dazn','fitness','gym','mcfit','apple.com','google play','zeitung','abo','handy','mobilfunk','youtube']},
+  'Lebensmittel':{c:'#6CC17B',fixed:false,ic:'cart',kw:['rewe','edeka','lidl','aldi','kaufland','penny','netto','dm ','rossmann','markt','supermarkt','bäckerei','metzger','denn','alnatura','globus']},
+  'Restaurants & Café':{c:'#E8A04C',fixed:false,ic:'utensils',kw:['lieferando','wolt','uber eats','restaurant','café','cafe','starbucks','mcdonald','burger','pizza','bäcker','imbiss','kiosk','kebab','döner']},
+  'Mobilität':{c:'#57C2E0',fixed:false,ic:'car',kw:['shell','aral','esso','tankstelle','jet ','db ','bahn','deutsche bahn','uber','tier ','parken','kfz','vvs','bvg','mvv','flixbus']},
+  'Freizeit & Shopping':{c:'#C9AA22',fixed:false,ic:'bag',kw:['amazon','zalando','ebay','kino','ikea','otto','media markt','saturn','steam','playstation','hotel','booking','airbnb','ryanair','lufthansa','h&m']},
+  'Gesundheit':{c:'#3FB8AF',fixed:false,ic:'heart',kw:['apotheke','arzt','zahnarzt','optiker','physio']},
+  'Sonstiges':{c:'#8A8F98',fixed:false,ic:'package',kw:[]}
 };
 const CAT_NAMES = Object.keys(CATS);
 const EXP_CATS = CAT_NAMES.filter(c=>c!=='Einkommen');
@@ -372,7 +389,7 @@ function tips(m){
       if(CATS[c].fixed||c==='Einkommen'||c==='Sonstiges') return;
       const cur=proj(c,m), avg=prior.map(x=>sums(x).by[c]||0).reduce((a,b)=>a+b,0)/prior.length;
       if(avg>20&&cur>avg*1.25&&cur-avg>20){
-        out.push({ic:'📈',t:`${c}: ${Math.round((cur/avg-1)*100)} % über Ihrem Schnitt`,
+        out.push({ic:'trendUp',t:`${c}: ${Math.round((cur/avg-1)*100)} % über Ihrem Schnitt`,
           p:`Sie liegen bei ca. ${eur(cur)} im Monat, sonst bei ${eur(avg)}. Kommen Sie zurück auf Ihren üblichen Wert, bleibt das Geld bei Ihnen.`,save:cur-avg});
       }
     });
@@ -380,23 +397,23 @@ function tips(m){
   const small=monthTx(m).filter(t=>t.cat==='Restaurants & Café'&&t.amt<0&&-t.amt<8);
   if(small.length>=6){
     const sum=small.reduce((x,t)=>x-t.amt,0)*scale, avg=sum/(small.length*scale);
-    out.push({ic:'☕',t:`${small.length} kleine Käufe im Café`,
+    out.push({ic:'coffee',t:`${small.length} kleine Käufe im Café`,
       p:`Im Schnitt ${eur2(avg)} pro Kauf, zusammen ca. ${eur(sum)} im Monat. Nur jeden zweiten Kauf zu ersparen, schafft spürbar Luft.`,save:sum/2});
   }
   const abos=recurring().filter(r=>r.cat==='Abos & Medien');
   if(abos.length>=2){
     const tot=abos.reduce((x,r)=>x+r.avg,0), top=abos[0];
-    out.push({ic:'🔁',t:`${abos.length} laufende Abos: ${eur(tot)} pro Monat`,
+    out.push({ic:'repeat',t:`${abos.length} laufende Abos: ${eur(tot)} pro Monat`,
       p:`Am teuersten: ${top.name} mit ${eur2(top.avg)} im Monat. Nutzen Sie wirklich alle? Ein gekündigtes Abo entlastet sofort.`,save:top.avg});
   }
   if(f.inc>0){
     const rate=f.saldo/f.inc;
-    if(rate<0.1) out.push({ic:'🎯',t:`Sparquote nur ${Math.max(0,Math.round(rate*100))} %`,
+    if(rate<0.1) out.push({ic:'target',t:`Sparquote nur ${Math.max(0,Math.round(rate*100))} %`,
       p:`Richtwert sind 10 bis 20 % des Einkommens. Richten Sie am Gehaltstag einen Dauerauftrag ein, bevor das Geld anderweitig verschwindet.`,save:Math.max(0,0.1*f.inc-f.saldo)});
-    else out.push({ic:'🏆',t:`Starke Sparquote: ${Math.round(rate*100)} %`,p:`Sie legen ${eur(f.saldo)} zurück. Legen Sie das Geld sinnvoll an, statt es auf dem Girokonto liegen zu lassen.`,save:0});
+    else out.push({ic:'trophy',t:`Starke Sparquote: ${Math.round(rate*100)} %`,p:`Sie legen ${eur(f.saldo)} zurück. Legen Sie das Geld sinnvoll an, statt es auf dem Girokonto liegen zu lassen.`,save:0});
   }
   /* Café-Käufe sind Teil der Kategorie "Restaurants & Café": nicht doppelt in die Summe zählen */
-  const cafe=out.find(t=>t.ic==='☕');
+  const cafe=out.find(t=>t.ic==='coffee');
   if(cafe&&out.some(t=>t.t.startsWith('Restaurants & Café'))){cafe.save=0;cafe.p+=' (Die Ersparnis steckt schon im Tipp zu Restaurants & Café.)';}
   return out.sort((a,b)=>b.save-a.save);
 }
@@ -429,12 +446,12 @@ function trend(m){
 /* ---------- Views ---------- */
 function monthBar(){
   const ms=months(), i=ms.indexOf(S.month);
-  return `<div class="monthbar"><button ${i<=0?'disabled':''} onclick="mv(-1)" aria-label="Vorheriger Monat">‹</button><div class="m">${mLabel(S.month)}</div><button ${i>=ms.length-1?'disabled':''} onclick="mv(1)" aria-label="Nächster Monat">›</button></div>`;
+  return `<div class="monthbar"><button ${i<=0?'disabled':''} onclick="mv(-1)" aria-label="Vorheriger Monat">${ic('chevL')}</button><div class="m">${mLabel(S.month)}</div><button ${i>=ms.length-1?'disabled':''} onclick="mv(1)" aria-label="Nächster Monat">${ic('chevR')}</button></div>`;
 }
 function empty(){
-  return `<div class="empty"><div class="big">🪙</div><h2 style="margin:8px 0;color:var(--text);font-size:22px;text-transform:none;letter-spacing:0">Ihr Haushaltsbuch. Ohne Tabellen.</h2>
+  return `<div class="empty"><div class="big gold">${ic('coins')}</div><h2 style="margin:8px 0;color:var(--text);font-size:22px;text-transform:none;letter-spacing:0">Ihr Haushaltsbuch. Ohne Tabellen.</h2>
   <p class="mute" style="margin-bottom:20px">Erfassen Sie Einnahmen und Ausgaben mit wenigen Taps, oder fotografieren Sie einfach den Kassenzettel.</p>
-  <div class="btns"><button class="btn" onclick="openStatement()">🏦 Kontoauszug hochladen</button><button class="btn ghost" onclick="openAdd()">Buchung erfassen</button><button class="btn ghost" onclick="openAdd(true)">📷 Kassenzettel scannen</button></div>
+  <div class="btns"><button class="btn" onclick="openStatement()">${ic('landmark')} Kontoauszug hochladen</button><button class="btn ghost" onclick="openAdd()">Buchung erfassen</button><button class="btn ghost" onclick="openAdd(true)">${ic('camera')} Kassenzettel scannen</button></div>
   <p class="note" style="margin-top:18px"><a href="#" style="color:var(--gold)" onclick="loadDemo();return false">Oder erst mit Beispieldaten ansehen</a></p></div>`;
 }
 function vHome(){
@@ -452,7 +469,7 @@ function vHome(){
     <div class="card kpi"><div class="lbl">Einnahmen</div><div class="val pos">${eur(s.inc)}</div></div>
     <div class="card kpi"><div class="lbl">Ausgaben</div><div class="val">${eur(s.exp)}</div></div>
   </div>
-  ${sv>0?`<div class="card total" onclick="go('tips')" style="cursor:pointer"><div class="row"><div><div class="gold sm" style="font-weight:700">SPARPOTENZIAL</div><div class="big gold">${eur(sv)}</div><div class="mute sm">pro Monat · ${tp.filter(t=>t.save>0).length} Tipps für Sie</div></div><div style="font-size:34px">✦</div></div></div>`:''}
+  ${sv>0?`<div class="card total" onclick="go('tips')" style="cursor:pointer"><div class="row"><div><div class="gold sm" style="font-weight:700">SPARPOTENZIAL</div><div class="big gold">${eur(sv)}</div><div class="mute sm">pro Monat · ${tp.filter(t=>t.save>0).length} Tipps für Sie</div></div><div class="gold" style="font-size:34px">${ic('sparkles')}</div></div></div>`:''}
   ${budgetCard(S.month)}${goalsCard(false)}
   <h2>Wohin geht das Geld?</h2><div class="card">${donut(s.by)||'<p class="mute">Keine Ausgaben in diesem Monat.</p>'}</div>
   <h2>Verlauf</h2><div class="card">${trend(S.month)||'<p class="mute">Für den Verlauf brauchen wir mindestens zwei Monate.</p>'}</div>`;
@@ -463,11 +480,11 @@ function vTx(){
   const list=monthTx(S.month).filter(t=>!q||t.desc.toLowerCase().includes(q)||t.cat.toLowerCase().includes(q)).sort((a,b)=>b.d.localeCompare(a.d)||0);
   return monthBar()+`<input type="search" placeholder="Suchen …" value="${esc(S.filter)}" oninput="S.filter=this.value;render(true)" style="margin-bottom:12px" aria-label="Buchungen durchsuchen">
   <div class="card">${list.map(t=>`<div class="tx"><span class="dot" style="background:${CATS[t.cat].c}"></span>
-    <div class="d"><div class="t1">${esc(t.desc)}${t.items?' 🧾':''}</div><div class="mute sm">${t.d.slice(8)}.${t.d.slice(5,7)}.
+    <div class="d"><div class="t1">${esc(t.desc)}${t.items?' '+ic('receipt'):''}</div><div class="mute sm">${t.d.slice(8)}.${t.d.slice(5,7)}.
     <select onchange="setCat('${t.id}',this.value)" aria-label="Kategorie">${CAT_NAMES.map(c=>`<option ${c===t.cat?'selected':''}>${c}</option>`).join('')}</select></div>
     ${t.items?`<ul class="items">${t.items.map(i=>`<li><span>${esc(i.n)}</span><span>${eur2(i.p)}</span></li>`).join('')}</ul>`:''}</div>
     <div class="amt ${t.amt>0?'pos':''}">${t.amt>0?'+':''}${eur2(t.amt)}</div>
-    <button class="del" onclick="openEdit('${t.id}')" aria-label="Bearbeiten">✎</button><button class="del" onclick="delTx('${t.id}')" aria-label="Löschen">✕</button></div>`).join('')||'<p class="mute">Keine Buchungen.</p>'}</div>`;
+    <button class="del" onclick="openEdit('${t.id}')" aria-label="Bearbeiten">${ic('pencil')}</button><button class="del" onclick="delTx('${t.id}')" aria-label="Löschen">${ic('x')}</button></div>`).join('')||'<p class="mute">Keine Buchungen.</p>'}</div>`;
 }
 function vTips(){
   if(!S.tx.length) return empty();
@@ -477,10 +494,10 @@ function vTips(){
     <div class="mute sm">Berechnet aus Ihren eigenen Ausgaben. Keine Provisionen, keine Vertragsvermittlung: Wir verdienen nichts an Ihren Wechseln.</div></div>`;
   h+='<h2>Ihre Tipps</h2>';
   h+=tp.map((t,i)=>{const lock=!S.premium&&i>=free;
-    return `<div class="card tip ${lock?'locked':''}" ${lock?'onclick="openPaywall()" style="cursor:pointer"':''}>${lock?'<span class="lockmsg">🔒 Premium</span>':''}
-      <h3><span class="ic">${t.ic}</span> ${esc(t.t)}</h3><p class="mute">${esc(t.p)}</p>${t.save>0?`<span class="save">bis zu ${eur(t.save)} pro Monat</span>`:''}</div>`;}).join('')||'<p class="mute">Noch keine Tipps. Erfassen Sie ein paar Wochen lang Ihre Ausgaben, dann werden sie genauer.</p>';
+    return `<div class="card tip ${lock?'locked':''}" ${lock?'onclick="openPaywall()" style="cursor:pointer"':''}>${lock?`<span class="lockmsg">${ic('lock')} Premium</span>`:''}
+      <h3><span class="ic">${ic(t.ic)}</span> ${esc(t.t)}</h3><p class="mute">${esc(t.p)}</p>${t.save>0?`<span class="save">bis zu ${eur(t.save)} pro Monat</span>`:''}</div>`;}).join('')||'<p class="mute">Noch keine Tipps. Erfassen Sie ein paar Wochen lang Ihre Ausgaben, dann werden sie genauer.</p>';
   h+='<h2>Abo- und Vertrags-Radar</h2>';
-  if(!S.premium) h+=`<div class="card tip locked" onclick="openPaywall()" style="cursor:pointer"><span class="lockmsg">🔒 Premium</span><p class="mute">${rec.length} wiederkehrende Zahlungen erkannt, zusammen ${eur(rec.reduce((x,r)=>x+r.avg,0))} pro Monat.</p></div>`;
+  if(!S.premium) h+=`<div class="card tip locked" onclick="openPaywall()" style="cursor:pointer"><span class="lockmsg">${ic('lock')} Premium</span><p class="mute">${rec.length} wiederkehrende Zahlungen erkannt, zusammen ${eur(rec.reduce((x,r)=>x+r.avg,0))} pro Monat.</p></div>`;
   else h+=`<div class="card">${rec.map(r=>`<div class="tx"><span class="dot" style="background:${CATS[r.cat].c}"></span><div class="d"><div class="t1">${esc(r.name)}</div><div class="mute sm">ca. am ${r.day}. · seit ${r.months} Monaten</div></div><div class="amt">${eur2(r.avg)}<div class="mute sm" style="text-align:right;font-weight:400">${eur(r.avg*12)}/Jahr</div></div></div>`).join('')||'<p class="mute">Keine wiederkehrenden Zahlungen erkannt.</p>'}</div>`;
   if(!S.premium) h+=`<button class="btn" onclick="openPaywall()">Alle Tipps freischalten</button>`;
   return h;
@@ -506,9 +523,9 @@ function goalsCard(full){
   if(!S.goals.length) return '';
   return `<h2>Sparziele</h2><div class="card" ${full?'':`onclick="go('more')" style="cursor:pointer"`}>${S.goals.map(g=>{
     const pct=Math.min(100,g.saved/g.target*100), done=g.saved>=g.target;
-    return `<div style="margin-bottom:16px"><div class="row"><b>${done?'🎉 ':'🎯 '}${esc(g.name)}</b><span class="sm"><b>${eur(g.saved)}</b> <span class="mute">von ${eur(g.target)}</span></span></div>
+    return `<div style="margin-bottom:16px"><div class="row"><b>${done?ic('check'):ic('target')} ${esc(g.name)}</b><span class="sm"><b>${eur(g.saved)}</b> <span class="mute">von ${eur(g.target)}</span></span></div>
       <div class="bar" style="margin:6px 0 2px"><i style="width:${pct}%"></i></div>
-      <div class="row sm mute"><span>${done?'Ziel erreicht!':goalNeed(g)||Math.round(pct)+' %'}</span>${full?`<span style="display:flex;gap:4px;align-items:center;flex:none"><button class="btn sm ghost" onclick="openGoal('dep','${g.id}')">+ Einzahlen</button><button class="del" onclick="delGoal('${g.id}')" aria-label="Löschen">✕</button></span>`:''}</div></div>`;}).join('')}</div>`;
+      <div class="row sm mute"><span>${done?'Ziel erreicht!':goalNeed(g)||Math.round(pct)+' %'}</span>${full?`<span style="display:flex;gap:4px;align-items:center;flex:none"><button class="btn sm ghost" onclick="openGoal('dep','${g.id}')">+ Einzahlen</button><button class="del" onclick="delGoal('${g.id}')" aria-label="Löschen">${ic('x')}</button></span>`:''}</div></div>`;}).join('')}</div>`;
 }
 function setBudget(c,v){
   const n=num(v);
@@ -525,10 +542,10 @@ function closeGoal(){document.getElementById('gm').classList.remove('show');S.gf
 function renderGoal(){
   const G=S.gf; if(!G) return; const g=S.goals.find(x=>x.id===G.id);
   document.getElementById('gsheet').innerHTML=G.mode==='dep'
-   ?`<div class="row" style="margin-bottom:10px"><h3>Einzahlen: ${esc(g?g.name:'')}</h3><button class="del" style="font-size:20px" onclick="closeGoal()" aria-label="Schließen">✕</button></div>
+   ?`<div class="row" style="margin-bottom:10px"><h3>Einzahlen: ${esc(g?g.name:'')}</h3><button class="del" style="font-size:20px" onclick="closeGoal()" aria-label="Schließen">${ic('x')}</button></div>
      <label class="fl">Betrag in €</label><input class="f amtin" inputmode="decimal" placeholder="0,00" oninput="S.gf.amt=this.value" autocomplete="off">
      <button class="btn" style="margin-top:20px" onclick="saveGoal()">Einzahlen</button>`
-   :`<div class="row" style="margin-bottom:10px"><h3>Neues Sparziel</h3><button class="del" style="font-size:20px" onclick="closeGoal()" aria-label="Schließen">✕</button></div>
+   :`<div class="row" style="margin-bottom:10px"><h3>Neues Sparziel</h3><button class="del" style="font-size:20px" onclick="closeGoal()" aria-label="Schließen">${ic('x')}</button></div>
      <label class="fl">Wofür sparen Sie?</label><input class="f" placeholder="z. B. Urlaub, Notgroschen" oninput="S.gf.name=this.value" autocomplete="off">
      <label class="fl">Zielbetrag in €</label><input class="f" inputmode="decimal" placeholder="z. B. 2500" oninput="S.gf.target=this.value" autocomplete="off">
      <label class="fl">Schon gespart in € (optional)</label><input class="f" inputmode="decimal" placeholder="0" oninput="S.gf.saved=this.value" autocomplete="off">
@@ -539,7 +556,7 @@ function saveGoal(){
   const G=S.gf; if(!G) return;
   if(G.mode==='dep'){
     const a=num(G.amt), g=S.goals.find(x=>x.id===G.id); if(!g||!(a>0)){toast('Bitte einen Betrag eingeben');return;}
-    g.saved=Math.round((g.saved+a)*100)/100; save(); closeGoal(); render(true); toast(g.saved>=g.target?'Ziel erreicht! 🎉':'Eingezahlt: '+eur2(a)); return;
+    g.saved=Math.round((g.saved+a)*100)/100; save(); closeGoal(); render(true); toast(g.saved>=g.target?'Ziel erreicht!':'Eingezahlt: '+eur2(a)); return;
   }
   const t=num(G.target), sv=G.saved?num(G.saved):0;
   if(!G.name.trim()||!(t>0)){toast('Bitte Name und Zielbetrag angeben');return;}
@@ -552,15 +569,15 @@ function vMore(){
   return `<div class="card" style="border-color:rgba(229,115,92,.45);background:linear-gradient(180deg,rgba(229,115,92,.12),rgba(255,255,255,.02));margin-top:16px"><div class="row"><div><b>Vertrag beenden?</b><div class="mute sm">Sie können jederzeit kündigen, ohne Anmeldung und in wenigen Schritten.</div></div></div>
    <button class="btn danger" style="margin-top:12px" onclick="openCancel()">Verträge hier kündigen</button></div>
   <h2>Kontoauszug analysieren</h2><div class="card"><div class="row"><div><b>Kontoauszug hochladen</b><div class="mute sm">PDF oder CSV aus dem Online-Banking. Einnahmen und Kategorien erkennt die App selbst.</div></div></div>
-   <button class="btn" style="margin-top:12px" onclick="openStatement()">🏦 Kontoauszug hochladen</button>
+   <button class="btn" style="margin-top:12px" onclick="openStatement()">${ic('landmark')} Kontoauszug hochladen</button>
    <p class="note">${S.premium?'Unbegrenzt.':`${Math.max(0,FREE_STMTS-stmtsUsed())} von ${FREE_STMTS} Gratis-Auszügen in diesem Monat übrig.`}</p></div>
-  ${goalsCard(true)}<div class="btns" style="margin-top:12px"><button class="btn ghost" onclick="openGoal('new')">+ Neues Sparziel ${!S.premium&&S.goals.length>=FREE_GOALS?'🔒':''}</button></div>
+  ${goalsCard(true)}<div class="btns" style="margin-top:12px"><button class="btn ghost" onclick="openGoal('new')">+ Neues Sparziel ${!S.premium&&S.goals.length>=FREE_GOALS?ic('lock'):''}</button></div>
   <h2>Monatsbudgets pro Kategorie</h2><div class="card">
    ${EXP_CATS.map(c=>`<div class="row" style="padding:6px 0"><span><span class="dot" style="background:${CATS[c].c};display:inline-block"></span> ${c}</span><input class="f" style="width:110px;text-align:right;padding:8px 10px" inputmode="decimal" placeholder="kein Limit" value="${S.budgets[c]||''}" onchange="setBudget('${c}',this.value)" aria-label="Budget ${c}"></div>`).join('')}
    <p class="note">${S.premium?'Unbegrenzt viele Budgets.':`Gratis: bis zu ${FREE_BUDGETS} Budgets (${Object.keys(S.budgets).length} belegt).`}</p></div>
   <h2>Wiederkehrende Buchungen</h2><div class="card">
-   ${S.rec.map(r=>`<div class="tx"><span class="dot" style="background:${CATS[r.cat].c}"></span><div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">jeden Monat am ${r.day}.</div></div><div class="amt ${r.amt>0?'pos':''}">${r.amt>0?'+':''}${eur2(r.amt)}</div><button class="del" onclick="delRec('${r.id}')" aria-label="Entfernen">✕</button></div>`).join('')||'<p class="mute sm">Noch keine. Beim Erfassen einer Buchung können Sie „Jeden Monat wiederholen" anhaken, z. B. für Miete und Gehalt.</p>'}</div>
-  <h2>Kassenzettel-Scans</h2><div class="card"><div class="row"><div><b>${S.premium?'Unbegrenzt':scansLeft()+' von '+FREE_SCANS+' übrig'}</b><div class="mute sm">${S.premium?'Mit Premium':'in diesem Monat (Gratis-Version)'}</div></div><button class="btn sm" onclick="openAdd(true)">📷 Scannen</button></div></div>
+   ${S.rec.map(r=>`<div class="tx"><span class="dot" style="background:${CATS[r.cat].c}"></span><div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">jeden Monat am ${r.day}.</div></div><div class="amt ${r.amt>0?'pos':''}">${r.amt>0?'+':''}${eur2(r.amt)}</div><button class="del" onclick="delRec('${r.id}')" aria-label="Entfernen">${ic('x')}</button></div>`).join('')||'<p class="mute sm">Noch keine. Beim Erfassen einer Buchung können Sie „Jeden Monat wiederholen" anhaken, z. B. für Miete und Gehalt.</p>'}</div>
+  <h2>Kassenzettel-Scans</h2><div class="card"><div class="row"><div><b>${S.premium?'Unbegrenzt':scansLeft()+' von '+FREE_SCANS+' übrig'}</b><div class="mute sm">${S.premium?'Mit Premium':'in diesem Monat (Gratis-Version)'}</div></div><button class="btn sm" onclick="openAdd(true)">${ic('camera')} Scannen</button></div></div>
   <h2>Premium</h2>${trialBanner()}<div class="card"><div class="row"><div><b>${S.paid?'Premium aktiv (Demo)':trialInfo().phase!=='ended'?'Premium-Testphase':'Basis-Version'}</b><div class="mute sm">${S.paid?'Alle Funktionen freigeschaltet':trialInfo().phase!=='ended'?`Alle Funktionen frei, noch ${trialInfo().left} Tage`:'Erfassen, Dashboard und Prognose sind kostenlos'}</div></div>
   <button class="btn sm" onclick="${S.paid?'togglePremium(false)':'openPaywall()'}">${S.paid?'Beenden':'Preise'}</button></div></div>
   <h2>Ihre Daten</h2><div class="card"><div><b>${S.tx.length}</b> Buchungen gespeichert<div class="mute sm">Nur lokal auf diesem Gerät. Kassenzettel-Fotos werden nicht gespeichert.</div></div>
@@ -579,7 +596,7 @@ function openAdd(scan){
 function closeAdd(){document.getElementById('addm').classList.remove('show');S.form=null;S.scan=null;}
 function chipsHtml(){
   const F=S.form, list=F.type==='inc'?['Einkommen']:EXP_CATS;
-  return list.map(c=>`<button type="button" class="chip ${F.cat===c?'on':''}" onclick="pickCat('${c}')">${CATS[c].ic} ${c}</button>`).join('');
+  return list.map(c=>`<button type="button" class="chip ${F.cat===c?'on':''}" onclick="pickCat('${c}')">${ic(CATS[c].ic,'',`color:${CATS[c].c}`)} ${c}</button>`).join('');
 }
 function openEdit(id){
   const t=S.tx.find(x=>x.id===id); if(!t) return;
@@ -590,7 +607,7 @@ function renderSheet(){
   const F=S.form; if(!F) return;
   const sc=S.scan, ed=!!F.editId;
   document.getElementById('addsheet').innerHTML=`
-  <div class="row" style="margin-bottom:14px"><h3>${ed?'Buchung bearbeiten':'Neue Buchung'}</h3><button class="del" style="font-size:20px" onclick="closeAdd()" aria-label="Schließen">✕</button></div>
+  <div class="row" style="margin-bottom:14px"><h3>${ed?'Buchung bearbeiten':'Neue Buchung'}</h3><button class="del" style="font-size:20px" onclick="closeAdd()" aria-label="Schließen">${ic('x')}</button></div>
   <div class="seg"><button class="e ${F.type==='exp'?'on':''}" onclick="setType('exp')">Ausgabe</button><button class="i ${F.type==='inc'?'on':''}" onclick="setType('inc')">Einnahme</button></div>
   <label class="fl">Betrag in €</label>
   <input class="f amtin" id="f_amt" inputmode="decimal" placeholder="0,00" value="${esc(F.amt)}" oninput="S.form.amt=this.value" autocomplete="off">
@@ -599,12 +616,12 @@ function renderSheet(){
   <label class="fl">Kategorie</label><div class="chips" id="chips">${chipsHtml()}</div>
   <label class="fl">Datum</label><input class="f" type="date" value="${F.date}" onchange="S.form.date=this.value">
   ${ed?'':`<label class="chk"><input type="checkbox" ${F.rep?'checked':''} onchange="S.form.rep=this.checked"> Jeden Monat wiederholen</label>`}
-  ${F.rcpt&&F.items&&F.items.length?`<div class="rcpt"><b>🧾 ${F.items.length} Positionen erkannt</b><ul class="items">${F.items.map(i=>`<li><span>${esc(i.n)}</span><span>${eur2(i.p)}</span></li>`).join('')}</ul></div>`:''}
+  ${F.rcpt&&F.items&&F.items.length?`<div class="rcpt"><b>${ic('receipt')} ${F.items.length} Positionen erkannt</b><ul class="items">${F.items.map(i=>`<li><span>${esc(i.n)}</span><span>${eur2(i.p)}</span></li>`).join('')}</ul></div>`:''}
   ${sc&&sc.busy?`<div class="rcpt"><span class="spin"></span>${esc(sc.msg)}</div>`:''}
   ${sc&&sc.err?`<div class="rcpt" style="border-color:var(--neg)">${esc(sc.err)}</div>`:''}
-  ${ed?'':`<button class="btn ghost" style="margin-top:14px" onclick="openStatement()">🏦 Stattdessen Kontoauszug hochladen</button>`}
-  ${F.type==='exp'&&!ed?`<div class="grid2" style="margin-top:14px"><button class="scanbtn" style="margin:0;flex-direction:column;text-align:center;gap:4px" onclick="tryScan('cam')" ${sc&&sc.busy?'disabled':''}><span class="e">📷</span><b>Foto aufnehmen</b></button>
-  <button class="scanbtn" style="margin:0;flex-direction:column;text-align:center;gap:4px" onclick="tryScan('file')" ${sc&&sc.busy?'disabled':''}><span class="e">📄</span><b>PDF / Bild hochladen</b></button></div>
+  ${ed?'':`<button class="btn ghost" style="margin-top:14px" onclick="openStatement()">${ic('landmark')} Stattdessen Kontoauszug hochladen</button>`}
+  ${F.type==='exp'&&!ed?`<div class="grid2" style="margin-top:14px"><button class="scanbtn" style="margin:0;flex-direction:column;text-align:center;gap:4px" onclick="tryScan('cam')" ${sc&&sc.busy?'disabled':''}><span class="e">${ic('camera')}</span><b>Foto aufnehmen</b></button>
+  <button class="scanbtn" style="margin:0;flex-direction:column;text-align:center;gap:4px" onclick="tryScan('file')" ${sc&&sc.busy?'disabled':''}><span class="e">${ic('fileText')}</span><b>PDF / Bild hochladen</b></button></div>
   <p class="note">${S.premium?'Kassenzettel-Scans: unbegrenzt.':scansLeft()+' von '+FREE_SCANS+' Gratis-Scans übrig.'}</p>`:''}
   <input type="file" id="rcam" accept="image/*" capture="environment" hidden onchange="scanFile(this.files[0]);this.value=''">
   <input type="file" id="rfile" accept="application/pdf,.pdf,image/*" hidden onchange="scanFile(this.files[0]);this.value=''">
@@ -869,8 +886,8 @@ async function onStmt(file){
       rows=parseStatementText(text);
     } else {
       const buf=await file.arrayBuffer(); let t=new TextDecoder('utf-8').decode(buf);
-      if(t.includes('�')) t=new TextDecoder('windows-1252').decode(buf);
-      rows=parseStatementCsv(t.replace(/^﻿/,''));
+      if(t.includes('\ufffd')) t=new TextDecoder('windows-1252').decode(buf);
+      rows=parseStatementCsv(t.replace(/^\ufeff/,''));
       if(rows===null) throw new Error('cols');
     }
     if(!rows.length) throw new Error('empty');
@@ -886,14 +903,14 @@ async function onStmt(file){
 function stTotals(){const R=(S.st.rows||[]).filter(r=>r.inc);return {n:R.length,inc:R.filter(r=>r.amt>0).reduce((x,r)=>x+r.amt,0),exp:R.filter(r=>r.amt<0).reduce((x,r)=>x-r.amt,0)};}
 function renderStmt(){
   const st=S.st, box=document.getElementById('ssheet'); if(!st||!box) return;
-  const head=`<div class="row" style="margin-bottom:10px"><h3>Kontoauszug analysieren</h3><button class="del" style="font-size:20px" onclick="closeStmt()" aria-label="Schließen">✕</button></div>`;
+  const head=`<div class="row" style="margin-bottom:10px"><h3>Kontoauszug analysieren</h3><button class="del" style="font-size:20px" onclick="closeStmt()" aria-label="Schließen">${ic('x')}</button></div>`;
   if(st.busy){box.innerHTML=head+`<div class="rcpt"><span class="spin"></span>${esc(st.msg)}</div>`;return;}
   if(st.err){box.innerHTML=head+`<div class="rcpt" style="border-color:var(--neg)">${esc(st.err)}</div><button class="btn ghost" style="margin-top:14px" onclick="closeStmt()">Schließen</button>`;return;}
   const T=stTotals(), ds=st.rows.map(r=>r.d).sort(), guess=st.rows.filter(r=>r.guess&&r.inc).length, dups=st.rows.filter(r=>r.dup).length;
   box.innerHTML=head+`
    <p class="mute sm">${esc(st.name)} · ${st.rows.length} Buchungen erkannt · ${ds[0].slice(8)}.${ds[0].slice(5,7)}.–${ds[ds.length-1].slice(8)}.${ds[ds.length-1].slice(5,7)}.${ds[ds.length-1].slice(0,4)}</p>
    <div class="grid2" style="margin:12px 0"><div class="card kpi" style="margin:0"><div class="lbl">Einnahmen</div><div class="val pos">${eur(T.inc)}</div></div><div class="card kpi" style="margin:0"><div class="lbl">Ausgaben</div><div class="val">${eur(T.exp)}</div></div></div>
-   ${guess?`<div class="rcpt" style="margin:0 0 12px">⚠️ Bei ${guess} Buchungen war das Vorzeichen nicht eindeutig. Tippen Sie auf den Betrag, um zwischen Einnahme und Ausgabe zu wechseln.</div>`:''}
+   ${guess?`<div class="rcpt" style="margin:0 0 12px">${ic('alert')} Bei ${guess} Buchungen war das Vorzeichen nicht eindeutig. Tippen Sie auf den Betrag, um zwischen Einnahme und Ausgabe zu wechseln.</div>`:''}
    ${dups?`<p class="note" style="margin:0 0 8px">${dups} bereits vorhandene Buchungen sind abgewählt.</p>`:''}
    <div class="card" style="padding:4px 14px;max-height:46vh;overflow:auto">${st.rows.map((r,i)=>`<div class="tx" style="${r.inc?'':'opacity:.45'}"><input type="checkbox" style="width:20px;height:20px;accent-color:#C9AA22;flex:none" ${r.inc?'checked':''} onchange="stToggle(${i})" aria-label="Übernehmen">
      <div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">${r.d.slice(8)}.${r.d.slice(5,7)}. <select onchange="stCat(${i},this.value)" aria-label="Kategorie">${CAT_NAMES.map(c=>`<option ${c===r.cat?'selected':''}>${c}</option>`).join('')}</select>${r.guess?' <span class="gold">Vorzeichen prüfen</span>':''}</div></div>
@@ -930,7 +947,7 @@ function closeCancel(){
 const kindText=c=>c.kind==='next'?'ordentlich, zum nächstmöglichen Zeitpunkt':c.kind==='date'?`ordentlich, zum ${c.when?fmtD(c.when):'…'}`:`außerordentlich (fristlos), Grund: ${c.reason}`;
 function renderCancel(){
   const C=S.cx, box=document.getElementById('csheet'); if(!C||!box) return;
-  const head=(t)=>`<div class="row" style="margin-bottom:8px"><h3>${t}</h3><button class="del" style="font-size:20px" onclick="closeCancel()" aria-label="Schließen">✕</button></div>`;
+  const head=(t)=>`<div class="row" style="margin-bottom:8px"><h3>${t}</h3><button class="del" style="font-size:20px" onclick="closeCancel()" aria-label="Schließen">${ic('x')}</button></div>`;
   if(C.step===1){
     box.innerHTML=head('Verträge kündigen')+`
      <p class="mute sm">Sie brauchen dafür kein Konto. Bitte machen Sie die folgenden Angaben. Im nächsten Schritt prüfen Sie alles und kündigen verbindlich.</p>
@@ -956,7 +973,7 @@ function renderCancel(){
   } else {
     const r=C.rec;
     box.innerHTML=head('Kündigung erfasst')+`
-     <div class="rcpt" style="margin-top:6px"><b>✅ Ihre Kündigung wurde erfasst.</b><br><span class="sm">Eingang: ${esc(fmtDT(new Date(r.ts)))}<br>Referenz: <b>${esc(r.ref)}</b></span></div>
+     <div class="rcpt" style="margin-top:6px"><b>${ic('check')} Ihre Kündigung wurde erfasst.</b><br><span class="sm">Eingang: ${esc(fmtDT(new Date(r.ts)))}<br>Referenz: <b>${esc(r.ref)}</b></span></div>
      <dl class="kv card" style="margin-top:14px"><dt>Name</dt><dd>${esc(r.name)}</dd><dt>Vertrag</dt><dd>${esc(r.contract)}</dd>${r.cid?`<dt>Nummer</dt><dd>${esc(r.cid)}</dd>`:''}<dt>Kündigung</dt><dd>${esc(kindText(r))}</dd></dl>
      <div class="rcpt" style="border-color:var(--gold)"><b>Noch ein Schritt:</b> Diese Version speichert Ihre Kündigung nur auf Ihrem Gerät. Tippen Sie auf „Per E-Mail absenden“, damit sie auch beim Anbieter ankommt. Sie erhalten dabei eine Kopie.</div>
      <button class="btn" style="margin-top:14px" onclick="cxMail()">Per E-Mail absenden</button>
@@ -1020,9 +1037,9 @@ function chooseBasic(){
 }
 function openDecide(){
   const t=trialInfo();
-  document.getElementById('dsheet').innerHTML=`<div class="row" style="margin-bottom:6px"><h3>Wie geht es weiter?</h3><button class="del" style="font-size:20px" onclick="closeDecide()" aria-label="Später">✕</button></div>
+  document.getElementById('dsheet').innerHTML=`<div class="row" style="margin-bottom:6px"><h3>Wie geht es weiter?</h3><button class="del" style="font-size:20px" onclick="closeDecide()" aria-label="Später">${ic('x')}</button></div>
    <p class="mute">${t.phase==='ended'?'Ihre Premium-Testphase ist beendet.':`Ihre Premium-Testphase endet in <b class="gold">${t.left} Tagen</b>.`} Bitte entscheiden Sie, wie Sie Goldstück weiter nutzen möchten.</p>
-   <div class="card" style="border-color:var(--gold);margin-top:14px"><b>★ Premium</b> <span class="gold sm">3,99 € im Monat · 29,99 € im Jahr</span>
+   <div class="card" style="border-color:var(--gold);margin-top:14px"><b>${ic('star')} Premium</b> <span class="gold sm">3,99 € im Monat · 29,99 € im Jahr</span>
     <ul class="ck"><li>Unbegrenzt Kassenzettel und Kontoauszüge</li><li>Alle Spartipps und Abo-Radar</li><li>Unbegrenzt Budgets und Sparziele</li></ul>
     <button class="btn" onclick="togglePremium(true)">Premium behalten (Demo)</button></div>
    <div class="card"><b>Basis</b> <span class="mute sm">kostenlos, für immer</span>
@@ -1035,10 +1052,10 @@ function closeDecide(){document.getElementById('dm').classList.remove('show');}
 function trialBanner(){
   if(S.paid) return '';
   const t=trialInfo();
-  if(t.phase==='trial'&&!S.choice) return `<div class="card" style="margin-top:14px;padding:12px 16px"><div class="row sm"><span>🎁 <b>Premium-Testphase</b></span><span class="gold"><b>noch ${t.left} Tage</b></span></div><div class="bar" style="margin:8px 0 2px;height:6px"><i style="width:${Math.min(100,t.day/TRIAL_DAYS*100)}%"></i></div><div class="mute sm">Alle Funktionen sind freigeschaltet. In ${t.decideIn} Tagen fragen wir, wie es weitergeht.</div></div>`;
-  if(t.phase==='trial') return `<div class="card" style="margin-top:14px;padding:12px 16px"><div class="row sm"><span>🎁 <b>Premium-Testphase</b></span><span class="gold"><b>noch ${t.left} Tage</b></span></div><div class="mute sm">Sie wechseln danach zur Basis-Version.</div></div>`;
+  if(t.phase==='trial'&&!S.choice) return `<div class="card" style="margin-top:14px;padding:12px 16px"><div class="row sm"><span>${ic('gift')} <b>Premium-Testphase</b></span><span class="gold"><b>noch ${t.left} Tage</b></span></div><div class="bar" style="margin:8px 0 2px;height:6px"><i style="width:${Math.min(100,t.day/TRIAL_DAYS*100)}%"></i></div><div class="mute sm">Alle Funktionen sind freigeschaltet. In ${t.decideIn} Tagen fragen wir, wie es weitergeht.</div></div>`;
+  if(t.phase==='trial') return `<div class="card" style="margin-top:14px;padding:12px 16px"><div class="row sm"><span>${ic('gift')} <b>Premium-Testphase</b></span><span class="gold"><b>noch ${t.left} Tage</b></span></div><div class="mute sm">Sie wechseln danach zur Basis-Version.</div></div>`;
   if(t.phase==='decide'&&!S.choice) return `<div class="card total" style="margin-top:14px"><div class="gold sm" style="font-weight:700">ENTSCHEIDUNG · NOCH ${t.left} TAGE</div><div style="margin:6px 0 12px">Ihre Premium-Testphase endet bald. Möchten Sie Premium behalten oder die Basis-Version nutzen?</div><button class="btn" onclick="openDecide()">Jetzt entscheiden</button></div>`;
-  if(t.phase==='decide') return `<div class="card" style="margin-top:14px;padding:12px 16px"><div class="row sm"><span>🎁 <b>Premium-Testphase</b></span><span class="gold"><b>noch ${t.left} Tage</b></span></div><div class="mute sm">Sie haben die Basis-Version gewählt. Das gilt nach der Testphase.</div></div>`;
+  if(t.phase==='decide') return `<div class="card" style="margin-top:14px;padding:12px 16px"><div class="row sm"><span>${ic('gift')} <b>Premium-Testphase</b></span><span class="gold"><b>noch ${t.left} Tage</b></span></div><div class="mute sm">Sie haben die Basis-Version gewählt. Das gilt nach der Testphase.</div></div>`;
   if(t.phase==='ended'&&S.choice!=='basic') return `<div class="card total" style="margin-top:14px"><div class="gold sm" style="font-weight:700">TESTPHASE BEENDET</div><div style="margin:6px 0 12px">Sie nutzen jetzt die Basis-Version. Premium gibt es für 3,99 € im Monat.</div><button class="btn" onclick="openDecide()">Optionen ansehen</button></div>`;
   return '';
 }
@@ -1050,7 +1067,7 @@ function render(keepScroll){
   if(!S.month||!ms.includes(S.month)) S.month=ms[ms.length-1]||mk(today());
   document.getElementById('app').innerHTML={home:vHome,tx:vTx,tips:vTips,more:vMore}[S.tab]();
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tab));
-  const p=document.getElementById('premPill'), ti=trialInfo();p.classList.toggle('on',S.premium);p.textContent=S.paid?'★ Premium aktiv':ti.phase!=='ended'?`★ Test · ${ti.left} Tage`:'★ Premium';
+  const p=document.getElementById('premPill'), ti=trialInfo();p.classList.toggle('on',S.premium);p.innerHTML=ic('star')+' '+(S.paid?'Premium aktiv':ti.phase!=='ended'?`Test · ${ti.left} Tage`:'Premium');
   if(keepScroll) window.scrollTo(0,y);
   const s=document.querySelector('input[type=search]'); if(s&&S.filter&&document.activeElement===document.body){s.focus();s.setSelectionRange(s.value.length,s.value.length);}
 }
