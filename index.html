@@ -366,7 +366,7 @@ function fixCats(){
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], customCats:[], ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-20.10';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-21.1';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -462,6 +462,7 @@ function recurring(){
     if(sd/avg>0.15) continue;
     out.push({key:k,name:list[list.length-1].desc,avg,day:Math.round(list.reduce((x,t)=>x+ +t.d.slice(8),0)/list.length),months:ms.length,cat:list[list.length-1].cat});
   }
+  S.rec.forEach(r=>{const k=key(r.desc);if(r.amt<0&&!out.some(o=>o.key===k))out.push({key:k,name:r.desc,avg:-r.amt,day:r.day,months:1,cat:r.cat});});
   return out.sort((a,b)=>b.avg-a.avg);
 }
 function forecast(m){
@@ -708,7 +709,7 @@ function chipsHtml(){
 }
 function openEdit(id){
   const t=S.tx.find(x=>x.id===id); if(!t) return;
-  S.form={type:t.amt>0?'inc':'exp',amt:String(Math.abs(t.amt)).replace('.',','),desc:t.desc,cat:t.cat,catManual:true,date:t.d,rep:false,items:t.items||null,rcpt:!!t.items,editId:id};
+  S.form={type:t.amt>0?'inc':'exp',amt:String(Math.abs(t.amt)).replace('.',','),desc:t.desc,cat:t.cat,catManual:true,date:t.d,rep:false,hasRec:!!t.recId,items:t.items||null,rcpt:!!t.items,editId:id};
   S.scan=null; renderSheet(); document.getElementById('addm').classList.add('show');
 }
 function renderSheet(){
@@ -723,7 +724,7 @@ function renderSheet(){
   <input class="f" id="f_desc" placeholder="${F.type==='inc'?'z. B. Gehalt':'z. B. REWE Einkauf'}" value="${esc(F.desc)}" oninput="onDesc(this.value)" autocomplete="off">
   <label class="fl">Kategorie</label><div class="chips" id="chips">${chipsHtml()}</div>
   <label class="fl">Datum</label><input class="f" type="date" value="${F.date}" onchange="S.form.date=this.value">
-  ${ed?'':`<label class="chk"><input type="checkbox" ${F.rep?'checked':''} onchange="S.form.rep=this.checked"> Jeden Monat wiederholen</label>`}
+  ${F.hasRec?'<p class="note">Wiederkehrende Buchung (Verwaltung unter Mehr).</p>':`<label class="chk"><input type="checkbox" ${F.rep?'checked':''} onchange="S.form.rep=this.checked"> Jeden Monat wiederholen (Dauerauftrag)</label>`}
   ${F.rcpt&&F.items&&F.items.length?`<div class="rcpt"><b>${ic('receipt')} ${F.items.length} Positionen erkannt</b><ul class="items">${F.items.map(i=>`<li><span>${esc(i.n)}</span><span>${eur2(i.p)}</span></li>`).join('')}</ul></div>`:''}
   ${sc&&sc.busy?`<div class="rcpt"><span class="spin"></span>${esc(sc.msg)}</div>`:''}
   ${sc&&sc.err?`<div class="rcpt" style="border-color:var(--neg)">${esc(sc.err)}</div>`:''}
@@ -748,16 +749,17 @@ function saveForm(){
   const desc=(F.desc||'').trim()||(F.type==='inc'?'Einnahme':F.cat);
   if(F.editId){
     const t=S.tx.find(x=>x.id===F.editId); if(!t){closeAdd();return;}
-    Object.assign(t,{d:F.date,desc,amt,cat:F.cat}); if(F.catManual&&F.desc.trim()) S.rules[key(desc)]=F.cat;
+    Object.assign(t,{d:F.date,desc,amt,cat:F.cat}); if(F.rep&&!t.recId) mkRec(t); if(F.catManual&&F.desc.trim()) S.rules[key(desc)]=F.cat;
     save(); S.month=mk(F.date); closeAdd(); render(true); toast('Änderung gespeichert'); return;
   }
   const t={id:uid(),d:F.date,desc,amt,cat:F.cat};
   if(F.items&&F.items.length) t.items=F.items;
   if(F.desc.trim()&&F.catManual) S.rules[key(desc)]=F.cat;
-  if(F.rep) S.rec.push({id:uid(),desc,amt,cat:F.cat,day:Math.min(+F.date.slice(8),28),from:mk(F.date)}), t.recId=S.rec[S.rec.length-1].id;
+  if(F.rep) mkRec(t);
   S.tx.push(t); if(F.rcpt) fbTrigger('scan'); save();
   S.month=mk(F.date); closeAdd(); render(); toast(`${amt>0?'Einnahme':'Ausgabe'} gespeichert: ${eur2(Math.abs(amt))}`);
 }
+function mkRec(t){const k=key(t.desc),o=S.rec.find(r=>key(r.desc)===k&&r.amt===t.amt);if(o){t.recId=o.id;return;}const r={id:uid(),desc:t.desc,amt:t.amt,cat:t.cat,day:Math.min(+t.d.slice(8),28),from:mk(t.d)};S.rec.push(r);t.recId=r.id;}
 function autoPost(){
   const now=today(), cm=mk(now); let n=0;
   S.rec.forEach(r=>{
@@ -985,7 +987,7 @@ function finishRow(d,desc0,v,sign,many){
   let guess=false, amt;
   if(sign===0){ guess=true; amt=INC_KW.test(desc0)?v:-v; } else amt=sign*v;
   /* Buchungen zwischen eigenen Konten würden sonst als Einnahme UND Ausgabe zählen: in der Vorschau vorab abgewählt */
-  return {d,desc,amt:Math.round(amt*100)/100,cat:categorize(desc,amt),guess:guess||false,many:!!many,transfer:/umbuchung|eigen(er)?\s?(ü|ue)bertrag|kontoausgleich/i.test(desc0)&&!/bargeld|abhebung|geldautomat/i.test(desc0)};
+  return {d,desc,amt:Math.round(amt*100)/100,cat:categorize(desc,amt),guess:guess||false,many:!!many,rep:/dauerauftrag|dauer(ü|ue)berweisung|standing order/i.test(desc0),transfer:/umbuchung|eigen(er)?\s?(ü|ue)bertrag|kontoausgleich/i.test(desc0)&&!/bargeld|abhebung|geldautomat/i.test(desc0)};
 }
 /* Storno/Rückbuchung: Steht dieselbe Summe mit umgekehrtem Vorzeichen kurz davor, heben sich beide auf und werden abgewählt */
 const REV_KW=/r(ü|ue)ckgabe|storno|r(ü|ue)ckbuchung|mangels deckung|nicht eingel(ö|oe)st|retoure/i;
@@ -1078,7 +1080,7 @@ function renderStmt(){
    ${dups?`<p class="note" style="margin:0 0 8px">${dups} bereits vorhandene Buchungen sind abgewählt.</p>`:''}
    ${trans?`<p class="note" style="margin:0 0 8px">${trans} Umbuchungen und Stornos sind abgewählt, damit sie Einnahmen und Ausgaben nicht doppelt zählen bzw. sich aufheben. Sie können sie bei Bedarf anwählen. Bargeldabhebungen zählen als Ausgabe.</p>`:''}
    <div class="card" style="padding:4px 14px;max-height:46vh;overflow:auto">${st.rows.map((r,i)=>`<div class="tx" style="${r.inc?'':'opacity:.45'}"><input type="checkbox" style="width:20px;height:20px;accent-color:#C9AA22;flex:none" ${r.inc?'checked':''} onchange="stToggle(${i})" aria-label="Übernehmen">
-     <div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">${r.d.slice(8)}.${r.d.slice(5,7)}. <select onchange="stCat(${i},this.value)" aria-label="Kategorie">${CAT_NAMES.map(c=>`<option ${c===r.cat?'selected':''}>${c}</option>`).join('')}</select>${r.guess?' <span class="gold">Vorzeichen prüfen</span>':''}${r.transfer?` <span class="gold">${r.reversal?'Storno':'Umbuchung'}</span>`:''}</div></div>
+     <div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">${r.d.slice(8)}.${r.d.slice(5,7)}. <select onchange="stCat(${i},this.value)" aria-label="Kategorie">${CAT_NAMES.map(c=>`<option ${c===r.cat?'selected':''}>${c}</option>`).join('')}</select><label style="white-space:nowrap"><input type="checkbox" style="accent-color:#C9AA22" ${r.rep?'checked':''} onchange="S.st.rows[${i}].rep=this.checked"> Dauerauftrag</label> ${r.guess?' <span class="gold">Vorzeichen prüfen</span>':''}${r.transfer?` <span class="gold">${r.reversal?'Storno':'Umbuchung'}</span>`:''}</div></div>
      <button class="amt ${r.amt>0?'pos':''}" style="background:none;border:0;font-size:15px;cursor:pointer;color:${r.amt>0?'':'var(--text)'}" onclick="stFlip(${i})" aria-label="Vorzeichen wechseln">${r.amt>0?'+':''}${eur2(r.amt)}</button></div>`).join('')}</div>
    <button class="btn" style="margin-top:16px" ${T.n?'':'disabled'} onclick="stImport()">${T.n} Buchungen übernehmen</button>
    <p class="note">Ihr Kontoauszug wird nur auf diesem Gerät verarbeitet und nicht hochgeladen oder gespeichert.</p>`;
@@ -1089,7 +1091,7 @@ function stFlip(i){const r=S.st.rows[i];r.amt=-r.amt;r.guess=false;r.cat=categor
 function closeStmt(){document.getElementById('sm').classList.remove('show');S.st=null;}
 function stImport(){
   const R=S.st.rows.filter(r=>r.inc); if(!R.length) return;
-  R.forEach(r=>S.tx.push({id:uid(),d:r.d,desc:r.desc,amt:r.amt,cat:r.cat}));
+  R.forEach(r=>{const t={id:uid(),d:r.d,desc:r.desc,amt:r.amt,cat:r.cat};S.tx.push(t);if(r.rep)mkRec(t);}); autoPost();
   const cnt={}; R.forEach(r=>cnt[mk(r.d)]=(cnt[mk(r.d)]||0)+1); const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0][0];
   S.stmts[mk(today())]=stmtsUsed()+1; fbTrigger('stmt'); save(); closeStmt(); S.month=top; S.tab='home'; render(); window.scrollTo(0,0);
   toast(`${R.length} Buchungen übernommen · ${mLabel(top)}`);
