@@ -366,7 +366,7 @@ function fixCats(){
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], customCats:[], ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-21.3';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-21.4';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -401,6 +401,10 @@ function num(s){
 }
 function categorize(desc,amount){
   const k=key(desc); if(S.rules[k]&&CATS[S.rules[k]]) return S.rules[k];
+  /* Gelernte Regel auch dann, wenn davor oder danach weitere Wörter stehen (z. B. "Überweisung an Miete Mai"), längste zuerst */
+  const nd=' '+desc.toLowerCase().replace(/\d+/g,'').replace(/[^a-zäöüß ]/g,' ').replace(/\s+/g,' ').trim()+' ';
+  const hit=Object.keys(S.rules).filter(r=>r&&CATS[S.rules[r]]&&nd.includes(' '+r+' ')).sort((a,b)=>b.length-a.length)[0];
+  if(hit) return S.rules[hit];
   const l=' '+desc.toLowerCase()+' ';
   if(amount>0){ for(const n of INC_CATS){ if(CATS[n].kw.some(w=>l.includes(w))) return n; } return 'Einkommen'; }
   const order=[...EXP_CATS.filter(n=>CATS[n].custom),...EXP_CATS.filter(n=>!CATS[n].custom)];
