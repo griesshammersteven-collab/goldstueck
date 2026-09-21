@@ -388,7 +388,7 @@ function fixCats(){
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], refCode:null, refBy:null, upl:0, customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null, list:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-23.4';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-23.5';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -476,6 +476,15 @@ function lastDay(m){const t=monthTx(m);return t.length?Math.max(...t.map(x=>+x.d
 function isOpen(m){return m===mk(today())&&+today().slice(8)<dim(m)-1;}
 const dayNow=m=>m===mk(today())?+today().slice(8):lastDay(m);
 
+const IVS=[[1,'Monatlich'],[3,'Vierteljährlich'],[6,'Halbjährlich'],[12,'Jährlich']];
+const ivName=n=>(IVS.find(x=>x[0]===(+n||1))||IVS[0])[1];
+const ivOk=n=>[1,3,6,12].includes(+n)?+n:1;
+const mDiff=(a,b)=>(+b.slice(0,4)-+a.slice(0,4))*12+(+b.slice(5,7)-+a.slice(5,7));
+/* Fällt eine wiederkehrende Buchung in diesem Monat an? */
+function recDue(r,m){
+  const iv=+r.iv||1; if(iv===1||!r.from) return true;
+  const d=mDiff(r.from,m); return d>=0&&d%iv===0;
+}
 function recurring(){
   const g={}, span=months().length;
   S.tx.filter(t=>t.amt<0).forEach(t=>{const k=key(t.desc);(g[k]=g[k]||[]).push(t);});
@@ -488,7 +497,7 @@ function recurring(){
     if(sd/avg>0.15) continue;
     out.push({key:k,name:list[list.length-1].desc,avg,day:Math.round(list.reduce((x,t)=>x+ +t.d.slice(8),0)/list.length),months:ms.length,cat:list[list.length-1].cat});
   }
-  S.rec.forEach(r=>{const k=key(r.desc);if(r.amt<0&&!out.some(o=>o.key===k))out.push({key:k,name:r.desc,avg:-r.amt,day:r.day,months:1,cat:r.cat});});
+  S.rec.forEach(r=>{const k=key(r.desc);if(r.amt<0&&!out.some(o=>o.key===k))out.push({key:k,name:r.desc,avg:-r.amt,day:r.day,months:1,cat:r.cat,iv:+r.iv||1,from:r.from});});
   return out.sort((a,b)=>b.avg-a.avg);
 }
 function forecast(m){
@@ -496,12 +505,12 @@ function forecast(m){
   if(!isOpen(m)) return {open:false,inc:s.inc,exp:s.exp,saldo:s.inc-s.exp,n:monthTx(m).length};
   const day=dayNow(m), rec=recurring(), rk=new Set(rec.map(r=>r.key));
   const booked=new Set(monthTx(m).map(t=>key(t.desc)));
-  const pendingFixed=rec.filter(r=>!booked.has(r.key)&&r.day>day).reduce((x,r)=>x+r.avg,0);
+  const pendingFixed=rec.filter(r=>!booked.has(r.key)&&r.day>day&&recDue(r,m)).reduce((x,r)=>x+r.avg,0);
   const varSoFar=monthTx(m).filter(t=>t.amt<0&&!rk.has(key(t.desc))).reduce((x,t)=>x-t.amt,0);
   const varProj=varSoFar/Math.max(day,1)*(dim(m)-day);
   const avgInc=ms.length?ms.map(x=>sums(x).inc).reduce((a,b)=>a+b,0)/ms.length:0;
   const inc=Math.max(s.inc,avgInc), exp=s.exp+varProj+pendingFixed;
-  const offen=rec.filter(r=>!booked.has(r.key)&&r.day>day);
+  const offen=rec.filter(r=>!booked.has(r.key)&&r.day>day&&recDue(r,m));
   return {open:true,inc,exp,saldo:inc-exp,day,
     p:{expSoFar:s.exp,varSoFar,varProj,pendingFixed,offen,incNow:s.inc,avgInc,nPrior:ms.length,tage:dim(m),rest:dim(m)-day,fix:s.exp-varSoFar}};
 }
@@ -761,7 +770,7 @@ function vMore(){
    ${EXP_CATS.map(c=>`<div class="row" style="padding:6px 0"><span><span class="dot" style="background:${CATS[c].c};display:inline-block"></span> ${c}</span><input class="f" style="width:110px;text-align:right;padding:8px 10px" inputmode="decimal" placeholder="kein Limit" value="${S.budgets[c]||''}" onchange="setBudget('${c}',this.value)" aria-label="Budget ${c}"></div>`).join('')}
    <p class="note">${S.premium?'Unbegrenzt viele Budgets.':`Gratis: bis zu ${FREE_BUDGETS} Budgets (${Object.keys(S.budgets).length} belegt).`}</p></div>
   <h2>Wiederkehrende Buchungen</h2><div class="card">
-   ${S.rec.map(r=>`<div class="tx"><span class="dot" style="background:${CATS[r.cat].c}"></span><div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">jeden Monat am ${r.day}.</div></div><div class="amt ${r.amt>0?'pos':''}">${r.amt>0?'+':''}${eur2(r.amt)}</div><button class="del" onclick="delRec('${r.id}')" aria-label="Entfernen">${ic('x')}</button></div>`).join('')||'<p class="mute sm">Noch keine. Beim Erfassen einer Buchung können Sie „Jeden Monat wiederholen" anhaken, z. B. für Miete und Gehalt.</p>'}</div>
+   ${S.rec.map(r=>`<div class="tx"><span class="dot" style="background:${CATS[r.cat].c}"></span><div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">${ivName(r.iv)} am ${r.day}.</div></div><div class="amt ${r.amt>0?'pos':''}">${r.amt>0?'+':''}${eur2(r.amt)}</div><button class="del" onclick="delRec('${r.id}')" aria-label="Entfernen">${ic('x')}</button></div>`).join('')||'<p class="mute sm">Noch keine. Beim Erfassen einer Buchung können Sie „Jeden Monat wiederholen" anhaken, z. B. für Miete und Gehalt.</p>'}</div>
   <h2>Kassenzettel-Scans</h2><div class="card"><div class="row"><div><b>${S.premium?'Unbegrenzt':scansLeft()+' von '+FREE_SCANS+' übrig'}</b><div class="mute sm">${S.premium?'Mit Premium':'in diesem Monat (Gratis-Version)'}</div></div><button class="btn sm" onclick="openAdd(true)">${ic('camera')} Scannen</button></div></div>
   <h2>Premium</h2>${trialBanner()}<div class="card"><div class="row"><div><b>${S.paid?'Premium aktiv (Demo)':trialInfo().phase!=='ended'?'Premium-Testphase':'Basis-Version'}</b><div class="mute sm">${S.paid?'Alle Funktionen freigeschaltet':trialInfo().phase!=='ended'?`Alle Funktionen frei, noch ${trialInfo().left} Tage`:'Erfassen, Dashboard und Prognose sind kostenlos'}</div></div>
   <button class="btn sm" onclick="${S.paid?'togglePremium(false)':'openPaywall()'}">${S.paid?'Beenden':'Preise'}</button></div></div>
@@ -774,7 +783,8 @@ function vMore(){
 }
 
 /* ---------- Erfassen ---------- */
-function newForm(){return {type:'exp',amt:'',desc:'',cat:'Lebensmittel',catManual:false,date:today(),rep:false,items:null,rcpt:false};}
+function newForm(){return {type:'exp',amt:'',desc:'',cat:'Lebensmittel',catManual:false,date:today(),rep:false,iv:1,items:null,rcpt:false};}
+function pickIv(n){S.form.iv=ivOk(n);keepInputs();}
 function openAdd(scan){
   S.form=newForm(); S.scan=null; renderSheet();
   document.getElementById('addm').classList.add('show');
@@ -790,7 +800,7 @@ function chipsHtml(){
 function itemsHtml(it){return `<details class="its"><summary>${it.length} ${it.length===1?'Position':'Positionen'} anzeigen</summary><ul class="items">${it.map(i=>`<li><span>${esc(i.n)}</span><span>${eur2(i.p)}</span></li>`).join('')}</ul></details>`;}
 function openEdit(id){
   const t=S.tx.find(x=>x.id===id); if(!t) return;
-  S.form={type:t.amt>0?'inc':'exp',amt:String(Math.abs(t.amt)).replace('.',','),desc:t.desc,cat:t.cat,catManual:true,date:t.d,rep:!!t.recId,items:t.items||null,rcpt:!!t.items,editId:id};
+  S.form={type:t.amt>0?'inc':'exp',amt:String(Math.abs(t.amt)).replace('.',','),desc:t.desc,cat:t.cat,catManual:true,date:t.d,rep:!!t.recId,iv:ivOk((S.rec.find(r=>r.id===t.recId)||{}).iv),items:t.items||null,rcpt:!!t.items,editId:id};
   S.scan=null; renderSheet(); document.getElementById('addm').classList.add('show');
 }
 function renderSheet(){
@@ -805,7 +815,9 @@ function renderSheet(){
   <input class="f" id="f_desc" placeholder="${F.type==='inc'?'z. B. Gehalt':'z. B. REWE Einkauf'}" value="${esc(F.desc)}" oninput="onDesc(this.value)" autocomplete="off">
   <label class="fl">Kategorie</label><div class="chips" id="chips">${chipsHtml()}</div>
   <label class="fl">Datum</label><input class="f" type="date" value="${F.date}" onchange="S.form.date=this.value">
-  <label class="chk"><input type="checkbox" ${F.rep?'checked':''} onchange="S.form.rep=this.checked"> Jeden Monat wiederholen (Dauerauftrag)</label>${ed?'<p class="note">Gilt auch rückwirkend für gleiche Buchungen aus früheren Monaten. Abwählen entfernt den Dauerauftrag.</p>':''}
+  <label class="chk"><input type="checkbox" ${F.rep?'checked':''} onchange="S.form.rep=this.checked;keepInputs()"> Regelmäßig wiederholen (Dauerauftrag)</label>
+  ${F.rep?`<div class="chips" style="margin-top:10px">${IVS.map(([n,t])=>`<button type="button" class="chip ${(F.iv||1)===n?'on':''}" onclick="pickIv(${n})">${t}</button>`).join('')}</div>`:''}
+  ${F.rep&&ed?'<p class="note">Gilt auch rückwirkend für gleiche Buchungen aus früheren Monaten. Abwählen entfernt den Dauerauftrag.</p>':''}
   ${F.rcpt&&F.items&&F.items.length?`<div class="rcpt"><b>${ic('receipt')} ${F.items.length} Positionen erkannt</b>${itemsHtml(F.items)}</div>`:''}
   ${sc&&sc.busy?`<div class="rcpt"><span class="spin"></span>${esc(sc.msg)}</div>`:''}
   ${sc&&sc.err?`<div class="rcpt" style="border-color:var(--neg)">${esc(sc.err)}</div>`:''}
@@ -837,17 +849,18 @@ function saveForm(){
   const desc=(F.desc||'').trim()||(F.type==='inc'?'Einnahme':F.cat);
   if(F.editId){
     const t=S.tx.find(x=>x.id===F.editId); if(!t){closeAdd();return;}
-    Object.assign(t,{d:F.date,desc,amt,cat:F.cat}); if(F.rep&&!t.recId){mkRec(t);S.tx.forEach(o=>{if(!o.recId&&key(o.desc)===key(t.desc)&&o.amt===t.amt)o.recId=t.recId;});}else if(!F.rep&&t.recId){const id=t.recId;S.tx.forEach(o=>{if(o.recId===id)delete o.recId;});S.rec=S.rec.filter(r=>r.id!==id);} if(F.catManual&&F.desc.trim()) S.rules[key(desc)]=F.cat;
+    Object.assign(t,{d:F.date,desc,amt,cat:F.cat}); if(F.rep&&!t.recId){mkRec(t,F.iv);S.tx.forEach(o=>{if(!o.recId&&key(o.desc)===key(t.desc)&&o.amt===t.amt)o.recId=t.recId;});}
+    else if(F.rep&&t.recId){const rr=S.rec.find(r=>r.id===t.recId);if(rr)rr.iv=ivOk(F.iv);}else if(!F.rep&&t.recId){const id=t.recId;S.tx.forEach(o=>{if(o.recId===id)delete o.recId;});S.rec=S.rec.filter(r=>r.id!==id);} if(F.catManual&&F.desc.trim()) S.rules[key(desc)]=F.cat;
     autoPost(); save(); S.month=mk(F.date); closeAdd(); render(true); toast('Änderung gespeichert'); return;
   }
   const t={id:uid(),d:F.date,desc,amt,cat:F.cat};
   if(F.items&&F.items.length) t.items=F.items;
   if(F.desc.trim()&&F.catManual) S.rules[key(desc)]=F.cat;
-  if(F.rep) mkRec(t);
+  if(F.rep) mkRec(t,F.iv);
   S.tx.push(t); if(F.rcpt) fbTrigger('scan'); autoPost(); save();
   S.month=mk(F.date); closeAdd(); render(); toast(`${amt>0?'Einnahme':'Ausgabe'} gespeichert: ${eur2(Math.abs(amt))}`);
 }
-function mkRec(t){const k=key(t.desc),o=S.rec.find(r=>key(r.desc)===k&&r.amt===t.amt);if(o){t.recId=o.id;return;}const r={id:uid(),desc:t.desc,amt:t.amt,cat:t.cat,day:Math.min(+t.d.slice(8),28),from:mk(t.d)};S.rec.push(r);t.recId=r.id;}
+function mkRec(t,iv){const k=key(t.desc),o=S.rec.find(r=>key(r.desc)===k&&r.amt===t.amt);if(o){o.iv=ivOk(iv);t.recId=o.id;return;}const r={id:uid(),desc:t.desc,amt:t.amt,cat:t.cat,day:Math.min(+t.d.slice(8),28),from:mk(t.d),iv:ivOk(iv)};S.rec.push(r);t.recId=r.id;}
 function autoPost(){
   const now=today(), cm=mk(now); let n=0;
   S.rec.forEach(r=>{
@@ -856,7 +869,7 @@ function autoPost(){
       const mm=`${y}-${pad(m)}`; if(mm>cm) break;
       const d=`${mm}-${pad(Math.min(r.day,dim(mm)))}`;
       if(d<=now&&!S.tx.some(t=>mk(t.d)===mm&&(t.recId===r.id||(t.amt===r.amt&&key(t.desc)===key(r.desc))))){S.tx.push({id:uid(),d,desc:r.desc,amt:r.amt,cat:r.cat,recId:r.id});n++;}
-      m++; if(m>12){m=1;y++;}
+      m+=(+r.iv||1); while(m>12){m-=12;y++;}
     }
   });
   if(n) save();
@@ -1353,7 +1366,7 @@ function cleanBackup(d){
   const rules={}; if(d.rules&&typeof d.rules==='object') for(const k of Object.keys(d.rules).slice(0,5000)) if(known(d.rules[k])) rules[str(k,60)]=d.rules[k];
   const budgets={}; if(d.budgets&&typeof d.budgets==='object') for(const k of Object.keys(d.budgets)) if(known(k)&&k!=='Einkommen'&&num0(d.budgets[k])>0) budgets[k]=Math.round(d.budgets[k]);
   const goals=(Array.isArray(d.goals)?d.goals:[]).slice(0,100).filter(g=>g&&num0(g.target)>0).map(g=>({id:str(g.id,40)||uid(),name:str(g.name,40)||'Sparziel',target:g.target,saved:num0(g.saved)||0,by:/^\d{4}-\d{2}-\d{2}$/.test(g.by)?g.by:''}));
-  const rec=(Array.isArray(d.rec)?d.rec:[]).slice(0,500).filter(r=>r&&num0(r.amt)!==null&&/^\d{4}-\d{2}$/.test(r.from)).map(r=>({id:str(r.id,40)||uid(),desc:str(r.desc,120),amt:r.amt,cat:known(r.cat)?r.cat:'Sonstiges',day:Math.min(28,Math.max(1,Math.round(+r.day)||1)),from:r.from}));
+  const rec=(Array.isArray(d.rec)?d.rec:[]).slice(0,500).filter(r=>r&&num0(r.amt)!==null&&/^\d{4}-\d{2}$/.test(r.from)).map(r=>({id:str(r.id,40)||uid(),desc:str(r.desc,120),amt:r.amt,cat:known(r.cat)?r.cat:'Sonstiges',day:Math.min(28,Math.max(1,Math.round(+r.day)||1)),from:r.from,iv:ivOk(r.iv)}));
   const ts=/^\d{4}-\d{2}-\d{2}$/.test(d.trialStart)?d.trialStart:null;
   return {tx,rules,budgets,goals,rec,cats,trialStart:ts,choice:d.choice==='basic'||d.choice==='premium'?d.choice:null,created:d.created};
 }
