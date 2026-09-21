@@ -385,10 +385,10 @@ function fixCats(){
 }
 
 /* ---------- Zustand & Speicher ---------- */
-let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
+let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], refCode:null, refBy:null, upl:0, customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-23.1';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-23.2';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -397,8 +397,8 @@ function trialInfo(){
 }
 /* S.premium gilt als aktiv, wenn gekauft (paid) oder die Testphase noch läuft */
 Object.defineProperty(S,'premium',{get(){return S.paid||trialInfo().phase!=='ended';},set(v){S.paid=!!v;}});
-function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||'null'); if(j){S.tx=j.tx||[];S.rules=j.rules||{};S.rec=j.rec||[];S.scans=j.scans||{};S.stmts=j.stmts||{};S.budgets=j.budgets||{};S.goals=j.goals||[];S.paid=!!j.paid;S.trialStart=j.trialStart||null;S.choice=j.choice||null;S.cancels=j.cancels||[];S.lastBackup=j.lastBackup||null;S.bkSnooze=j.bkSnooze||null;S.instSnooze=j.instSnooze||null;S.customCats=cleanCats(j.customCats);S.shop=cleanShop(j.shop);S.fb=Object.assign(S.fb,j.fb||{});}}catch(e){}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify({tx:S.tx,rules:S.rules,rec:S.rec,scans:S.scans,stmts:S.stmts,budgets:S.budgets,goals:S.goals,paid:S.paid,trialStart:S.trialStart,choice:S.choice,cancels:S.cancels,lastBackup:S.lastBackup,bkSnooze:S.bkSnooze,instSnooze:S.instSnooze,customCats:S.customCats,shop:S.shop,fb:S.fb}))}catch(e){toast('Speichern nicht möglich (Speicher voll oder gesperrt)')}}
+function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||'null'); if(j){S.tx=j.tx||[];S.rules=j.rules||{};S.rec=j.rec||[];S.scans=j.scans||{};S.stmts=j.stmts||{};S.budgets=j.budgets||{};S.goals=j.goals||[];S.paid=!!j.paid;S.trialStart=j.trialStart||null;S.choice=j.choice||null;S.cancels=j.cancels||[];S.lastBackup=j.lastBackup||null;S.bkSnooze=j.bkSnooze||null;S.instSnooze=j.instSnooze||null;S.customCats=cleanCats(j.customCats);S.refCode=refOk(j.refCode);S.refBy=refOk(j.refBy);S.upl=Math.max(0,Math.min(99999,Math.round(+j.upl||0)));S.shop=cleanShop(j.shop);S.fb=Object.assign(S.fb,j.fb||{});}}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({tx:S.tx,rules:S.rules,rec:S.rec,scans:S.scans,stmts:S.stmts,budgets:S.budgets,goals:S.goals,paid:S.paid,trialStart:S.trialStart,choice:S.choice,cancels:S.cancels,lastBackup:S.lastBackup,bkSnooze:S.bkSnooze,instSnooze:S.instSnooze,customCats:S.customCats,shop:S.shop,refCode:S.refCode,refBy:S.refBy,upl:S.upl,fb:S.fb}))}catch(e){toast('Speichern nicht möglich (Speicher voll oder gesperrt)')}}
 
 /* ---------- Helfer ---------- */
 const eur=(n,d=0)=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',minimumFractionDigits:d,maximumFractionDigits:d}).format(n);
@@ -902,7 +902,7 @@ async function scanFile(file){
     const byRule=S.rules[key(F.desc||'')];
     F.items=p.items; F.cat=byRule||(p.cat&&categorize(F.desc||'',-1)==='Sonstiges'?p.cat:categorize(F.desc||'',-1)); F.catManual=false;
     if(F.cat==='Sonstiges'&&p.items.length>=3&&/(milch|brot|butter|käse|kaese|nudel|obst|gemüse|gemuese|joghurt|eier|banane|apfel|tomate|wurst|fleisch|mehl|zucker|reis|bio )/i.test(p.items.map(i=>i.n).join(' '))) F.cat='Lebensmittel';
-    S.scans[mk(today())]=(S.scans[mk(today())]||0)+1; save();
+    S.scans[mk(today())]=(S.scans[mk(today())]||0)+1; S.upl++; save();
     S.scan=null; renderSheet(); toast('Bitte Werte kurz prüfen und speichern');
   }catch(e){
     S.scan={err:e&&e.message==='offline'?'Die Texterkennung konnte nicht geladen werden. Bitte Internetverbindung prüfen (nur beim ersten Scan nötig).':'Die Datei konnte nicht gelesen werden (bei PDFs: Passwortschutz?). Bitte erneut versuchen oder den Betrag von Hand eingeben.'};
@@ -1146,7 +1146,7 @@ function stImport(){
   const R=S.st.rows.filter(r=>r.inc); if(!R.length) return;
   R.forEach(r=>{const t={id:uid(),d:r.d,desc:r.desc,amt:r.amt,cat:r.cat};S.tx.push(t);if(r.rep)mkRec(t);}); autoPost();
   const cnt={}; R.forEach(r=>cnt[mk(r.d)]=(cnt[mk(r.d)]||0)+1); const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0][0];
-  S.stmts[mk(today())]=stmtsUsed()+1; fbTrigger('stmt'); save(); closeStmt(); S.month=top; S.tab='home'; render(); window.scrollTo(0,0);
+  S.stmts[mk(today())]=stmtsUsed()+1; S.upl++; fbTrigger('stmt'); save(); closeStmt(); S.month=top; S.tab='home'; render(); window.scrollTo(0,0);
   toast(`${R.length} Buchungen übernommen · ${mLabel(top)}`);
 }
 
@@ -1619,9 +1619,19 @@ function openInstall(m){
 function closeInstall(){document.getElementById('im').classList.remove('show');}
 async function copyLink(){try{await navigator.clipboard.writeText(location.origin+'/');toast('Link kopiert. Fügen Sie ihn in Ihren Browser ein.');}catch(e){toast(location.origin+'/');}}
 
+const refOk=c=>/^[A-Z0-9]{6}$/.test(String(c||''))?String(c):null;
+function myRef(){
+  if(!S.refCode){const a=new Uint8Array(6);crypto.getRandomValues(a);S.refCode=[...a].map(x=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[x%32]).join('');save();}
+  return S.refCode;
+}
+function catchRef(){
+  const c=refOk(new URLSearchParams(location.search).get('r'));
+  if(c&&!S.refBy&&c!==S.refCode&&!S.tx.length){S.refBy=c;save();}   /* nur bei einer frischen Installation */
+  if(new URLSearchParams(location.search).has('r')) history.replaceState(null,'',location.pathname);
+}
 const SHARE_TXT='Ich nutze Monatsklar als Haushaltsbuch: Kassenzettel abfotografieren, Kontoauszug hochladen, und die App sortiert alles selbst. Läuft komplett auf dem Handy, keine Anmeldung, keine Werbung. 8 Wochen alles gratis testen:';
 async function shareApp(){
-  const url='https://monatsklar.de/';
+  const url='https://monatsklar.de/?r='+myRef();
   if(navigator.share){ try{ await navigator.share({title:'Monatsklar',text:SHARE_TXT,url}); return; }catch(e){ if(e&&e.name==='AbortError') return; } }
   try{ await navigator.clipboard.writeText(SHARE_TXT+' '+url); toast('Text und Link kopiert. Jetzt einfügen und senden.'); }
   catch(e){ toast('Link: '+url); }
@@ -1959,7 +1969,7 @@ function render(keepScroll){
   const s=document.querySelector('input[type=search]'); if(s&&S.filter&&document.activeElement===document.body){s.focus();s.setSelectionRange(s.value.length,s.value.length);}
 }
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.t));
-load(); rebuildCats(); fixCats(); autoPost();
+load(); rebuildCats(); fixCats(); catchRef(); autoPost();
 if(!S.trialStart){S.trialStart=today();save();}   /* Testphase startet beim ersten Öffnen */
 render();
 /* Direktlink zur Kündigung, z. B. von der Website: …/#kuendigen */
