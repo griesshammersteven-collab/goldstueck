@@ -296,6 +296,7 @@ details.note summary{color:var(--gold)}
     <li>Unbegrenzt Kassenzettel scannen (gratis: 5 pro Monat)</li>
     <li>Unbegrenzt Kontoauszüge analysieren (gratis: 1 pro Monat)</li>
     <li>Unbegrenzt Budgets und Sparziele (gratis: 3 Budgets, 1 Ziel)</li>
+    <li>Einkaufsplaner: Budget-Korb, Speiseplan und hunderte Rezepte</li>
     <li>Alle Spartipps mit Euro-Effekt pro Monat</li>
     <li>Abo- und Vertrags-Radar mit Jahreskosten</li>
     <li>Jederzeit kündbar</li>
@@ -369,10 +370,10 @@ function fixCats(){
 }
 
 /* ---------- Zustand & Speicher ---------- */
-let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true}},plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
+let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-22.2';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-22.4';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -1610,102 +1611,131 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 /* ---------- Einkaufen: Laden, Einkaufsliste, Budget-Korb, Rezepte (Richtpreise, alles lokal) ---------- */
 /* Läden mit Preisfaktor gegenüber einem Discounter-Richtpreis */
 const STORES={aldi:['Aldi',.97],lidl:['Lidl',.97],netto:['Netto',1],penny:['Penny',1.03],kaufland:['Kaufland',1.05],edeka:['Edeka',1.12],rewe:['REWE',1.15],other:['Anderer Laden',1.1]};
-const SHOP_CATS=['Obst & Gemüse','Milch & Eier','Fleisch & Fisch','Brot & Backwaren','Vorrat','Tiefkühl'];
-const IT={};
-/* id, Name, Bereich, Packungsgröße, Einheit, Richtpreis pro Packung, Merkmal (m Fleisch, f Fisch, d Milch, e Ei) */
-[['kartoffeln','Kartoffeln',0,2000,'g',2.79],['zwiebeln','Zwiebeln',0,1000,'g',1.49],['knoblauch','Knoblauch',0,10,'Zehe',.49],['moehren','Karotten',0,1000,'g',1.29],
- ['paprika','Paprika',0,500,'g',1.99],['tomaten','Tomaten',0,500,'g',1.99],['gurke','Gurke',0,400,'g',.79],['zucchini','Zucchini',0,500,'g',1.39],
- ['brokkoli','Brokkoli',0,500,'g',1.49],['salat','Blattsalat',0,150,'g',1.09],['champignons','Champignons',0,400,'g',1.79],['aepfel','Äpfel',0,1000,'g',2.29],['bananen','Bananen',0,1000,'g',1.69],
- ['milch','Milch',1,1000,'ml',1.15,'d'],['joghurt','Naturjoghurt',1,500,'g',.95,'d'],['quark','Magerquark',1,500,'g',1.09,'d'],['kaese','Gouda in Scheiben',1,200,'g',1.79,'d'],
- ['reibekaese','Reibekäse',1,200,'g',1.69,'d'],['mozzarella','Mozzarella',1,125,'g',.89,'d'],['feta','Feta',1,200,'g',1.79,'d'],['butter','Butter',1,250,'g',2.19,'d'],
- ['sahne','Sahne',1,200,'ml',.89,'d'],['eier','Eier',1,10,'Stk',2.79,'e'],
- ['haehnchen','Hähnchenbrust',2,500,'g',4.99,'m'],['hack','Hackfleisch gemischt',2,500,'g',3.99,'m'],['lachs','Lachsfilet (TK)',2,250,'g',3.99,'f'],
- ['brot','Vollkornbrot',3,500,'g',1.49],['tortilla','Weizen-Wraps',3,6,'Stk',1.69],
- ['nudeln','Nudeln',4,500,'g',.99],['reis','Reis',4,1000,'g',1.99],['haferflocken','Haferflocken',4,500,'g',.89],['muesli','Müsli',4,750,'g',2.49],['linsen','Rote Linsen',4,500,'g',1.99],
- ['kichererbsen','Kichererbsen (Dose)',4,400,'g',.89],['bohnen','Kidneybohnen (Dose)',4,400,'g',.79],['tomatenstueck','Stückige Tomaten (Dose)',4,400,'g',.69],
- ['kokosmilch','Kokosmilch',4,400,'ml',1.29],['bruehe','Gemüsebrühe',4,12,'Würfel',1.39],['marmelade','Marmelade',4,450,'g',1.69],
- ['spinat','Blattspinat (TK)',5,450,'g',1.29],['erbsen','Erbsen (TK)',5,450,'g',1.29],['gemuesemix','Gemüsemischung (TK)',5,750,'g',1.79]
-].forEach(([id,n,c,p,u,pr,t])=>IT[id]={id,n,c:SHOP_CATS[c],p,u,pr,t:t||''});
-/* id, Name, Mahlzeit (f Frühstück, h Hauptgericht), Minuten, Zutaten pro Person, Schritte */
-const RECS=[
-['b1','Haferflocken mit Apfel & Joghurt','f',5,[['haferflocken',50],['joghurt',120],['aepfel',100]],['Haferflocken in eine Schale geben.','Apfel raspeln oder würfeln.','Mit Joghurt vermengen und kurz ziehen lassen.']],
-['b2','Rührei mit Vollkornbrot','f',10,[['eier',2],['butter',10],['brot',100],['tomaten',60]],['Eier verquirlen, salzen und pfeffern.','Butter erhitzen und die Eier bei mittlerer Hitze stocken lassen.','Mit Brot und Tomatenscheiben servieren.']],
-['b3','Müsli mit Milch & Banane','f',3,[['muesli',60],['milch',150],['bananen',100]],['Müsli in eine Schale geben.','Banane in Scheiben schneiden.','Mit Milch übergießen.']],
-['b4','Brot mit Käse & Gurke','f',5,[['brot',100],['kaese',40],['butter',10],['gurke',60]],['Brot mit Butter bestreichen.','Mit Käse belegen.','Gurke in Scheiben schneiden und dazu essen.']],
-['b5','Haferbrei mit Apfel & Banane','f',10,[['haferflocken',60],['bananen',100],['aepfel',80]],['Haferflocken mit der doppelten Menge Wasser aufkochen.','5 Minuten köcheln lassen und dabei umrühren.','Apfel und Banane in Stücken darübergeben.']],
-['b6','Vollkornbrot mit Marmelade & Banane','f',5,[['brot',100],['marmelade',30],['bananen',80]],['Brot mit Marmelade bestreichen.','Banane in Scheiben schneiden.','Zusammen servieren.']],
-['m1','Spaghetti Bolognese','h',30,[['nudeln',100],['hack',100],['tomatenstueck',150],['zwiebeln',50],['moehren',50],['knoblauch',1]],['Zwiebel, Karotte und Knoblauch klein schneiden und mit dem Hack anbraten.','Stückige Tomaten zugeben, salzen, pfeffern und 15 Minuten köcheln lassen.','Nudeln in Salzwasser garen und mit der Soße servieren.']],
-['m2','Pasta Pomodoro mit Mozzarella','h',20,[['nudeln',100],['tomatenstueck',150],['zwiebeln',40],['knoblauch',1],['mozzarella',60]],['Zwiebel und Knoblauch anschwitzen, Tomaten zugeben und 10 Minuten köcheln lassen.','Nudeln in Salzwasser garen.','Mit der Soße mischen und Mozzarella in Stücken darübergeben.']],
-['m3','Gemüse-Reispfanne','h',25,[['reis',80],['paprika',100],['zucchini',100],['zwiebeln',50],['bruehe',1]],['Reis mit Brühe nach Packungsangabe garen.','Gemüse würfeln und in der Pfanne anbraten.','Reis unterheben, abschmecken.']],
-['m4','Linsen-Curry mit Reis','h',30,[['linsen',70],['kokosmilch',100],['reis',70],['zwiebeln',50],['knoblauch',1],['tomatenstueck',100]],['Zwiebel und Knoblauch anbraten, Linsen, Tomaten und Kokosmilch zugeben.','15 bis 20 Minuten köcheln lassen, bis die Linsen weich sind.','Mit Reis servieren und kräftig würzen.']],
-['m5','Kartoffelsuppe','h',35,[['kartoffeln',300],['moehren',80],['zwiebeln',50],['bruehe',1]],['Kartoffeln, Karotten und Zwiebel würfeln.','Mit Brühe und Wasser 20 Minuten weich kochen.','Grob pürieren und abschmecken.']],
-['m6','Ofenkartoffeln mit Kräuterquark','h',45,[['kartoffeln',300],['quark',100],['gurke',60],['zwiebeln',20]],['Kartoffeln waschen, halbieren und bei 200 °C etwa 35 Minuten backen.','Quark mit fein gewürfelter Zwiebel und Gurke verrühren.','Salzen, pfeffern und zu den Kartoffeln servieren.']],
-['m7','Hähnchen-Reis-Pfanne','h',30,[['haehnchen',130],['reis',80],['paprika',100],['zwiebeln',50],['erbsen',60]],['Reis garen.','Hähnchen würfeln und in der Pfanne anbraten, Gemüse zugeben.','Reis und Erbsen unterheben und würzen.']],
-['m8','Kichererbsen-Salat mit Feta','h',15,[['kichererbsen',130],['feta',50],['gurke',100],['tomaten',100],['zwiebeln',20]],['Kichererbsen abspülen und abtropfen lassen.','Gurke, Tomaten und Zwiebel würfeln.','Alles mischen, Feta darüber bröseln und würzen.']],
-['m9','Lachs mit Kartoffeln & Brokkoli','h',30,[['lachs',125],['kartoffeln',250],['brokkoli',150],['butter',10]],['Kartoffeln kochen.','Brokkoli 5 Minuten dämpfen.','Lachs in Butter von beiden Seiten braten und alles zusammen servieren.']],
-['m10','Bohnen-Wraps','h',20,[['tortilla',2],['bohnen',120],['paprika',80],['salat',30],['tomaten',60]],['Bohnen erwärmen und würzen.','Paprika und Tomaten würfeln.','Wraps füllen, mit Salat belegen und einrollen.']],
-['m11','Spinat mit Ei & Kartoffeln','h',30,[['spinat',150],['eier',2],['kartoffeln',250]],['Kartoffeln kochen.','Spinat auftauen und erhitzen, mit Salz und Muskat würzen.','Spiegeleier braten und alles zusammen anrichten.']],
-['m12','Nudeln mit Champignon-Sahnesoße','h',25,[['nudeln',100],['champignons',120],['sahne',60],['zwiebeln',40]],['Nudeln garen.','Zwiebel und Champignons anbraten, Sahne zugeben und kurz einkochen.','Mit den Nudeln mischen und abschmecken.']],
-['m13','Hack-Kartoffel-Auflauf','h',50,[['hack',100],['kartoffeln',250],['zucchini',100],['reibekaese',40]],['Kartoffeln in Scheiben schneiden und vorkochen.','Hack anbraten, Zucchini zugeben, alles in eine Form schichten.','Mit Käse bestreuen und bei 200 °C 25 Minuten überbacken.']],
-['m14','Gemüsepfanne mit Ei & Reis','h',25,[['reis',80],['gemuesemix',150],['eier',1]],['Reis garen.','Gemüse in der Pfanne braten.','Ei darüber braten, mit Reis servieren.']],
-['m15','Tomatensuppe mit Brot','h',25,[['tomatenstueck',250],['zwiebeln',40],['knoblauch',1],['brot',80],['bruehe',1]],['Zwiebel und Knoblauch anschwitzen.','Tomaten und Brühe zugeben, 15 Minuten köcheln und pürieren.','Mit Brot servieren.']],
-['m16','Bohnen-Chili mit Reis','h',35,[['bohnen',120],['tomatenstueck',150],['paprika',80],['zwiebeln',50],['reis',60]],['Zwiebel und Paprika anbraten.','Bohnen und Tomaten zugeben, 20 Minuten köcheln lassen und scharf würzen.','Mit Reis servieren.']],
-['m17','Gemüse-Nudelpfanne','h',20,[['nudeln',100],['gemuesemix',150],['zwiebeln',30],['knoblauch',1]],['Nudeln garen.','Zwiebel, Knoblauch und Gemüse anbraten.','Nudeln unterheben und würzen.']]
-].map(([id,n,m,min,ing,steps])=>{const t=ing.map(([k])=>IT[k].t).join('');return{id,n,m,min,ing,steps,veg:!/[mf]/.test(t),vegan:!/[mfde]/.test(t)};});
-const RECI={}; RECS.forEach(r=>RECI[r.id]=r);
+const SHOP_CATS=['Obst & Gemüse','Milch & Eier','Fleisch & Fisch','Brot & Backwaren','Vorrat','Tiefkühl','Gewürze & Basics','Getränke','Snacks & Süßes','Haushalt'];
 const MEAL={f:'Frühstück',l:'Mittagessen',a:'Abendessen'}, MEALS=['f','l','a'];
+/* Produkt- und Rezeptdaten liegen in shop-items.js und shop-recs.js und werden erst beim Öffnen des Reiters geladen */
+let IT={}, RECS=[], RECI={}, SHOP_READY=false, shopLoading=false;
+function initShopData(){
+  IT={}; RECS=[]; RECI={};
+  (window.SHOP_ITEMS||[]).forEach(a=>{const [id,n,c,p,u,pr,t]=a; if(id&&n&&p>0&&pr>0&&SHOP_CATS.includes(c)) IT[id]={id,n,c,p,u,pr,t:t||''};});
+  (window.SHOP_RECS||[]).forEach(a=>{
+    const [id,n,m,min,cui,main,season,ing,steps]=a;
+    if(!id||!n||!Array.isArray(ing)||!ing.length||ing.some(i=>!IT[i[0]]||!(i[1]>0))) return;
+    const t=ing.map(i=>IT[i[0]].t).join('');
+    const r={id,n,m:m||'la',min:min||20,cui:cui||'int',main:main||id,season:season||'',ing,steps:steps||[],veg:!/[mf]/.test(t),vegan:!/[mfde]/.test(t),lf:!/d/.test(t),gf:!/g/.test(t),nf:!/n/.test(t),nu:!/u/.test(t),tags:t,names:(n+'|'+ing.map(i=>IT[i[0]].n+' '+i[0]).join('|')).toLowerCase()};
+    RECS.push(r); RECI[id]=r;
+  });
+}
+function shopLoad(){
+  if(SHOP_READY||shopLoading) return; shopLoading=true; S.shopErr=false; let n=0;
+  ['shop-items.js','shop-recs.js'].forEach(f=>{
+    const s=document.createElement('script'); s.src=f+'?v='+APP_VERSION;
+    s.onload=()=>{if(++n===2){initShopData();SHOP_READY=true;shopLoading=false;S.shop=cleanShop(S.shop);if(S.tab==='shop')render(true);}};
+    s.onerror=()=>{shopLoading=false;S.shopErr=true;if(S.tab==='shop')render(true);};
+    document.head.appendChild(s);
+  });
+}
 const clamp=(v,a,b,d)=>{v=Math.round(+v);return v>=a&&v<=b?v:d;};
+const okId=(map,id)=>{id=String(id||'');return SHOP_READY?(map[id]?id:null):(/^[a-z0-9_]{1,32}$/.test(id)?id:null);};
 function cleanShop(s){
-  s=s&&typeof s==='object'?s:{}; const P=s.prefs||{}, M=P.meals||{};
+  s=s&&typeof s==='object'?s:{}; const P=s.prefs||{}, M=P.meals||{}, X=P.excl||{};
   const d={store:STORES[s.store]?s.store:null,seed:clamp(s.seed,0,1e6,0),
-    list:(Array.isArray(s.list)?s.list:[]).slice(0,200).map(x=>x||{}).map(x=>({id:String(x.id||uid()).replace(/[^A-Za-z0-9_-]/g,'').slice(0,40)||uid(),n:String(x.n||'').slice(0,60),q:String(x.q||'').slice(0,40),pid:IT[x.pid]?x.pid:null,packs:clamp(x.packs,1,99,1),done:!!x.done})).filter(x=>x.n),
-    prefs:{budget:String(P.budget||'').slice(0,8),people:clamp(P.people,1,6,2),days:clamp(P.days,1,7,3),diet:['all','veg','vegan'].includes(P.diet)?P.diet:'all',bio:!!P.bio,meals:{f:!!M.f,l:M.l===undefined?M.h!==false:!!M.l,a:!!M.a}},plan:null};
+    hist:(Array.isArray(s.hist)?s.hist:[]).slice(0,60).map(x=>String(x)).filter(x=>/^[a-z0-9_]{1,32}$/.test(x)),
+    list:(Array.isArray(s.list)?s.list:[]).slice(0,200).map(x=>x||{}).map(x=>({id:String(x.id||uid()).replace(/[^A-Za-z0-9_-]/g,'').slice(0,40)||uid(),n:String(x.n||'').slice(0,60),q:String(x.q||'').slice(0,40),pid:okId(IT,x.pid),packs:clamp(x.packs,1,99,1),done:!!x.done})).filter(x=>x.n),
+    prefs:{budget:String(P.budget||'').slice(0,8),adults:clamp(P.adults!==undefined?P.adults:P.people,1,6,2),kids:(Array.isArray(P.kids)?P.kids:[]).slice(0,6).map(a=>clamp(a,0,17,6)),days:clamp(P.days,1,7,3),diet:['all','veg','vegan'].includes(P.diet)?P.diet:'all',bio:!!P.bio,basics:P.basics!==false,
+      excl:{lf:!!X.lf,gf:!!X.gf,nf:!!X.nf},nou:!!P.nou,no:(Array.isArray(P.no)?P.no:[]).slice(0,20).map(x=>String(x).toLowerCase().replace(/[^a-zäöüß -]/g,'').trim().slice(0,30)).filter(x=>x.length>=2),meals:{f:!!M.f,l:M.l===undefined?M.h!==false:!!M.l,a:!!M.a}},plan:null};
   if(!MEALS.some(m=>d.prefs.meals[m])) d.prefs.meals.a=true;
+  d.prefs.people=portions(d.prefs);
   const pl=s.plan;
   if(pl&&Array.isArray(pl.days)){
-    const days=pl.days.slice(0,7).map(o=>{o=o||{};const l=o.l===undefined?o.h:o.l,ok=id=>RECI[id]?id:null;return{f:ok(o.f),l:ok(l),a:ok(o.a)};}).filter(o=>o.f||o.l||o.a);
-    if(days.length) d.plan={days,people:clamp(pl.people,1,6,2),bio:!!pl.bio,budget:Math.max(0,+pl.budget||0)};
+    const days=pl.days.slice(0,7).map(o=>{o=o||{};const l=o.l===undefined?o.h:o.l;return{f:okId(RECI,o.f),l:okId(RECI,l),a:okId(RECI,o.a)};}).filter(o=>o.f||o.l||o.a);
+    if(days.length) d.plan={days,people:Math.min(12,Math.max(.25,+pl.people||2)),n:clamp(pl.n||pl.people,1,12,2),txt:String(pl.txt||'').slice(0,90),bio:!!pl.bio,basics:pl.basics!==false,budget:Math.max(0,+pl.budget||0)};
   }
   return d;
 }
+/* Portionsfaktor nach Alter: Erwachsene 1, Kinder je nach Alter weniger */
+function kidF(a){return a<2?.25:a<4?.4:a<7?.55:a<10?.7:a<13?.85:1;}
+function portions(P){return Math.round((P.adults+P.kids.reduce((x,a)=>x+kidF(a),0))*100)/100;}
+function hhTxt(P){const k=P.kids.length;return P.adults+(P.adults===1?' Erwachsener':' Erwachsene')+(k?' und '+k+(k===1?' Kind':' Kinder')+' ('+P.kids.map(a=>a<1?'unter 1 J.':a+' J.').join(', ')+')':'');}
 const shopMult=()=>(STORES[S.shop.store]||['',1])[1];
-function packLabel(it){return it.u==='g'?(it.p>=1000?it.p/1000+' kg':it.p+' g'):it.u==='ml'?(it.p>=1000?it.p/1000+' l':it.p+' ml'):it.p+' '+it.u;}
+function packLabel(it){return it.u==='g'?(it.p>=1000?it.p/1000+' kg':it.p+' g'):it.u==='ml'?(it.p>=1000?it.p/1000+' l':it.p+' ml'):it.p===1?'1 Stk':it.p+' '+it.u;}
 function fmtQty(u,q){
   if(u==='g'||u==='ml'){const r=Math.max(5,Math.round(q/5)*5);return r>=1000?(r/1000).toLocaleString('de-DE')+(u==='g'?' kg':' l'):r+' '+u;}
-  return (Math.round(q*10)/10).toString().replace('.',',')+' '+u;
+  return (Math.round(q*10)/10).toString().replace('.',',')+' '+(u==='Stk'?'Stk':u);
 }
-function basket(days,people,bio){
+const isBasic=(it,basics)=>basics&&/x/.test(it.t);
+function basket(days,people,bio,basics){
   const need={}; days.forEach(d=>MEALS.forEach(m=>{const id=d[m];if(id)RECI[id].ing.forEach(([k,q])=>{need[k]=(need[k]||0)+q*people;});}));
-  const m=shopMult()*(bio?1.35:1);
-  const lines=Object.entries(need).map(([k,q])=>{const it=IT[k],packs=Math.max(1,Math.ceil(q/it.p-1e-9));return{it,q,packs,price:packs*it.pr*m};});
+  const mu=shopMult()*(bio?1.35:1);
+  const lines=Object.entries(need).filter(([k])=>!isBasic(IT[k],basics)).map(([k,q])=>{const it=IT[k],packs=Math.max(1,Math.ceil(q/it.p-1e-9));return{it,q,packs,price:packs*it.pr*mu};});
   lines.sort((a,b)=>SHOP_CATS.indexOf(a.it.c)-SHOP_CATS.indexOf(b.it.c)||a.it.n.localeCompare(b.it.n,'de'));
   return{lines,total:lines.reduce((x,l)=>x+l.price,0)};
 }
 function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
-/* Zufällige Speisepläne durchprobieren: erst alles im Budget, dann möglichst viel Abwechslung, dann der günstigste */
+/* Was der Nutzer ausschließt: Oberbegriffe wie „Fleisch" oder „Pilze" auf Merkmale und Produktwörter abbilden */
+const NO_SYN=[[/^(fleisch|fleischlos|wurst)/,'m',''],[/^(fisch|meeresfr|meerestier)/,'f',''],[/^(milch|laktose|milchprod)/,'d',''],[/^(nuss|nuesse|nüsse|nuessen)/,'n',''],[/^pilz/,'','champignon|pilz'],[/^zwiebel/,'','zwiebel'],[/^tomat/,'','tomat'],[/^paprika/,'','paprika'],[/^oliv/,'','oliv'],[/^sellerie/,'','sellerie'],[/^koriander/,'','koriander'],[/^kohl/,'','kohl'],[/^schwein/,'','schwein|speck|schinken|kassler|bratwurst'],[/^rind/,'','rind|hack'],[/^h(ü|ue)hn|^h(ä|ae)hnchen|^gefl(ü|ue)gel/,'','h(ä|ae)hnchen|h(ü|ue)hner|pute'],[/^scharf|^chili/,'','chili|harissa|sambal|currypaste']];
+function noMatch(r,w){for(const [re,tag,words] of NO_SYN){if(re.test(w))return (tag&&r.tags.includes(tag))||(words&&new RegExp(words).test(r.names));}return r.names.includes(w);}
+const inSeason=r=>{if(!r.season)return true;const [a,b]=r.season.split('-').map(Number),m=new Date().getMonth()+1;return a<=b?m>=a&&m<=b:m>=a||m<=b;};
+/* Rezepte, die zu Mahlzeit, Ernährung, Unverträglichkeiten und Jahreszeit passen */
+function shopPool(m){
+  const P=S.shop.prefs, X=P.excl;
+  const ok=r=>(!m||r.m.includes(m))&&(P.diet==='all'||(P.diet==='veg'&&r.veg)||(P.diet==='vegan'&&r.vegan))&&(!X.lf||r.lf)&&(!X.gf||r.gf)&&(!X.nf||r.nf)&&(!P.nou||r.nu)&&!P.no.some(w=>noMatch(r,w));
+  const all=RECS.filter(ok), seas=all.filter(inSeason);
+  return seas.length>=6?seas:all;
+}
+/* Gewichtete Wahl: kürzlich Gekochtes, gleiche Hauptzutat oder Küche kommen seltener dran */
+function pick(pl,used,mains,cuis,prev,hist,rnd){
+  const w=pl.map(r=>{let x=1;const hi=hist.indexOf(r.id);if(hi>=0)x*=.05+.9*hi/60;if(used.has(r.id))x*=.001;if(prev&&r.main===prev.main)x*=.1;if(mains[r.main])x*=.4;if((cuis[r.cui]||0)>=2)x*=.5;return x;});
+  let v=rnd()*w.reduce((a,b)=>a+b,0);for(let i=0;i<pl.length;i++){v-=w[i];if(v<=0)return pl[i];}return pl[pl.length-1];
+}
+function rememberPlan(days){
+  const ids=[...new Set(days.flatMap(d=>MEALS.map(m=>d[m])).filter(Boolean))];
+  S.shop.hist=[...ids,...S.shop.hist.filter(x=>!ids.includes(x))].slice(0,60);
+}
+/* Viele zufällige Speisepläne durchprobieren: erst alles im Budget, dann möglichst viel Abwechslung, dann der günstigste */
 function makePlan(){
-  const P=S.shop.prefs, budget=num(P.budget), meals=MEALS.filter(m=>P.meals[m]);
-  const pool=m=>RECS.filter(r=>r.m===(m==='f'?'f':'h')&&(P.diet==='all'||(P.diet==='veg'&&r.veg)||(P.diet==='vegan'&&r.vegan)));
-  S.shop.seed=(S.shop.seed||0)+1; const rnd=rng(S.shop.seed*7919+13); let best=null;
-  for(let n=0;n<150;n++){
-    const used=new Set(), days=[];
-    for(let d=0;d<P.days;d++){const day={f:null,l:null,a:null};meals.forEach(m=>{const pl=pool(m),fresh=pl.filter(r=>!used.has(r.id)),src=fresh.length?fresh:pl,r=src[Math.floor(rnd()*src.length)];used.add(r.id);day[m]=r.id;});days.push(day);}
-    const b=basket(days,P.people,P.bio), ok=b.total<=budget, sc=ok?[1,used.size,-b.total]:[0,-b.total,0];
+  const P=S.shop.prefs, budget=num(P.budget), meals=MEALS.filter(m=>P.meals[m]), pools={};
+  meals.forEach(m=>pools[m]=shopPool(m));
+  if(meals.some(m=>!pools[m].length)) return null;
+  S.shop.seed=(S.shop.seed||0)+1; const rnd=rng(S.shop.seed*7919+Date.now()%9973); let best=null;
+  for(let n=0;n<200;n++){
+    const used=new Set(), mains={}, cuis={}, days=[]; let prev=null;
+    for(let d=0;d<P.days;d++){const day={f:null,l:null,a:null};meals.forEach(m=>{const r=pick(pools[m],used,mains,cuis,prev,S.shop.hist,rnd);used.add(r.id);mains[r.main]=1;cuis[r.cui]=(cuis[r.cui]||0)+1;prev=r;day[m]=r.id;});days.push(day);}
+    const b=basket(days,P.people,P.bio,P.basics), ok=b.total<=budget, var_=Object.keys(mains).length+Object.keys(cuis).length, sc=ok?[1,var_,-b.total]:[0,-b.total,0];
     if(!best||sc[0]>best.sc[0]||(sc[0]===best.sc[0]&&(sc[1]>best.sc[1]||(sc[1]===best.sc[1]&&sc[2]>best.sc[2])))) best={days,sc};
   }
-  return{days:best.days,people:P.people,bio:P.bio,budget};
+  return{days:best.days,people:P.people,n:P.adults+P.kids.length,txt:hhTxt(P),bio:P.bio,basics:P.basics,budget};
 }
 function shopSave(){save();render(true);}
 function shopStore(k){S.shop.store=k;shopSave();}
 function shopTabSet(t){S.shopTab=t;render(true);}
-function shopPref(k,v){const P=S.shop.prefs;if(k==='meal'){P.meals[v]=!P.meals[v];if(!MEALS.some(m=>P.meals[m]))P.meals[v]=true;}else if(k==='bio')P.bio=!P.bio;else P[k]=v;shopSave();}
+function shopPref(k,v){
+  const P=S.shop.prefs;
+  if(k==='meal'){P.meals[v]=!P.meals[v];if(!MEALS.some(m=>P.meals[m]))P.meals[v]=true;}
+  else if(k==='adults'){P.adults=v;P.people=portions(P);} else if(k==='bio')P.bio=!P.bio; else if(k==='nou')P.nou=!P.nou; else if(k==='basics')P.basics=!P.basics; else if(k==='excl')P.excl[v]=!P.excl[v]; else P[k]=v;
+  shopSave();
+}
+function shopNo(e){e.preventDefault();const el=document.getElementById('sh_no');el.value.split(/[,;]/).forEach(v=>{v=v.toLowerCase().replace(/[^a-zäöüß -]/g,'').trim().slice(0,30);const no=S.shop.prefs.no;if(v.length>=2&&!no.includes(v)&&no.length<20)no.push(v);});shopSave();}
+function shopNoDel(i){S.shop.prefs.no.splice(i,1);shopSave();}
+function shopKids(n){const P=S.shop.prefs;while(P.kids.length>n)P.kids.pop();while(P.kids.length<n)P.kids.push(6);P.people=portions(P);shopSave();}
+function shopKidAge(i,v){const P=S.shop.prefs;P.kids[i]=clamp(v,0,17,6);P.people=portions(P);save();}
 function shopBudget(v){S.shop.prefs.budget=v.replace(/[^0-9,.]/g,'').slice(0,8);save();}
 function shopBuild(){
   const b=num(S.shop.prefs.budget);
   if(!(b>0)){toast('Bitte zuerst ein Budget eingeben');const i=document.getElementById('sh_bud');if(i)i.focus();return;}
-  S.shop.plan=makePlan(); shopSave(); const el=document.getElementById('sh_res'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+  const pl=makePlan(); if(!pl){toast('Für diese Auswahl gibt es zu wenige Rezepte. Bitte lockern Sie die Filter.');return;}
+  S.shop.plan=pl; rememberPlan(pl.days); shopSave(); const el=document.getElementById('sh_res'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
 }
-const listMatch=q=>{q=q.toLowerCase();return Object.values(IT).find(i=>i.n.toLowerCase()===q)||(q.length>=3?Object.values(IT).find(i=>i.n.toLowerCase().includes(q)):null)||null;};
+/* Einzelnes Gericht tauschen, möglichst so, dass das Budget passt */
+function shopSwap(i,m){
+  const pl=S.shop.plan; if(!pl) return;
+  const taken=new Set(pl.days.flatMap(d=>MEALS.map(k=>d[k])).filter(Boolean)), cur=pl.days[i][m], rnd=rng(Date.now()%1e9);
+  const cands=shopPool(m).filter(r=>!taken.has(r.id)); if(!cands.length){toast('Kein weiteres passendes Rezept');return;}
+  let best=null;
+  for(let n=0;n<30;n++){const r=pick(cands,new Set(),{},{},null,S.shop.hist,rnd);pl.days[i][m]=r.id;const t=basket(pl.days,pl.people,pl.bio,pl.basics).total;if(t<=pl.budget){best=r.id;break;}if(!best||t<best.t)best={id:r.id,t};if(typeof best==='string')break;}
+  pl.days[i][m]=typeof best==='string'?best:(best?best.id:cur); rememberPlan(pl.days); shopSave();
+}
+const listMatch=q=>{q=q.toLowerCase();const a=Object.values(IT);return a.find(i=>i.n.toLowerCase()===q)||(q.length>=3?a.find(i=>i.n.toLowerCase().includes(q)):null)||null;};
 function shopAdd(e){
   e.preventDefault(); const el=document.getElementById('sh_in'), n=el.value.trim().slice(0,60); if(!n) return;
   if(S.shop.list.length>=200){toast('Die Liste ist voll (200 Artikel)');return;}
@@ -1715,46 +1745,85 @@ function shopAdd(e){
 function shopTick(id){const x=S.shop.list.find(i=>i.id===id);if(x){x.done=!x.done;shopSave();}}
 function shopDel(id){S.shop.list=S.shop.list.filter(i=>i.id!==id);shopSave();}
 function shopClean(){S.shop.list=S.shop.list.filter(i=>!i.done);shopSave();}
+function addLines(lines){
+  let n=0; lines.forEach(l=>{if(S.shop.list.some(x=>x.pid===l.it.id&&!x.done)||S.shop.list.length>=200)return;S.shop.list.push({id:uid(),n:l.it.n,q:l.packs+' × '+packLabel(l.it),pid:l.it.id,packs:l.packs,done:false});n++;});
+  return n;
+}
 function shopFromPlan(){
-  const pl=S.shop.plan; if(!pl) return; let n=0;
-  basket(pl.days,pl.people,pl.bio).lines.forEach(l=>{if(S.shop.list.some(x=>x.pid===l.it.id&&!x.done)||S.shop.list.length>=200)return;S.shop.list.push({id:uid(),n:l.it.n,q:l.packs+' × '+packLabel(l.it),pid:l.it.id,packs:l.packs,done:false});n++;});
+  const pl=S.shop.plan; if(!pl) return; const n=addLines(basket(pl.days,pl.people,pl.bio,pl.basics).lines);
   S.shopTab='list'; save(); render(); window.scrollTo(0,0); toast(n?n+' Artikel auf die Einkaufsliste gesetzt':'Alles steht schon auf der Liste');
 }
-const listPrice=x=>x.pid?IT[x.pid].pr*x.packs*shopMult():null;
+function shopRecToList(id){
+  const r=RECI[id], P=S.shop.prefs; if(!r) return;
+  const n=addLines(r.ing.filter(i=>!isBasic(IT[i[0]],P.basics)).map(([k,q])=>({it:IT[k],packs:Math.max(1,Math.ceil(q*P.people/IT[k].p-1e-9))})));
+  save(); toast(n?n+' Zutaten auf die Einkaufsliste gesetzt':'Alle Zutaten stehen schon auf der Liste');
+}
+const listPrice=x=>x.pid&&IT[x.pid]?IT[x.pid].pr*x.packs*shopMult():null;
 function shopToExpense(){
   const t=S.shop.list.reduce((s,x)=>s+(listPrice(x)||0),0);
   openAdd(); S.form.amt=t?String(Math.round(t*100)/100).replace('.',','):''; S.form.cat='Lebensmittel'; S.form.desc='Einkauf'+(S.shop.store?' '+STORES[S.shop.store][0]:''); S.form.catManual=true; renderSheet();
 }
+/* Ein Rezept mit Zutaten (anteilig gerechnet), Schritten und Aktionen */
+function recHtml(r,people,bio,basics,act,txt){
+  const mu=shopMult()*(bio?1.35:1), cst=i=>isBasic(IT[i[0]],basics)?0:i[1]*people/IT[i[0]].p*IT[i[0]].pr*mu, sub=r.ing.reduce((x,i)=>x+cst(i),0);
+  return `<div class="sm" style="margin-top:6px"><b>Einkaufskorb für ${esc(txt||'')}: ${eur2(sub)}</b><ul class="items" style="color:var(--text)">${r.ing.map(i=>`<li><span>${esc(IT[i[0]].n)} · ${fmtQty(IT[i[0]].u,i[1]*people)}</span><span>${isBasic(IT[i[0]],basics)?'vorrätig':eur2(cst(i))}</span></li>`).join('')}</ul><p class="note">Anteilig gerechnet. Gekauft werden ganze Packungen.</p><ol class="rsteps">${r.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol><div class="btns" style="margin-top:12px">${act}</div></div>`;
+}
+const CUI={de:'Deutsch',it:'Italienisch',fr:'Französisch',es:'Spanisch',gr:'Griechisch',tr:'Türkisch',or:'Orientalisch',in:'Indisch',th:'Thai',cn:'Chinesisch',jp:'Japanisch',kr:'Koreanisch',mx:'Mexikanisch',us:'Amerikanisch',nord:'Nordisch',int:'International'};
+const recMeta=r=>`${r.min} Min.${CUI[r.cui]?' · '+CUI[r.cui]:''}${r.vegan?' · vegan':r.veg?' · vegetarisch':''}`;
+function recListHtml(){
+  const P=S.shop.prefs, q=(S.shopQ||'').toLowerCase().trim(), rm=S.shopRm||'all';
+  let list=shopPool(rm==='all'?null:rm).filter(r=>!q||r.n.toLowerCase().includes(q)||r.ing.some(i=>IT[i[0]].n.toLowerCase().includes(q)));
+  list=list.slice().sort((a,b)=>a.n.localeCompare(b.n,'de')); const lim=S.shopMore||30, shown=list.slice(0,lim);
+  return `<p class="mute sm" style="margin:0 0 8px">${list.length} Rezepte${list.length?'':' · lockern Sie Suche oder Filter'}</p>`+shown.map(r=>`<div class="card" style="padding:12px 16px;margin-bottom:8px"><details class="its big"><summary><b>${esc(r.n)}</b><span class="mute sm" style="display:block;font-weight:400">${recMeta(r)}</span></summary>${recHtml(r,P.people,P.bio,P.basics,`<button class="btn ghost sm" onclick="shopRecToList('${r.id}')">${ic('cart')} Zutaten auf die Liste</button>`,hhTxt(P))}</details></div>`).join('')+(list.length>lim?`<button class="btn ghost" onclick="S.shopMore=(S.shopMore||30)+30;render(true)">Mehr anzeigen (${list.length-lim} weitere)</button>`:'');
+}
+function shopRecSearch(v){S.shopQ=v;S.shopMore=30;const el=document.getElementById('sh_rl');if(el)el.innerHTML=recListHtml();}
 function vShop(){
+  if(!S.premium) return `<h2>Einkaufen</h2><div class="card" style="text-align:center;padding:28px 20px"><div class="gold" style="font-size:30px">${ic('cart')}</div><h3 style="margin:10px 0 6px">Der Einkaufsplaner ist Teil von Premium</h3><p class="mute">Stellen Sie sich Ihren Wocheneinkauf im Budget zusammen. Mit Speiseplan, hunderten Rezepten und Preisen für Ihren Laden.</p><ul class="ck" style="text-align:left;margin:14px 0"><li>Einkaufsliste mit Preisschätzung</li><li>Budget-Korb nach Ihren Vorlieben</li><li>Frühstück, Mittag- und Abendessen für 1 bis 7 Tage</li><li>Rezepte ohne Hochverarbeitetes, vegan, laktose- oder glutenfrei</li></ul><button class="btn" onclick="openPaywall()">Premium ansehen</button></div>`;
   const H=S.shop, P=H.prefs, tab=S.shopTab||'list', ch=(on,fn,txt)=>`<button type="button" class="chip ${on?'on':''}" onclick="${fn}">${txt}</button>`;
   let h=`<h2>Einkaufen</h2><div class="card"><label class="fl" style="margin-top:0">Ihr Laden</label><div class="chips">${Object.entries(STORES).map(([k,v])=>ch(H.store===k,`shopStore('${k}')`,v[0])).join('')}</div>
    <p class="note">${H.store?'Alle Preise sind Richtwerte für '+STORES[H.store][0]+', keine tagesaktuellen Angebote.':'Wählen Sie Ihren Laden, damit die Preise passen. Alle Preise sind Richtwerte, keine tagesaktuellen Angebote.'}</p></div>
-   <div class="seg g" style="margin-bottom:14px"><button class="${tab==='list'?'on':''}" onclick="shopTabSet('list')">${ic('cart')} Einkaufsliste</button><button class="${tab==='plan'?'on':''}" onclick="shopTabSet('plan')">${ic('sparkles')} Korb &amp; Rezepte</button></div>`;
+   <div class="seg g" style="margin-bottom:14px"><button class="${tab==='list'?'on':''}" onclick="shopTabSet('list')">Liste</button><button class="${tab==='plan'?'on':''}" onclick="shopTabSet('plan')">Plan &amp; Korb</button><button class="${tab==='rec'?'on':''}" onclick="shopTabSet('rec')">Rezepte</button></div>`;
+  if(!SHOP_READY){
+    shopLoad();
+    return h+(S.shopErr?`<div class="card"><p>Die Produktdaten konnten nicht geladen werden. Beim ersten Öffnen braucht die App kurz eine Internetverbindung.</p><button class="btn" style="margin-top:12px" onclick="S.shopErr=false;render()">Erneut versuchen</button></div>`:`<div class="card"><div class="rcpt" style="margin:0"><span class="spin"></span>Produkte und Rezepte werden geladen …</div></div>`);
+  }
   if(tab==='list'){
-    const tot=H.list.reduce((s,x)=>s+(listPrice(x)||0),0), un=H.list.filter(x=>x.pid===null).length, done=H.list.filter(x=>x.done).length;
+    const tot=H.list.reduce((s,x)=>s+(listPrice(x)||0),0), un=H.list.filter(x=>listPrice(x)===null).length, done=H.list.filter(x=>x.done).length;
+    const grp={}; H.list.forEach(x=>{const c=x.pid&&IT[x.pid]?IT[x.pid].c:'Sonstiges';(grp[c]=grp[c]||[]).push(x);});
+    const row=x=>{const p=listPrice(x);return `<div class="tx"><input type="checkbox" style="width:22px;height:22px;accent-color:#C9AA22;flex:none" ${x.done?'checked':''} onchange="shopTick('${x.id}')" aria-label="Erledigt"><div class="d"><div class="t1" style="${x.done?'text-decoration:line-through;opacity:.5':''}">${esc(x.n)}</div>${x.q?`<div class="mute sm">${esc(x.q)}</div>`:''}</div>${p!==null?`<div class="amt">${eur2(p)}</div>`:''}<button class="del" onclick="shopDel('${x.id}')" aria-label="Entfernen">${ic('x')}</button></div>`;};
     h+=`<form class="row" style="gap:8px;margin-bottom:12px" onsubmit="shopAdd(event)"><input class="f" id="sh_in" list="sh_dl" placeholder="Was brauchen Sie? z. B. Nudeln" maxlength="60" autocomplete="off" aria-label="Artikel hinzufügen"><datalist id="sh_dl">${Object.values(IT).map(i=>`<option value="${esc(i.n)}">`).join('')}</datalist><button class="btn sm" type="submit" style="flex:none;width:auto" aria-label="Hinzufügen">${ic('plusSquare')} Hinzu</button></form>
-     <div class="card" style="padding:4px 16px">${H.list.map(x=>{const p=listPrice(x);return `<div class="tx"><input type="checkbox" style="width:22px;height:22px;accent-color:#C9AA22;flex:none" ${x.done?'checked':''} onchange="shopTick('${x.id}')" aria-label="Erledigt"><div class="d"><div class="t1" style="${x.done?'text-decoration:line-through;opacity:.5':''}">${esc(x.n)}</div>${x.q?`<div class="mute sm">${esc(x.q)}</div>`:''}</div>${p!==null?`<div class="amt">${eur2(p)}</div>`:''}<button class="del" onclick="shopDel('${x.id}')" aria-label="Entfernen">${ic('x')}</button></div>`;}).join('')||`<p class="mute" style="padding:14px 0">Ihre Liste ist leer. Tippen Sie oben einen Artikel ein oder lassen Sie sich unter „Korb &amp; Rezepte" einen Einkauf zusammenstellen.</p>`}</div>
+     <div class="card" style="padding:4px 16px">${[...SHOP_CATS,'Sonstiges'].filter(c=>grp[c]).map(c=>`<div class="mute sm" style="margin-top:12px;text-transform:uppercase;letter-spacing:.1em">${c}</div>${grp[c].map(row).join('')}`).join('')||`<p class="mute" style="padding:14px 0">Ihre Liste ist leer. Tippen Sie oben einen Artikel ein oder lassen Sie sich unter „Plan &amp; Korb" einen Einkauf zusammenstellen. Unter „Rezepte" können Sie Zutaten direkt übernehmen.</p>`}</div>
      ${H.list.length?`<div class="card kpi"><div class="lbl">Geschätzte Summe</div><div class="val">${eur2(tot)}</div>${un?`<div class="mute sm">${un} ${un===1?'Artikel':'Artikel'} ohne Preis</div>`:''}</div>
      <div class="btns"><button class="btn" onclick="shopToExpense()">${ic('wallet')} Als Ausgabe erfassen</button>${done?`<button class="btn ghost" onclick="shopClean()">${done} erledigte entfernen</button>`:''}</div>`:''}`;
+  } else if(tab==='rec'){
+    const rm=S.shopRm||'all';
+    h+=`<input type="search" placeholder="Rezept oder Zutat suchen …" value="${esc(S.shopQ||'')}" oninput="shopRecSearch(this.value)" style="margin-bottom:10px" aria-label="Rezepte durchsuchen">
+     <div class="chips" style="margin-bottom:12px">${[['all','Alle'],['f','Frühstück'],['l','Mittagessen'],['a','Abendessen']].map(([k,t])=>ch(rm===k,`S.shopRm='${k}';S.shopMore=30;render(true)`,t)).join('')}</div>
+     <p class="note" style="margin:0 0 10px">Es gelten Ihre Einstellungen für Ernährung und Unverträglichkeiten aus „Plan &amp; Korb" und die Jahreszeit.</p><div id="sh_rl">${recListHtml()}</div>`;
   } else {
     const prior=months().filter(x=>x<mk(today())).slice(-3), avg=prior.length?prior.map(x=>sums(x).by['Lebensmittel']||0).reduce((a,b)=>a+b,0)/prior.length:0;
     h+=`<div class="card"><label class="fl" style="margin-top:0">Budget für diesen Einkauf (€)</label><input class="f amtin" id="sh_bud" inputmode="decimal" placeholder="z. B. 60" value="${esc(P.budget)}" onchange="shopBudget(this.value)" autocomplete="off">
      ${avg>0?`<p class="note">Zum Vergleich: Sie geben im Schnitt ${eur(avg)} pro Monat für Lebensmittel aus.</p>`:''}
-     <label class="fl">Personen</label><div class="chips">${[1,2,3,4,5,6].map(n=>ch(P.people===n,`shopPref('people',${n})`,n)).join('')}</div>
+     <label class="fl">Erwachsene</label><div class="chips">${[1,2,3,4,5,6].map(n=>ch(P.adults===n,`shopPref('adults',${n})`,n)).join('')}</div>
+     <label class="fl">Kinder</label><div class="chips">${[0,1,2,3,4,5,6].map(n=>ch(P.kids.length===n,`shopKids(${n})`,n)).join('')}</div>
+     ${P.kids.map((a,i)=>`<div class="row" style="margin-top:10px"><span>Kind ${i+1}</span><select class="f" style="width:auto;min-width:150px" onchange="shopKidAge(${i},this.value)" aria-label="Alter Kind ${i+1}">${Array.from({length:18},(_,y)=>`<option value="${y}" ${y===a?'selected':''}>${y<1?'unter 1 Jahr':y+(y===1?' Jahr':' Jahre')}</option>`).join('')}</select></div>`).join('')}
+     ${P.kids.length?`<p class="note">Die Portionen werden nach Alter berechnet: ${hhTxt(P)} entsprechen ${String(P.people).replace('.',',')} Erwachsenen-Portionen.${P.kids.some(a=>a<4)?' Für Kleinkinder bitte Salz, Schärfe und harte Nüsse anpassen.':''}</p>`:''}
      <label class="fl">Für wie viele Tage</label><div class="chips">${[1,2,3,4,5,6,7].map(n=>ch(P.days===n,`shopPref('days',${n})`,n)).join('')}</div>
-     <label class="fl">Mahlzeiten pro Tag</label><div class="chips">${ch(P.meals.f,"shopPref('meal','f')",'Frühstück')}${ch(P.meals.l,"shopPref('meal','l')",'Mittagessen')}${ch(P.meals.a,"shopPref('meal','a')",'Abendessen')}</div>
-     <label class="fl">Ernährung</label><div class="chips">${ch(P.diet==='all',"shopPref('diet','all')",'Alles')}${ch(P.diet==='veg',"shopPref('diet','veg')",'Vegetarisch')}${ch(P.diet==='vegan',"shopPref('diet','vegan')",'Vegan')}${ch(P.bio,"shopPref('bio')",'Bio-Qualität')}</div>
+     <label class="fl">Mahlzeiten pro Tag</label><div class="chips">${MEALS.map(m=>ch(P.meals[m],`shopPref('meal','${m}')`,MEAL[m])).join('')}</div>
+     <label class="fl">Ernährung</label><div class="chips">${ch(P.diet==='all',"shopPref('diet','all')",'Alles')}${ch(P.diet==='veg',"shopPref('diet','veg')",'Vegetarisch')}${ch(P.diet==='vegan',"shopPref('diet','vegan')",'Vegan')}</div>
+     <label class="fl">Weitere Wünsche</label><div class="chips">${ch(P.excl.lf,"shopPref('excl','lf')",'Laktosefrei')}${ch(P.excl.gf,"shopPref('excl','gf')",'Glutenfrei')}${ch(P.excl.nf,"shopPref('excl','nf')",'Ohne Nüsse')}${ch(P.nou,"shopPref('nou')",'Ohne Hochverarbeitetes')}${ch(P.bio,"shopPref('bio')",'Bio-Qualität')}${ch(P.basics,"shopPref('basics')",'Gewürze &amp; Öl vorhanden')}</div>
+     <label class="fl">Diese Lebensmittel nie</label><form class="row" style="gap:8px" onsubmit="shopNo(event)"><input class="f" id="sh_no" placeholder="z. B. Pilze, Fisch, Koriander, Schwein" maxlength="60" autocomplete="off" aria-label="Lebensmittel ausschließen"><button class="btn sm" type="submit" style="flex:none;width:auto">Ausschließen</button></form>${P.no.length?`<div class="chips" style="margin-top:10px">${P.no.map((w,i)=>`<button type="button" class="chip on" onclick="shopNoDel(${i})" aria-label="${esc(w)} wieder erlauben">${esc(w)} ${ic('x')}</button>`).join('')}</div>`:''}
      <button class="btn" style="margin-top:20px" onclick="shopBuild()">${ic('sparkles')} ${H.plan?'Neu zusammenstellen':'Korb zusammenstellen'}</button>
-     <p class="note">Die App wählt Rezepte, die zusammen in Ihr Budget passen. Salz, Pfeffer und Öl setzen wir als vorhanden voraus.</p></div><div id="sh_res"></div>`;
+     <p class="note">Die App wählt Rezepte, die zusammen in Ihr Budget passen, und achtet auf Abwechslung und die Jahreszeit. Bereits geplante Gerichte kommen seltener wieder dran. Angaben zu Laktose, Gluten und Nüssen sind eine Orientierung, bitte prüfen Sie die Zutaten auf den Verpackungen.</p></div><div id="sh_res"></div>`;
     const pl=H.plan;
     if(pl){
-      const b=basket(pl.days,pl.people,pl.bio), ok=b.total<=pl.budget, pct=Math.min(100,pl.budget?b.total/pl.budget*100:100);
+      const b=basket(pl.days,pl.people,pl.bio,pl.basics), ok=b.total<=pl.budget, pct=Math.min(100,pl.budget?b.total/pl.budget*100:100);
       h+=`<h2>Ihr Ergebnis</h2><div class="card"><div class="row"><div><div class="mute sm">Einkaufskorb</div><div style="font-size:28px;font-weight:800">${eur2(b.total)}</div></div><div style="text-align:right"><div class="mute sm">Budget</div><div style="font-size:18px;font-weight:700">${eur2(pl.budget)}</div></div></div>
        <div style="height:8px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin:12px 0 10px"><div style="height:100%;width:${pct}%;background:${ok?'var(--pos)':'var(--neg)'}"></div></div>
        <p class="sm ${ok?'pos':''}" style="${ok?'':'color:var(--neg)'}">${ok?`${ic('check')} Im Budget, ${eur2(pl.budget-b.total)} bleiben übrig.`:`${ic('alert')} Das Budget reicht dafür nicht. Nötig wären ${eur2(b.total)}. Tipp: weniger Tage, ein günstigerer Laden, vegetarisch oder ohne Bio.`}</p>
-       <p class="mute sm" style="margin-top:6px">Etwa ${eur2(b.total/pl.people/pl.days.length)} pro Person und Tag.</p>
+       <p class="mute sm" style="margin-top:6px">Etwa ${eur2(b.total/(pl.n||pl.people)/pl.days.length)} pro Person und Tag.</p>
        <div class="btns" style="margin-top:14px"><button class="btn" onclick="shopFromPlan()">${ic('cart')} Auf die Einkaufsliste</button><button class="btn ghost" onclick="shopBuild()">Neu mischen</button></div></div>
-       <h2>Speiseplan</h2>${pl.days.map((d,i)=>`<div class="card"><b>Tag ${i+1}</b>${MEALS.filter(m=>d[m]).map(m=>{const r=RECI[d[m]], mu=shopMult()*(pl.bio?1.35:1), cst=([k,q])=>q*pl.people/IT[k].p*IT[k].pr*mu, sub=r.ing.reduce((x,i)=>x+cst(i),0);return `<details class="its big" style="margin-top:8px"><summary><b>${MEAL[m]}:</b> ${esc(r.n)} · ${r.min} Min.</summary><div class="sm" style="margin-top:6px"><b>Einkaufskorb für ${pl.people} ${pl.people===1?'Person':'Personen'}: ${eur2(sub)}</b><ul class="items" style="color:var(--text)">${r.ing.map(i=>`<li><span>${esc(IT[i[0]].n)} · ${fmtQty(IT[i[0]].u,i[1]*pl.people)}</span><span>${eur2(cst(i))}</span></li>`).join('')}</ul><p class="note">Anteilig gerechnet. Gekauft werden ganze Packungen, siehe Gesamtkorb unten.</p><ol class="rsteps">${r.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol></div></details>`;}).join('')}</div>`).join('')}
+       <h2>Speiseplan</h2>${pl.days.map((d,i)=>`<div class="card"><b>Tag ${i+1}</b>${MEALS.filter(m=>d[m]).map(m=>{const r=RECI[d[m]];return `<details class="its big" style="margin-top:8px"><summary><b>${MEAL[m]}:</b> ${esc(r.n)}<span class="mute sm" style="display:block;font-weight:400">${recMeta(r)}</span></summary>${recHtml(r,pl.people,pl.bio,pl.basics,`<button class="btn ghost sm" onclick="shopSwap(${i},'${m}')">Anderes Rezept</button>`,pl.txt||pl.n+' Personen')}</details>`;}).join('')}</div>`).join('')}
        <h2>Einkaufskorb</h2><div class="card" style="padding:4px 16px">${b.lines.map((l,i)=>`${i===0||b.lines[i-1].it.c!==l.it.c?`<div class="mute sm" style="margin-top:12px;text-transform:uppercase;letter-spacing:.1em">${l.it.c}</div>`:''}<div class="tx"><div class="d"><div class="t1">${esc(l.it.n)}</div><div class="mute sm">${l.packs} × ${packLabel(l.it)}</div></div><div class="amt">${eur2(l.price)}</div></div>`).join('')}</div>`;
     }
   }
