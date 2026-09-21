@@ -366,7 +366,7 @@ function fixCats(){
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], customCats:[], ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-21.1';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-21.2';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -709,7 +709,7 @@ function chipsHtml(){
 }
 function openEdit(id){
   const t=S.tx.find(x=>x.id===id); if(!t) return;
-  S.form={type:t.amt>0?'inc':'exp',amt:String(Math.abs(t.amt)).replace('.',','),desc:t.desc,cat:t.cat,catManual:true,date:t.d,rep:false,hasRec:!!t.recId,items:t.items||null,rcpt:!!t.items,editId:id};
+  S.form={type:t.amt>0?'inc':'exp',amt:String(Math.abs(t.amt)).replace('.',','),desc:t.desc,cat:t.cat,catManual:true,date:t.d,rep:!!t.recId,items:t.items||null,rcpt:!!t.items,editId:id};
   S.scan=null; renderSheet(); document.getElementById('addm').classList.add('show');
 }
 function renderSheet(){
@@ -724,7 +724,7 @@ function renderSheet(){
   <input class="f" id="f_desc" placeholder="${F.type==='inc'?'z. B. Gehalt':'z. B. REWE Einkauf'}" value="${esc(F.desc)}" oninput="onDesc(this.value)" autocomplete="off">
   <label class="fl">Kategorie</label><div class="chips" id="chips">${chipsHtml()}</div>
   <label class="fl">Datum</label><input class="f" type="date" value="${F.date}" onchange="S.form.date=this.value">
-  ${F.hasRec?'<p class="note">Wiederkehrende Buchung (Verwaltung unter Mehr).</p>':`<label class="chk"><input type="checkbox" ${F.rep?'checked':''} onchange="S.form.rep=this.checked"> Jeden Monat wiederholen (Dauerauftrag)</label>`}
+  <label class="chk"><input type="checkbox" ${F.rep?'checked':''} onchange="S.form.rep=this.checked"> Jeden Monat wiederholen (Dauerauftrag)</label>${ed?'<p class="note">Gilt auch rückwirkend für gleiche Buchungen aus früheren Monaten. Abwählen entfernt den Dauerauftrag.</p>':''}
   ${F.rcpt&&F.items&&F.items.length?`<div class="rcpt"><b>${ic('receipt')} ${F.items.length} Positionen erkannt</b><ul class="items">${F.items.map(i=>`<li><span>${esc(i.n)}</span><span>${eur2(i.p)}</span></li>`).join('')}</ul></div>`:''}
   ${sc&&sc.busy?`<div class="rcpt"><span class="spin"></span>${esc(sc.msg)}</div>`:''}
   ${sc&&sc.err?`<div class="rcpt" style="border-color:var(--neg)">${esc(sc.err)}</div>`:''}
@@ -749,7 +749,7 @@ function saveForm(){
   const desc=(F.desc||'').trim()||(F.type==='inc'?'Einnahme':F.cat);
   if(F.editId){
     const t=S.tx.find(x=>x.id===F.editId); if(!t){closeAdd();return;}
-    Object.assign(t,{d:F.date,desc,amt,cat:F.cat}); if(F.rep&&!t.recId) mkRec(t); if(F.catManual&&F.desc.trim()) S.rules[key(desc)]=F.cat;
+    Object.assign(t,{d:F.date,desc,amt,cat:F.cat}); if(F.rep&&!t.recId){mkRec(t);S.tx.forEach(o=>{if(!o.recId&&key(o.desc)===key(t.desc)&&o.amt===t.amt)o.recId=t.recId;});}else if(!F.rep&&t.recId){const id=t.recId;S.tx.forEach(o=>{if(o.recId===id)delete o.recId;});S.rec=S.rec.filter(r=>r.id!==id);} if(F.catManual&&F.desc.trim()) S.rules[key(desc)]=F.cat;
     save(); S.month=mk(F.date); closeAdd(); render(true); toast('Änderung gespeichert'); return;
   }
   const t={id:uid(),d:F.date,desc,amt,cat:F.cat};
@@ -987,7 +987,7 @@ function finishRow(d,desc0,v,sign,many){
   let guess=false, amt;
   if(sign===0){ guess=true; amt=INC_KW.test(desc0)?v:-v; } else amt=sign*v;
   /* Buchungen zwischen eigenen Konten würden sonst als Einnahme UND Ausgabe zählen: in der Vorschau vorab abgewählt */
-  return {d,desc,amt:Math.round(amt*100)/100,cat:categorize(desc,amt),guess:guess||false,many:!!many,rep:/dauerauftrag|dauer(ü|ue)berweisung|standing order/i.test(desc0),transfer:/umbuchung|eigen(er)?\s?(ü|ue)bertrag|kontoausgleich/i.test(desc0)&&!/bargeld|abhebung|geldautomat/i.test(desc0)};
+  return {d,desc,amt:Math.round(amt*100)/100,cat:categorize(desc,amt),guess:guess||false,many:!!many,rep:/dauerauftrag|dauer(ü|ue)berweisung|termin(ü|ue)berweisung|standing order/i.test(desc0),transfer:/umbuchung|eigen(er)?\s?(ü|ue)bertrag|kontoausgleich/i.test(desc0)&&!/bargeld|abhebung|geldautomat/i.test(desc0)};
 }
 /* Storno/Rückbuchung: Steht dieselbe Summe mit umgekehrtem Vorzeichen kurz davor, heben sich beide auf und werden abgewählt */
 const REV_KW=/r(ü|ue)ckgabe|storno|r(ü|ue)ckbuchung|mangels deckung|nicht eingel(ö|oe)st|retoure/i;
@@ -1114,7 +1114,7 @@ function openList(kind,key){
    <div class="grid2" style="margin:14px 0 4px"><div class="card kpi" style="margin:0"><div class="lbl">Summe</div><div class="val ${kind==='inc'?'pos':''}">${eur(spend)}</div></div>
     <div class="card kpi" style="margin:0"><div class="lbl">${share!==null?'Anteil an den Ausgaben':'Durchschnitt pro Buchung'}</div><div class="val">${share!==null?share+' %':eur(list.length?spend/list.length:0)}</div></div></div>
    <div class="card" style="padding:4px 16px;margin-top:14px">${list.map(t=>`<div class="tx"><span class="dot" style="background:${CATS[t.cat].c}"></span>
-     <div class="d"><div class="t1">${esc(t.desc)}${t.items?' '+ic('receipt'):''}</div><div class="mute sm">${t.d.slice(8)}.${t.d.slice(5,7)}.${kind!=='cat'?' · '+esc(t.cat):''}</div>
+     <div class="d"><div class="t1">${esc(t.desc)}${t.items?' '+ic('receipt'):''}</div><div class="mute sm">${t.d.slice(8)}.${t.d.slice(5,7)}.${kind!=='cat'?' · '+esc(t.cat):''}${t.recId?' · Dauerauftrag':''}</div>
      ${t.items?`<ul class="items">${t.items.map(i=>`<li><span>${esc(i.n)}</span><span>${eur2(i.p)}</span></li>`).join('')}</ul>`:''}</div>
      <div class="amt ${t.amt>0?'pos':''}">${t.amt>0?'+':''}${eur2(t.amt)}</div>
      <button class="del" onclick="listEdit('${t.id}')" aria-label="Bearbeiten">${ic('pencil')}</button></div>`).join('')||'<p class="mute" style="padding:14px 0">Keine Buchungen.</p>'}</div>`;
