@@ -388,7 +388,7 @@ function fixCats(){
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], refCode:null, refBy:null, upl:0, customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-23.2';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-23.3';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -493,7 +493,7 @@ function recurring(){
 }
 function forecast(m){
   const s=sums(m), ms=months().filter(x=>x<m);
-  if(!isOpen(m)) return {open:false,inc:s.inc,exp:s.exp,saldo:s.inc-s.exp};
+  if(!isOpen(m)) return {open:false,inc:s.inc,exp:s.exp,saldo:s.inc-s.exp,n:monthTx(m).length};
   const day=dayNow(m), rec=recurring(), rk=new Set(rec.map(r=>r.key));
   const booked=new Set(monthTx(m).map(t=>key(t.desc)));
   const pendingFixed=rec.filter(r=>!booked.has(r.key)&&r.day>day).reduce((x,r)=>x+r.avg,0);
@@ -501,7 +501,9 @@ function forecast(m){
   const varProj=varSoFar/Math.max(day,1)*(dim(m)-day);
   const avgInc=ms.length?ms.map(x=>sums(x).inc).reduce((a,b)=>a+b,0)/ms.length:0;
   const inc=Math.max(s.inc,avgInc), exp=s.exp+varProj+pendingFixed;
-  return {open:true,inc,exp,saldo:inc-exp,day};
+  const offen=rec.filter(r=>!booked.has(r.key)&&r.day>day);
+  return {open:true,inc,exp,saldo:inc-exp,day,
+    p:{expSoFar:s.exp,varSoFar,varProj,pendingFixed,offen,incNow:s.inc,avgInc,nPrior:ms.length,tage:dim(m),rest:dim(m)-day,fix:s.exp-varSoFar}};
 }
 /* Zu jedem Spartipp aufklappbar: Rechenweg, Zahlen und die Buchungen, auf denen er beruht */
 function whyHtml(t){
@@ -511,6 +513,34 @@ function whyHtml(t){
     ${t.facts&&t.facts.length?`<dl class="kv">${t.facts.map(([k,v])=>`<dt>${esc(String(k))}</dt><dd>${esc(String(v))}</dd>`).join('')}</dl>`:''}
     ${t.tx&&t.tx.length?`<ul class="items" style="color:var(--text)">${t.tx.slice().sort((a,b)=>a.d.localeCompare(b.d)).map(x=>`<li><span>${x.d.slice(8)}.${x.d.slice(5,7)}. ${esc(x.desc)}</span><span>${eur2(-x.amt)}</span></li>`).join('')}</ul>`:''}
     ${t.cat?`<button class="btn ghost sm" style="margin-top:12px" onclick="openList('cat','${esc(t.cat)}')">Alle Buchungen in ${esc(t.cat)}</button>`:''}</details>`;
+}
+function fcWhy(f,m){
+  if(!f.open) return `<details class="its big why"><summary>Wie kommt die Zahl zustande?</summary>
+    <p class="sm" style="margin:8px 0 0">${mLabel(m)} ist abgeschlossen. Hier steht keine Prognose, sondern das tatsächliche Ergebnis aus Ihren ${f.n} erfassten Buchungen.</p>
+    <dl class="kv"><dt>Einnahmen</dt><dd>${eur(f.inc)}</dd><dt>Ausgaben</dt><dd>${eur(f.exp)}</dd><dt>Bleibt übrig</dt><dd>${eur(f.saldo)}</dd></dl></details>`;
+  const p=f.p, perDay=p.varSoFar/Math.max(f.day,1);
+  return `<details class="its big why"><summary>Wie kommt die Prognose zustande?</summary>
+    <p class="sm" style="margin:8px 0 0">${mLabel(m)} läuft noch. Die App rechnet Ihre bisherigen Ausgaben auf den ganzen Monat hoch und legt noch fehlende feste Zahlungen obendrauf. Erkannte Fixkosten werden dabei <b>nicht</b> hochgerechnet, sonst würde die Miete mehrfach zählen.</p>
+    <p class="sm" style="margin:10px 0 0"><b>Ausgaben</b></p>
+    <dl class="kv">
+      <dt>Bisher ausgegeben (Tag 1 bis ${f.day})</dt><dd>${eur(p.expSoFar)}</dd>
+      <dt>Davon feste Zahlungen</dt><dd>${eur(p.fix)}</dd>
+      <dt>Davon übrige Ausgaben</dt><dd>${eur(p.varSoFar)}</dd>
+      <dt>Das sind pro Tag</dt><dd>${eur2(perDay)}</dd>
+      <dt>Hochgerechnet auf ${p.rest} Resttage</dt><dd>${eur(p.varProj)}</dd>
+      <dt>Noch erwartete feste Zahlungen</dt><dd>${eur(p.pendingFixed)}</dd>
+      <dt>Ausgaben am Monatsende</dt><dd>${eur(f.exp)}</dd>
+    </dl>
+    ${p.offen.length?`<p class="sm" style="margin:10px 0 0">Diese festen Zahlungen stehen noch aus:</p><ul class="items" style="color:var(--text)">${p.offen.map(r=>`<li><span>${esc(r.name)} · ca. am ${r.day}.</span><span>${eur2(r.avg)}</span></li>`).join('')}</ul>`:'<p class="note">Für diesen Monat stehen keine erkannten festen Zahlungen mehr aus.</p>'}
+    <p class="sm" style="margin:12px 0 0"><b>Einnahmen</b></p>
+    <dl class="kv">
+      <dt>Bisher erfasst</dt><dd>${eur(p.incNow)}</dd>
+      ${p.nPrior?`<dt>Schnitt der letzten ${p.nPrior} Monate</dt><dd>${eur(p.avgInc)}</dd>`:''}
+      <dt>Gerechnet wird mit</dt><dd>${eur(f.inc)}</dd>
+    </dl>
+    <p class="note">${p.nPrior?'Wir nehmen den höheren der beiden Werte, damit ein noch nicht gebuchtes Gehalt die Prognose nicht unnötig schwarzmalt.':'Ohne Vormonate rechnen wir nur mit dem, was Sie bisher erfasst haben.'}</p>
+    <p class="note">Die Prognose ist eine Schätzung aus Ihrem bisherigen Tempo. Ein ungewöhnlich teurer oder ruhiger Monatsanfang verzerrt sie.</p>
+    <button class="btn ghost sm" style="margin-top:12px" onclick="openList('exp')">Alle Ausgaben ansehen</button></details>`;
 }
 function tips(m){
   const out=[], s=sums(m), f=forecast(m), prior=months().filter(x=>x<m).slice(-3);
@@ -610,7 +640,8 @@ function vHome(){
     <div class="big ${f.saldo>=0?'pos':'neg'}">${f.saldo>=0?'+':''}${eur(f.saldo)}</div>
     <div class="bar"><i class="${over?'over':''}" style="width:${pct}%"></i></div>
     <div class="row sm mute"><span>${f.open?'Prognose Ausgaben':'Ausgaben'} ${eur(f.exp)}</span><span>Einnahmen ${eur(f.inc)}</span></div>
-    ${f.open?`<div class="note">Stand Tag ${f.day}: bisher ${eur(s.exp)} ausgegeben. Die Prognose rechnet Ihr bisheriges Tempo und noch fehlende Fixkosten ein.</div>`:''}
+    ${f.open?`<div class="note">Stand Tag ${f.day}: bisher ${eur(s.exp)} ausgegeben.</div>`:''}
+    ${fcWhy(f,S.month)}
   </div>
   <div class="grid2">
     <div class="card kpi click" role="button" tabindex="0" onclick="openList('inc')" onkeydown="if(event.key==='Enter')openList('inc')"><div class="lbl">Einnahmen</div><div class="val pos">${eur(s.inc)}</div></div>
