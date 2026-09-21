@@ -388,7 +388,7 @@ function fixCats(){
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-22.7';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-22.8';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -716,6 +716,8 @@ function vMore(){
   return `<div class="card" style="border-color:rgba(229,115,92,.45);background:linear-gradient(180deg,rgba(229,115,92,.12),rgba(255,255,255,.02));margin-top:16px"><div class="row"><div><b>Vertrag beenden?</b><div class="mute sm">Sie können jederzeit kündigen, ohne Anmeldung und in wenigen Schritten.</div></div></div>
    <button class="btn danger" style="margin-top:12px" onclick="openCancel()">Verträge hier kündigen</button></div>
   ${installCard()}
+  <div class="card" style="border-color:rgba(201,170,34,.45)"><div><b>${ic('share')} Monatsklar weiterempfehlen</b><div class="mute sm">Monatsklar lebt von Weiterempfehlung, nicht von Werbung. Wenn die App Ihnen hilft, schicken Sie sie jemandem, der seine Ausgaben in den Griff bekommen will.</div></div>
+   <button class="btn" style="margin-top:12px" onclick="shareApp()">${ic('share')} Teilen</button></div>
   <div class="card"><div><b>Ihre Meinung zählt</b><div class="mute sm">Was gefällt Ihnen, was fehlt, was funktioniert nicht? Ihr Feedback macht Monatsklar besser.</div></div>
    <button class="btn" style="margin-top:12px" onclick="openFeedback()">Feedback geben</button>
    <label class="chk" style="margin-top:12px"><input type="checkbox" ${S.fb.off?'':'checked'} onchange="S.fb.off=!this.checked;save()"> Gelegentlich nach Feedback fragen</label></div>
@@ -1613,6 +1615,14 @@ function openInstall(m){
 }
 function closeInstall(){document.getElementById('im').classList.remove('show');}
 async function copyLink(){try{await navigator.clipboard.writeText(location.origin+'/');toast('Link kopiert. Fügen Sie ihn in Ihren Browser ein.');}catch(e){toast(location.origin+'/');}}
+
+const SHARE_TXT='Ich nutze Monatsklar als Haushaltsbuch: Kassenzettel abfotografieren, Kontoauszug hochladen, und die App sortiert alles selbst. Läuft komplett auf dem Handy, keine Anmeldung, keine Werbung. 8 Wochen alles gratis testen:';
+async function shareApp(){
+  const url='https://monatsklar.de/';
+  if(navigator.share){ try{ await navigator.share({title:'Monatsklar',text:SHARE_TXT,url}); return; }catch(e){ if(e&&e.name==='AbortError') return; } }
+  try{ await navigator.clipboard.writeText(SHARE_TXT+' '+url); toast('Text und Link kopiert. Jetzt einfügen und senden.'); }
+  catch(e){ toast('Link: '+url); }
+}
 
 /* ---------- Update-Hinweis ---------- */
 /* Die App startet aus dem Zwischenspeicher (schnell). Im Hintergrund prüft sie, ob eine neuere Version online ist. */
