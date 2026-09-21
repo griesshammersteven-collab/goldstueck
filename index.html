@@ -37,7 +37,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{background:var(--bg);color:var(--text);font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
-body{padding-bottom:104px;overflow-x:hidden}
+body{padding-bottom:150px;overflow-x:hidden}
 ::selection{background:rgba(201,170,34,.35)}
 /* Wie im Tailwind-Reset der Landingpage: Buttons, Felder und Listen erben die Schriftart statt der Browser-Standardschrift */
 button,input,select,textarea,optgroup{font-family:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit}
@@ -157,7 +157,7 @@ label.fl{display:block;font-size:12px;color:var(--mute);margin:16px 0 6px}
 @keyframes sp{to{transform:rotate(360deg)}}
 @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 
-.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(50px + env(safe-area-inset-bottom));z-index:7;width:64px;height:64px;border-radius:50%;border:4px solid var(--bg);background:linear-gradient(135deg,var(--gold2),var(--gold));color:#0B0C0F;cursor:pointer;box-shadow:0 10px 34px -4px rgba(201,170,34,.6);display:flex;align-items:center;justify-content:center;transition:transform .3s,box-shadow .3s}
+.fab{position:fixed;right:max(16px,calc(50vw - 344px));bottom:calc(74px + env(safe-area-inset-bottom));z-index:7;width:60px;height:60px;border-radius:50%;border:0;box-shadow:0 8px 28px -4px rgba(0,0,0,.7),0 10px 34px -6px rgba(201,170,34,.55);background:linear-gradient(135deg,var(--gold2),var(--gold));color:#0B0C0F;cursor:pointer;box-shadow:0 10px 34px -4px rgba(201,170,34,.6);display:flex;align-items:center;justify-content:center;transition:transform .3s,box-shadow .3s}
 .fab:hover{transform:translateX(-50%) translateY(-3px) scale(1.05);box-shadow:0 16px 44px -4px rgba(201,170,34,.8)}
 .fab .ico{width:28px;height:28px;margin:0;stroke-width:2.4}
 nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,12,15,.9);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--line);z-index:6;padding-bottom:env(safe-area-inset-bottom)}
@@ -254,7 +254,7 @@ details.note summary{color:var(--gold)}
 .steps li{counter-increment:s;display:flex;gap:12px;align-items:flex-start;padding:10px 0;line-height:1.45}
 .steps li::before{content:counter(s);flex:none;width:26px;height:26px;border-radius:50%;background:var(--grad);color:#0B0C0F;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
 .steps svg.i{color:var(--gold);width:1.2em;height:1.2em}
-.update{position:fixed;left:12px;right:12px;bottom:calc(132px + env(safe-area-inset-bottom));z-index:25;max-width:696px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:18px;border:1px solid rgba(201,170,34,.5);background:linear-gradient(180deg,#1c1a10,#14151a);box-shadow:0 12px 40px -10px rgba(0,0,0,.7);font-size:14px}
+.update{position:fixed;left:12px;right:12px;bottom:calc(146px + env(safe-area-inset-bottom));z-index:25;max-width:696px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:18px;border:1px solid rgba(201,170,34,.5);background:linear-gradient(180deg,#1c1a10,#14151a);box-shadow:0 12px 40px -10px rgba(0,0,0,.7);font-size:14px}
 .legal{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:6px}
 .legal a{color:var(--mute);font-size:13px;text-decoration:none;transition:color .2s}
 .legal a:hover{color:var(--gold)}
@@ -388,7 +388,7 @@ function fixCats(){
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-22.8';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-22.9';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
