@@ -5,7 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0B0C0F">
 <meta name="description" content="Monatsklar: Haushaltsbuch mit Kassenzettel-Scan, Budgets, Sparzielen und Spartipps. Ihre Daten bleiben auf Ihrem Gerät.">
-<meta name="robots" content="noindex">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://monatsklar.de/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Monatsklar">
+<meta property="og:locale" content="de_DE">
+<meta property="og:url" content="https://monatsklar.de/">
+<meta property="og:title" content="Monatsklar – Ihr Haushaltsbuch ohne Tabellen">
+<meta property="og:description" content="Kassenzettel scannen, Kontoauszug hochladen, ehrliche Spartipps. Ihre Daten bleiben auf Ihrem Gerät. 8 Wochen Premium gratis.">
+<meta property="og:image" content="https://monatsklar.de/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Monatsklar – das Haushaltsbuch, das Excel ersetzt">
+<meta name="twitter:card" content="summary_large_image">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' data: blob:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -110,6 +122,9 @@ svg{display:block;width:100%;height:auto}
 .items{font-size:12px;color:var(--mute);margin:6px 0 0;padding-left:0;list-style:none}
 .seg.g button.on{background:var(--grad);color:#0B0C0F}
 .seg.g svg.i{width:16px;height:16px;vertical-align:-3px}
+.why{margin-top:14px;border-top:1px solid var(--line);padding-top:6px}
+.why .kv{margin-top:10px}
+.why dd{text-align:right}
 .its.big summary{font-size:14px;color:var(--text)}
 .its.big summary b{color:var(--gold)}
 .rsteps{margin:10px 0 4px 18px;line-height:1.5;color:var(--mute)}
@@ -373,7 +388,7 @@ function fixCats(){
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-22.4';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-22.6';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -488,6 +503,15 @@ function forecast(m){
   const inc=Math.max(s.inc,avgInc), exp=s.exp+varProj+pendingFixed;
   return {open:true,inc,exp,saldo:inc-exp,day};
 }
+/* Zu jedem Spartipp aufklappbar: Rechenweg, Zahlen und die Buchungen, auf denen er beruht */
+function whyHtml(t){
+  if(!t.why) return '';
+  return `<details class="its big why"><summary>Wie kommt die App darauf?</summary>
+    <p class="sm" style="margin:8px 0 0">${esc(t.why)}</p>
+    ${t.facts&&t.facts.length?`<dl class="kv">${t.facts.map(([k,v])=>`<dt>${esc(String(k))}</dt><dd>${esc(String(v))}</dd>`).join('')}</dl>`:''}
+    ${t.tx&&t.tx.length?`<ul class="items" style="color:var(--text)">${t.tx.slice().sort((a,b)=>a.d.localeCompare(b.d)).map(x=>`<li><span>${x.d.slice(8)}.${x.d.slice(5,7)}. ${esc(x.desc)}</span><span>${eur2(-x.amt)}</span></li>`).join('')}</ul>`:''}
+    ${t.cat?`<button class="btn ghost sm" style="margin-top:12px" onclick="openList('cat','${esc(t.cat)}')">Alle Buchungen in ${esc(t.cat)}</button>`:''}</details>`;
+}
 function tips(m){
   const out=[], s=sums(m), f=forecast(m), prior=months().filter(x=>x<m).slice(-3);
   const scale=isOpen(m)?dim(m)/Math.max(dayNow(m),1):1;
@@ -499,7 +523,10 @@ function tips(m){
       const cur=proj(c,m), avg=prior.map(x=>sums(x).by[c]||0).reduce((a,b)=>a+b,0)/prior.length;
       if(avg>20&&cur>avg*1.25&&cur-avg>20){
         out.push({ic:'trendUp',t:`${c}: ${Math.round((cur/avg-1)*100)} % über Ihrem Schnitt`,
-          p:`Sie liegen bei ca. ${eur(cur)} im Monat, sonst bei ${eur(avg)}. Kommen Sie zurück auf Ihren üblichen Wert, bleibt das Geld bei Ihnen.`,save:cur-avg});
+          p:`Sie liegen bei ca. ${eur(cur)} im Monat, sonst bei ${eur(avg)}. Kommen Sie zurück auf Ihren üblichen Wert, bleibt das Geld bei Ihnen.`,save:cur-avg,
+          why:`Wir vergleichen Ihre Ausgaben der Kategorie „${c}" in ${mLabel(m)} mit dem Durchschnitt der letzten ${prior.length} Monate. Der Tipp erscheint, sobald Sie mehr als 25 % darüber liegen und der Unterschied über 20 € beträgt.${isOpen(m)?` Da ${mLabel(m)} noch läuft, rechnen wir Ihr bisheriges Tempo auf den ganzen Monat hoch. Erkannte Fixkosten werden dabei nicht hochgerechnet.`:''}`,
+          facts:[[`${mLabel(m)}${isOpen(m)?' (hochgerechnet)':''}`,eur(cur)],...prior.map(x=>[mLabel(x),eur(sums(x).by[c]||0)]),['Durchschnitt',eur(avg)],['Unterschied',eur(cur-avg)]],
+          cat:c});
       }
     });
   }
@@ -507,19 +534,27 @@ function tips(m){
   if(small.length>=6){
     const sum=small.reduce((x,t)=>x-t.amt,0)*scale, avg=sum/(small.length*scale);
     out.push({ic:'coffee',t:`${small.length} kleine Käufe im Café`,
-      p:`Im Schnitt ${eur2(avg)} pro Kauf, zusammen ca. ${eur(sum)} im Monat. Nur jeden zweiten Kauf zu ersparen, schafft spürbar Luft.`,save:sum/2});
+      p:`Im Schnitt ${eur2(avg)} pro Kauf, zusammen ca. ${eur(sum)} im Monat. Nur jeden zweiten Kauf zu ersparen, schafft spürbar Luft.`,save:sum/2,
+      why:`Gezählt werden alle Buchungen in „Restaurants & Café" unter 8 €. Ab sechs solcher Käufe im Monat erscheint der Tipp. Als Ersparnis rechnen wir die Hälfte, weil Sie kaum alle streichen werden.${isOpen(m)?` ${mLabel(m)} läuft noch, deshalb ist die Summe auf den ganzen Monat hochgerechnet.`:''}`,
+      facts:[['Kleine Käufe',small.length],['Schnitt pro Kauf',eur2(avg)],['Zusammen',eur(sum)],['Davon die Hälfte',eur(sum/2)]],
+      tx:small});
   }
   const abos=recurring().filter(r=>r.cat==='Abos & Medien');
   if(abos.length>=2){
     const tot=abos.reduce((x,r)=>x+r.avg,0), top=abos[0];
     out.push({ic:'repeat',t:`${abos.length} laufende Abos: ${eur(tot)} pro Monat`,
-      p:`Am teuersten: ${top.name} mit ${eur2(top.avg)} im Monat. Nutzen Sie wirklich alle? Ein gekündigtes Abo entlastet sofort.`,save:top.avg});
+      p:`Am teuersten: ${top.name} mit ${eur2(top.avg)} im Monat. Nutzen Sie wirklich alle? Ein gekündigtes Abo entlastet sofort.`,save:top.avg,
+      why:`Als Abo zählt eine Zahlung in „Abos & Medien", die in mindestens drei Monaten mit fast gleichem Betrag auftaucht. Als Ersparnis setzen wir nur das teuerste an, weil Sie vermutlich nicht alle kündigen wollen.`,
+      facts:abos.map(r=>[r.name+' (ca. am '+r.day+'.)',eur2(r.avg)+' · '+eur(r.avg*12)+'/Jahr'])});
   }
   if(f.inc>0){
     const rate=f.saldo/f.inc;
+    const qFacts=[['Einnahmen',eur(f.inc)],[f.open?'Ausgaben (Prognose)':'Ausgaben',eur(f.exp)],['Bleibt übrig',eur(f.saldo)],['Sparquote',Math.round(rate*100)+' %']];
+    const qWhy=`Sparquote heißt: Was am Monatsende übrig bleibt, geteilt durch Ihre Einnahmen.${f.open?` ${mLabel(m)} läuft noch, deshalb ist es eine Prognose aus Ihrem bisherigen Tempo plus den noch fehlenden Fixkosten.`:''} Der Richtwert von 10 bis 20 % ist eine gängige Faustregel, keine Vorgabe für Ihre Lage.`;
     if(rate<0.1) out.push({ic:'target',t:`Sparquote nur ${Math.max(0,Math.round(rate*100))} %`,
-      p:`Richtwert sind 10 bis 20 % des Einkommens. Richten Sie am Gehaltstag einen Dauerauftrag ein, bevor das Geld anderweitig verschwindet.`,save:Math.max(0,0.1*f.inc-f.saldo)});
-    else out.push({ic:'trophy',t:`Starke Sparquote: ${Math.round(rate*100)} %`,p:`Sie legen ${eur(f.saldo)} zurück. Legen Sie das Geld sinnvoll an, statt es auf dem Girokonto liegen zu lassen.`,save:0});
+      p:`Richtwert sind 10 bis 20 % des Einkommens. Richten Sie am Gehaltstag einen Dauerauftrag ein, bevor das Geld anderweitig verschwindet.`,save:Math.max(0,0.1*f.inc-f.saldo),
+      why:qWhy+` Als Ersparnis zeigen wir, was bis zu 10 % noch fehlt.`,facts:[...qFacts,['10 % wären',eur(0.1*f.inc)]]});
+    else out.push({ic:'trophy',t:`Starke Sparquote: ${Math.round(rate*100)} %`,p:`Sie legen ${eur(f.saldo)} zurück. Legen Sie das Geld sinnvoll an, statt es auf dem Girokonto liegen zu lassen.`,save:0,why:qWhy,facts:qFacts});
   }
   /* Café-Käufe sind Teil der Kategorie "Restaurants & Café": nicht doppelt in die Summe zählen */
   const cafe=out.find(t=>t.ic==='coffee');
@@ -607,7 +642,7 @@ function vTips(){
   h+='<h2>Ihre Tipps</h2>';
   h+=tp.map((t,i)=>{const lock=!S.premium&&i>=free;
     return `<div class="card tip ${lock?'locked':''}" ${lock?'onclick="openPaywall()" style="cursor:pointer"':''}>${lock?`<span class="lockmsg">${ic('lock')} Premium</span>`:''}
-      <h3><span class="ic">${ic(t.ic)}</span> ${esc(t.t)}</h3><p class="mute">${esc(t.p)}</p>${t.save>0?`<span class="save">bis zu ${eur(t.save)} pro Monat</span>`:''}</div>`;}).join('')||'<p class="mute">Noch keine Tipps. Erfassen Sie ein paar Wochen lang Ihre Ausgaben, dann werden sie genauer.</p>';
+      <h3><span class="ic">${ic(t.ic)}</span> ${esc(t.t)}</h3><p class="mute">${esc(t.p)}</p>${t.save>0?`<span class="save">bis zu ${eur(t.save)} pro Monat</span>`:''}${lock?'':whyHtml(t)}</div>`;}).join('')||'<p class="mute">Noch keine Tipps. Erfassen Sie ein paar Wochen lang Ihre Ausgaben, dann werden sie genauer.</p>';
   h+='<h2>Abo- und Vertrags-Radar</h2>';
   if(!S.premium) h+=`<div class="card tip locked" onclick="openPaywall()" style="cursor:pointer"><span class="lockmsg">${ic('lock')} Premium</span><p class="mute">${rec.length} wiederkehrende Zahlungen erkannt, zusammen ${eur(rec.reduce((x,r)=>x+r.avg,0))} pro Monat.</p></div>`;
   else h+=`<div class="card">${rec.map(r=>`<div class="tx"><span class="dot" style="background:${CATS[r.cat].c}"></span><div class="d"><div class="t1">${esc(r.name)}</div><div class="mute sm">ca. am ${r.day}. · seit ${r.months} Monaten</div></div><div class="amt">${eur2(r.avg)}<div class="mute sm" style="text-align:right;font-weight:400">${eur(r.avg*12)}/Jahr</div></div></div>`).join('')||'<p class="mute">Keine wiederkehrenden Zahlungen erkannt.</p>'}</div>`;
@@ -1649,7 +1684,7 @@ function cleanShop(s){
   const pl=s.plan;
   if(pl&&Array.isArray(pl.days)){
     const days=pl.days.slice(0,7).map(o=>{o=o||{};const l=o.l===undefined?o.h:o.l;return{f:okId(RECI,o.f),l:okId(RECI,l),a:okId(RECI,o.a)};}).filter(o=>o.f||o.l||o.a);
-    if(days.length) d.plan={days,people:Math.min(12,Math.max(.25,+pl.people||2)),n:clamp(pl.n||pl.people,1,12,2),txt:String(pl.txt||'').slice(0,90),bio:!!pl.bio,basics:pl.basics!==false,budget:Math.max(0,+pl.budget||0)};
+    if(days.length) d.plan={done:(Array.isArray(pl.done)?pl.done:[]).slice(0,120).filter(x=>/^[a-z0-9_]{1,32}$/.test(String(x))),days,people:Math.min(12,Math.max(.25,+pl.people||2)),n:clamp(pl.n||pl.people,1,12,2),txt:String(pl.txt||'').slice(0,90),bio:!!pl.bio,basics:pl.basics!==false,budget:Math.max(0,+pl.budget||0)};
   }
   return d;
 }
@@ -1704,8 +1739,10 @@ function makePlan(){
     const b=basket(days,P.people,P.bio,P.basics), ok=b.total<=budget, var_=Object.keys(mains).length+Object.keys(cuis).length, sc=ok?[1,var_,-b.total]:[0,-b.total,0];
     if(!best||sc[0]>best.sc[0]||(sc[0]===best.sc[0]&&(sc[1]>best.sc[1]||(sc[1]===best.sc[1]&&sc[2]>best.sc[2])))) best={days,sc};
   }
-  return{days:best.days,people:P.people,n:P.adults+P.kids.length,txt:hhTxt(P),bio:P.bio,basics:P.basics,budget};
+  return{done:[],days:best.days,people:P.people,n:P.adults+P.kids.length,txt:hhTxt(P),bio:P.bio,basics:P.basics,budget};
 }
+function korbTick(id){const p=S.shop.plan,i=p.done.indexOf(id);i<0?p.done.push(id):p.done.splice(i,1);shopSave();}
+function korbReset(){S.shop.plan.done=[];shopSave();}
 function shopSave(){save();render(true);}
 function shopStore(k){S.shop.store=k;shopSave();}
 function shopTabSet(t){S.shopTab=t;render(true);}
@@ -1817,14 +1854,14 @@ function vShop(){
      <p class="note">Die App wählt Rezepte, die zusammen in Ihr Budget passen, und achtet auf Abwechslung und die Jahreszeit. Bereits geplante Gerichte kommen seltener wieder dran. Angaben zu Laktose, Gluten und Nüssen sind eine Orientierung, bitte prüfen Sie die Zutaten auf den Verpackungen.</p></div><div id="sh_res"></div>`;
     const pl=H.plan;
     if(pl){
-      const b=basket(pl.days,pl.people,pl.bio,pl.basics), ok=b.total<=pl.budget, pct=Math.min(100,pl.budget?b.total/pl.budget*100:100);
+      const b=basket(pl.days,pl.people,pl.bio,pl.basics), dn=b.lines.filter(l=>pl.done.includes(l.it.id)).length, ok=b.total<=pl.budget, pct=Math.min(100,pl.budget?b.total/pl.budget*100:100);
       h+=`<h2>Ihr Ergebnis</h2><div class="card"><div class="row"><div><div class="mute sm">Einkaufskorb</div><div style="font-size:28px;font-weight:800">${eur2(b.total)}</div></div><div style="text-align:right"><div class="mute sm">Budget</div><div style="font-size:18px;font-weight:700">${eur2(pl.budget)}</div></div></div>
        <div style="height:8px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin:12px 0 10px"><div style="height:100%;width:${pct}%;background:${ok?'var(--pos)':'var(--neg)'}"></div></div>
        <p class="sm ${ok?'pos':''}" style="${ok?'':'color:var(--neg)'}">${ok?`${ic('check')} Im Budget, ${eur2(pl.budget-b.total)} bleiben übrig.`:`${ic('alert')} Das Budget reicht dafür nicht. Nötig wären ${eur2(b.total)}. Tipp: weniger Tage, ein günstigerer Laden, vegetarisch oder ohne Bio.`}</p>
        <p class="mute sm" style="margin-top:6px">Etwa ${eur2(b.total/(pl.n||pl.people)/pl.days.length)} pro Person und Tag.</p>
        <div class="btns" style="margin-top:14px"><button class="btn" onclick="shopFromPlan()">${ic('cart')} Auf die Einkaufsliste</button><button class="btn ghost" onclick="shopBuild()">Neu mischen</button></div></div>
        <h2>Speiseplan</h2>${pl.days.map((d,i)=>`<div class="card"><b>Tag ${i+1}</b>${MEALS.filter(m=>d[m]).map(m=>{const r=RECI[d[m]];return `<details class="its big" style="margin-top:8px"><summary><b>${MEAL[m]}:</b> ${esc(r.n)}<span class="mute sm" style="display:block;font-weight:400">${recMeta(r)}</span></summary>${recHtml(r,pl.people,pl.bio,pl.basics,`<button class="btn ghost sm" onclick="shopSwap(${i},'${m}')">Anderes Rezept</button>`,pl.txt||pl.n+' Personen')}</details>`;}).join('')}</div>`).join('')}
-       <h2>Einkaufskorb</h2><div class="card" style="padding:4px 16px">${b.lines.map((l,i)=>`${i===0||b.lines[i-1].it.c!==l.it.c?`<div class="mute sm" style="margin-top:12px;text-transform:uppercase;letter-spacing:.1em">${l.it.c}</div>`:''}<div class="tx"><div class="d"><div class="t1">${esc(l.it.n)}</div><div class="mute sm">${l.packs} × ${packLabel(l.it)}</div></div><div class="amt">${eur2(l.price)}</div></div>`).join('')}</div>`;
+       <h2>Einkaufskorb</h2><div class="card" style="padding:12px 16px"><details class="its big"><summary><b>${b.lines.length} Artikel</b> · ${eur2(b.total)}${dn?` · ${dn} erledigt`:''}</summary><div style="margin-top:6px">${b.lines.map((l,i)=>{const on=pl.done.includes(l.it.id);return `${i===0||b.lines[i-1].it.c!==l.it.c?`<div class="mute sm" style="margin-top:12px;text-transform:uppercase;letter-spacing:.1em">${l.it.c}</div>`:''}<div class="tx"><input type="checkbox" style="width:22px;height:22px;accent-color:#C9AA22;flex:none" ${on?'checked':''} onchange="korbTick('${l.it.id}')" aria-label="Erledigt"><div class="d"><div class="t1" style="${on?'text-decoration:line-through;opacity:.5':''}">${esc(l.it.n)}</div><div class="mute sm">${l.packs} × ${packLabel(l.it)}</div></div><div class="amt" style="${on?'opacity:.5':''}">${eur2(l.price)}</div></div>`;}).join('')}${dn?`<button class="btn ghost sm" style="margin-top:14px" onclick="korbReset()">Haken zurücksetzen</button>`:''}</div></details></div>`;
     }
   }
   return h;
