@@ -388,7 +388,7 @@ function fixCats(){
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-22.9';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-23.1';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -843,11 +843,14 @@ async function prep(file){
   const x=c.getContext('2d'); x.filter='grayscale(1) contrast(1.4)'; x.drawImage(bmp,0,0,c.width,c.height);
   return c;
 }
-async function ocr(img){
-  S.scan.msg='Texterkennung wird geladen (nur beim ersten Mal) …'; renderSheet();
+async function ocrRead(img,onMsg,label){
+  onMsg('Texterkennung wird geladen (nur beim ersten Mal) …');
   await loadTess();
-  const r=await Tesseract.recognize(img,'deu',{workerPath:LOCAL+'tesseract/worker.min.js',corePath:LOCAL+'tesseract/core',langPath:LOCAL+'tesseract/lang',logger:m=>{if(m.status==='recognizing text'&&S.scan&&S.scan.busy){S.scan.msg=`Kassenzettel wird gelesen … ${Math.round(m.progress*100)} %`;const b=document.querySelector('.rcpt');if(b)b.innerHTML='<span class="spin"></span>'+esc(S.scan.msg);}}});
+  const r=await Tesseract.recognize(img,'deu',{workerPath:LOCAL+'tesseract/worker.min.js',corePath:LOCAL+'tesseract/core',langPath:LOCAL+'tesseract/lang',logger:m=>{if(m.status==='recognizing text')onMsg(`${label} … ${Math.round(m.progress*100)} %`);}});
   return r.data.text;
+}
+async function ocr(img){
+  return ocrRead(img,msg=>{if(S.scan&&S.scan.busy){S.scan.msg=msg;const b=document.querySelector('.rcpt');if(b)b.innerHTML='<span class="spin"></span>'+esc(msg);else renderSheet();}},'Kassenzettel wird gelesen');
 }
 /* PDF: erst eingebetteten Text lesen (genau), sonst Seite 1 als Bild erkennen */
 let pdfP=null;
@@ -1686,7 +1689,7 @@ function cleanShop(s){
   s=s&&typeof s==='object'?s:{}; const P=s.prefs||{}, M=P.meals||{}, X=P.excl||{};
   const d={store:STORES[s.store]?s.store:null,seed:clamp(s.seed,0,1e6,0),
     hist:(Array.isArray(s.hist)?s.hist:[]).slice(0,60).map(x=>String(x)).filter(x=>/^[a-z0-9_]{1,32}$/.test(x)),
-    list:(Array.isArray(s.list)?s.list:[]).slice(0,200).map(x=>x||{}).map(x=>({id:String(x.id||uid()).replace(/[^A-Za-z0-9_-]/g,'').slice(0,40)||uid(),n:String(x.n||'').slice(0,60),q:String(x.q||'').slice(0,40),pid:okId(IT,x.pid),packs:clamp(x.packs,1,99,1),done:!!x.done})).filter(x=>x.n),
+    list:(Array.isArray(s.list)?s.list:[]).slice(0,200).map(x=>x||{}).map(x=>({id:String(x.id||uid()).replace(/[^A-Za-z0-9_-]/g,'').slice(0,40)||uid(),n:String(x.n||'').slice(0,60),q:String(x.q||'').slice(0,40),pid:okId(IT,x.pid),packs:clamp(x.packs,1,99,1),pr:(typeof x.pr==='number'&&x.pr>0&&x.pr<10000)?Math.round(x.pr*100)/100:null,done:!!x.done})).filter(x=>x.n),
     prefs:{budget:String(P.budget||'').slice(0,8),adults:clamp(P.adults!==undefined?P.adults:P.people,1,6,2),kids:(Array.isArray(P.kids)?P.kids:[]).slice(0,6).map(a=>clamp(a,0,17,6)),days:clamp(P.days,1,7,3),diet:['all','veg','vegan'].includes(P.diet)?P.diet:'all',bio:!!P.bio,basics:P.basics!==false,
       excl:{lf:!!X.lf,gf:!!X.gf,nf:!!X.nf},nou:!!P.nou,no:(Array.isArray(P.no)?P.no:[]).slice(0,20).map(x=>String(x).toLowerCase().replace(/[^a-zäöüß -]/g,'').trim().slice(0,30)).filter(x=>x.length>=2),meals:{f:!!M.f,l:M.l===undefined?M.h!==false:!!M.l,a:!!M.a}},plan:null};
   if(!MEALS.some(m=>d.prefs.meals[m])) d.prefs.meals.a=true;
@@ -1785,14 +1788,69 @@ function shopSwap(i,m){
   pl.days[i][m]=typeof best==='string'?best:(best?best.id:cur); rememberPlan(pl.days); shopSave();
 }
 const listMatch=q=>{q=q.toLowerCase();const a=Object.values(IT);return a.find(i=>i.n.toLowerCase()===q)||(q.length>=3?a.find(i=>i.n.toLowerCase().includes(q)):null)||null;};
+/* Preisschild lesen: Grundpreise je Kilo oder Liter und Werbezeilen sind nicht der Artikelpreis */
+const PT_SKIP=/\b(kg|liter|ltr|100\s?g|1\s?l|je)\b|grundpreis|pfand|statt|uvp|rabatt|%|treue|punkte|gutschein/i;
+const PT_LETTERS=/[a-zA-ZäöüÄÖÜß]/g;
+function parsePriceTag(text){
+  const lines=text.split(/\r?\n/).map(l=>l.replace(/\s+/g,' ').trim()).filter(Boolean);
+  let pr=null, prLine=-1;
+  lines.forEach((l,i)=>{
+    if(pr!==null||PT_SKIP.test(l)) return;
+    const m=l.match(/(?:^|[^\d.,])(\d{1,3})[.,](\d{2})(?!\d)/);
+    if(!m) return;
+    const v=+(m[1]+'.'+m[2]);
+    if(v>0&&v<500){pr=v;prLine=i;}
+  });
+  let n='', hit=null;
+  for(const l of lines){ const m=listMatch(l.replace(/[^a-zA-ZäöüÄÖÜß ]/g,' ').trim()); if(m){hit=m;break;} }
+  if(hit) n=hit.n;
+  else {
+    const cands=lines.filter((l,i)=>i!==prLine&&!PT_SKIP.test(l)&&(l.match(PT_LETTERS)||[]).length>=3&&(l.match(/\d/g)||[]).length<=2);
+    cands.sort((a,b)=>(b.match(PT_LETTERS)||[]).length-(a.match(PT_LETTERS)||[]).length);
+    n=(cands[0]||'').slice(0,60);
+  }
+  return {n,pr,pid:hit?hit.id:null};
+}
 function shopAdd(e){
   e.preventDefault(); const el=document.getElementById('sh_in'), n=el.value.trim().slice(0,60); if(!n) return;
   if(S.shop.list.length>=200){toast('Die Liste ist voll (200 Artikel)');return;}
-  const m=listMatch(n); S.shop.list.push({id:uid(),n:m?m.n:n,q:m?'1 × '+packLabel(m):'',pid:m?m.id:null,packs:1,done:false}); shopSave();
+  const pe=document.getElementById('sh_pr'), pv=pe?num(pe.value):NaN, pr=(pv>0&&pv<10000)?Math.round(pv*100)/100:null;
+  shopPush(n,pr); if(pe) pe.value='';
   const i=document.getElementById('sh_in'); if(i) i.focus();
+}
+function shopPush(n,pr){
+  const m=listMatch(n);
+  S.shop.list.push({id:uid(),n:m&&pr===null?m.n:n,q:pr!==null?'selbst erfasst':(m?'1 × '+packLabel(m):''),pid:m?m.id:null,packs:1,pr,done:false});
+  shopSave();
 }
 function shopTick(id){const x=S.shop.list.find(i=>i.id===id);if(x){x.done=!x.done;shopSave();}}
 function shopDel(id){S.shop.list=S.shop.list.filter(i=>i.id!==id);shopSave();}
+function shopPhoto(){
+  if(!S.premium){openPaywall();toast('Preisschild fotografieren ist Teil von Premium');return;}
+  document.getElementById('sh_cam').click();
+}
+async function shopScanFile(file){
+  if(!file) return;
+  S.shopScan={busy:true,msg:'Bild wird vorbereitet …'}; render(true);
+  const upd=m=>{S.shopScan.msg=m;const b=document.getElementById('sh_sc');if(b)b.innerHTML='<span class="spin"></span>'+esc(m);};
+  try{
+    const text=await ocrRead(await prep(file),upd,'Preisschild wird gelesen');
+    const r=parsePriceTag(text);
+    if(!r.n&&r.pr===null) throw new Error('leer');
+    S.shopScan={n:r.n,pr:r.pr===null?'':String(r.pr).replace('.',',')};
+  }catch(e){
+    S.shopScan={err:e&&e.message==='offline'?'Die Texterkennung konnte nicht geladen werden. Beim ersten Mal ist dafür eine Internetverbindung nötig.':'Auf dem Foto war nichts Lesbares. Tippen Sie den Artikel bitte von Hand ein, oder fotografieren Sie das Preisschild näher und gerader.'};
+  }
+  render(true);
+}
+function shopScanSave(){
+  const sc=S.shopScan; if(!sc) return;
+  const ne=document.getElementById('sc_n'), pe=document.getElementById('sc_p');
+  const n=(ne?ne.value:sc.n||'').trim().slice(0,60); if(!n){toast('Bitte einen Namen eingeben');return;}
+  const v=pe?num(pe.value):NaN, pr=(v>0&&v<10000)?Math.round(v*100)/100:null;
+  S.shopScan=null; shopPush(n,pr); toast(pr!==null?n+' für '+eur2(pr)+' hinzugefügt':n+' hinzugefügt');
+}
+function shopScanClose(){S.shopScan=null;render(true);}
 function shopClean(){S.shop.list=S.shop.list.filter(i=>!i.done);shopSave();}
 function addLines(lines){
   let n=0; lines.forEach(l=>{if(S.shop.list.some(x=>x.pid===l.it.id&&!x.done)||S.shop.list.length>=200)return;S.shop.list.push({id:uid(),n:l.it.n,q:l.packs+' × '+packLabel(l.it),pid:l.it.id,packs:l.packs,done:false});n++;});
@@ -1808,7 +1866,7 @@ function shopRecToList(id){
   const n=addLines(r.ing.filter(i=>!isBasic(IT[i[0]],P.basics)).map(([k,q])=>({it:IT[k],packs:Math.max(1,Math.ceil(q*P.people/IT[k].p-1e-9))})));
   save(); toast(n?n+' Zutaten auf die Einkaufsliste gesetzt':'Alle Zutaten stehen schon auf der Liste');
 }
-const listPrice=x=>x.pid&&IT[x.pid]?IT[x.pid].pr*x.packs*shopMult():null;
+const listPrice=x=>x.pr!=null?x.pr*x.packs:(x.pid&&IT[x.pid]?IT[x.pid].pr*x.packs*shopMult():null);
 function shopToExpense(){
   const t=S.shop.list.reduce((s,x)=>s+(listPrice(x)||0),0);
   openAdd(); S.form.amt=t?String(Math.round(t*100)/100).replace('.',','):''; S.form.cat='Lebensmittel'; S.form.desc='Einkauf'+(S.shop.store?' '+STORES[S.shop.store][0]:''); S.form.catManual=true; renderSheet();
@@ -1841,7 +1899,16 @@ function vShop(){
     const tot=H.list.reduce((s,x)=>s+(listPrice(x)||0),0), un=H.list.filter(x=>listPrice(x)===null).length, done=H.list.filter(x=>x.done).length;
     const grp={}; H.list.forEach(x=>{const c=x.pid&&IT[x.pid]?IT[x.pid].c:'Sonstiges';(grp[c]=grp[c]||[]).push(x);});
     const row=x=>{const p=listPrice(x);return `<div class="tx"><input type="checkbox" style="width:22px;height:22px;accent-color:#C9AA22;flex:none" ${x.done?'checked':''} onchange="shopTick('${x.id}')" aria-label="Erledigt"><div class="d"><div class="t1" style="${x.done?'text-decoration:line-through;opacity:.5':''}">${esc(x.n)}</div>${x.q?`<div class="mute sm">${esc(x.q)}</div>`:''}</div>${p!==null?`<div class="amt">${eur2(p)}</div>`:''}<button class="del" onclick="shopDel('${x.id}')" aria-label="Entfernen">${ic('x')}</button></div>`;};
-    h+=`<form class="row" style="gap:8px;margin-bottom:12px" onsubmit="shopAdd(event)"><input class="f" id="sh_in" list="sh_dl" placeholder="Was brauchen Sie? z. B. Nudeln" maxlength="60" autocomplete="off" aria-label="Artikel hinzufügen"><datalist id="sh_dl">${Object.values(IT).map(i=>`<option value="${esc(i.n)}">`).join('')}</datalist><button class="btn sm" type="submit" style="flex:none;width:auto" aria-label="Hinzufügen">${ic('plusSquare')} Hinzu</button></form>
+    const sc=S.shopScan;
+    h+=`<form style="margin-bottom:12px" onsubmit="shopAdd(event)"><div class="row" style="gap:8px"><input class="f" id="sh_in" list="sh_dl" placeholder="Artikel, z. B. Nudeln" maxlength="60" autocomplete="off" aria-label="Artikel hinzufügen"><input class="f" id="sh_pr" inputmode="decimal" placeholder="Preis" style="width:86px;flex:none;text-align:right" autocomplete="off" aria-label="Preis in Euro"><button class="btn sm" type="submit" style="flex:none;width:auto;padding:13px 14px" aria-label="Hinzufügen">${ic('plusSquare')}</button></div>
+     <datalist id="sh_dl">${Object.values(IT).map(i=>`<option value="${esc(i.n)}">`).join('')}</datalist>
+     <button class="btn ghost sm" type="button" style="margin-top:8px;width:100%" onclick="shopPhoto()">${ic('camera')} Preisschild fotografieren${S.premium?'':' '+ic('lock')}</button>
+     <input type="file" id="sh_cam" accept="image/*" capture="environment" hidden onchange="shopScanFile(this.files[0]);this.value=''"></form>
+     ${sc?(sc.busy?`<div class="rcpt" id="sh_sc"><span class="spin"></span>${esc(sc.msg)}</div>`:sc.err?`<div class="rcpt" style="border-color:var(--neg)">${esc(sc.err)}<button class="btn ghost sm" style="margin-top:10px" onclick="shopScanClose()">Schließen</button></div>`:`<div class="card" style="border-color:rgba(201,170,34,.5)"><div class="row" style="margin-bottom:6px"><b>${ic('camera')} Erkannt</b><button class="del" onclick="shopScanClose()" aria-label="Verwerfen">${ic('x')}</button></div>
+      <label class="fl" style="margin-top:4px">Artikel</label><input class="f" id="sc_n" value="${esc(sc.n||'')}" maxlength="60" placeholder="Name des Artikels">
+      <label class="fl">Preis in €</label><input class="f" id="sc_p" inputmode="decimal" value="${esc(sc.pr||'')}" placeholder="0,00">
+      <p class="note">Bitte kurz prüfen. Die Erkennung liest das größte Preisfeld und blendet Grundpreise je Kilo oder Liter aus.</p>
+      <button class="btn" style="margin-top:12px" onclick="shopScanSave()">Auf die Einkaufsliste</button></div>`):''}
      <div class="card" style="padding:4px 16px">${[...SHOP_CATS,'Sonstiges'].filter(c=>grp[c]).map(c=>`<div class="mute sm" style="margin-top:12px;text-transform:uppercase;letter-spacing:.1em">${c}</div>${grp[c].map(row).join('')}`).join('')||`<p class="mute" style="padding:14px 0">Ihre Liste ist leer. Tippen Sie oben einen Artikel ein oder lassen Sie sich unter „Plan &amp; Korb" einen Einkauf zusammenstellen. Unter „Rezepte" können Sie Zutaten direkt übernehmen.</p>`}</div>
      ${H.list.length?`<div class="card kpi"><div class="lbl">Geschätzte Summe</div><div class="val">${eur2(tot)}</div>${un?`<div class="mute sm">${un} ${un===1?'Artikel':'Artikel'} ohne Preis</div>`:''}</div>
      <div class="btns"><button class="btn" onclick="shopToExpense()">${ic('wallet')} Als Ausgabe erfassen</button>${done?`<button class="btn ghost" onclick="shopClean()">${done} erledigte entfernen</button>`:''}</div>`:''}`;
