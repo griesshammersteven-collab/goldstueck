@@ -385,10 +385,10 @@ function fixCats(){
 }
 
 /* ---------- Zustand & Speicher ---------- */
-let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], refCode:null, refBy:null, upl:0, customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
+let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], refCode:null, refBy:null, upl:0, customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null, list:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-23.3';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-23.4';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -816,12 +816,19 @@ function renderSheet(){
   <input type="file" id="rcam" accept="image/*" capture="environment" hidden onchange="scanFile(this.files[0]);this.value=''">
   <input type="file" id="rfile" accept="application/pdf,.pdf,image/*" hidden onchange="scanFile(this.files[0]);this.value=''">
   <button class="btn" style="margin-top:20px" onclick="saveForm()">${ed?'Änderung speichern':'Speichern'}</button>
+  ${ed?`<button class="btn ghost" style="margin-top:10px;border-color:rgba(229,115,92,.5);color:#E5735C" onclick="editDel()">${ic('x')} Buchung löschen</button>`:''}
   ${ed?'':'<p class="note">Kassenzettel-Fotos werden auf Ihrem Gerät ausgewertet und nicht gespeichert.</p>'}`;
 }
 function setType(t){const F=S.form;F.type=t;if(t==='inc'){if(!isInc(F.cat))F.cat='Einkommen';}else if(isInc(F.cat))F.cat='Lebensmittel';F.catManual=false;keepInputs();}
 function keepInputs(){const a=document.getElementById('f_amt'),d=document.getElementById('f_desc');if(a)S.form.amt=a.value;if(d)S.form.desc=d.value;renderSheet();}
 function pickCat(c){S.form.cat=c;S.form.catManual=true;document.getElementById('chips').innerHTML=chipsHtml();}
 function onDesc(v){const F=S.form;F.desc=v;if(!F.catManual&&F.type==='exp'&&v.length>2){const c=categorize(v,-1);if(c!==F.cat&&c!=='Sonstiges'){F.cat=c;document.getElementById('chips').innerHTML=chipsHtml();}}}
+function editDel(){
+  const F=S.form; if(!F||!F.editId) return;
+  const t=S.tx.find(x=>x.id===F.editId); if(!t){closeAdd();return;}
+  if(!confirm(`${t.desc} über ${eur2(Math.abs(t.amt))} wirklich löschen?`)) return;
+  S.tx=S.tx.filter(x=>x.id!==F.editId); save(); closeAdd(); render(true); toast('Buchung gelöscht');
+}
 function saveForm(){
   const F=S.form, a=Math.abs(num(F.amt));
   if(!a||isNaN(a)){toast('Bitte einen Betrag eingeben');document.getElementById('f_amt').focus();return;}
@@ -1184,7 +1191,7 @@ function stImport(){
 /* ---------- Buchungen zu Diagramm, Kategorie und Kennzahlen anzeigen ---------- */
 function setMonth(m){S.month=m;render(true);}
 function openList(kind,key){
-  const m=S.month, all=monthTx(m);
+  const m=S.month, all=monthTx(m); S.list={kind,key};
   let list,title,ico,color;
   if(kind==='cat'){list=all.filter(t=>t.cat===key);title=key;ico=CATS[key].ic;color=CATS[key].c;}
   else if(kind==='inc'){list=all.filter(t=>t.amt>0);title='Einnahmen';ico='wallet';color='#4CC38A';}
@@ -1201,11 +1208,19 @@ function openList(kind,key){
      <div class="d"><div class="t1">${esc(t.desc)}${t.items?' '+ic('receipt'):''}</div><div class="mute sm">${t.d.slice(8)}.${t.d.slice(5,7)}.${kind!=='cat'?' · '+esc(t.cat):''}${t.recId?' · Dauerauftrag':''}</div>
      ${t.items?itemsHtml(t.items):''}</div>
      <div class="amt ${t.amt>0?'pos':''}">${t.amt>0?'+':''}${eur2(t.amt)}</div>
-     <button class="del" onclick="listEdit('${t.id}')" aria-label="Bearbeiten">${ic('pencil')}</button></div>`).join('')||'<p class="mute" style="padding:14px 0">Keine Buchungen.</p>'}</div>`;
+     <button class="del" onclick="listEdit('${t.id}')" aria-label="Bearbeiten">${ic('pencil')}</button>
+     <button class="del" onclick="listDel('${t.id}')" aria-label="Löschen">${ic('x')}</button></div>`).join('')||'<p class="mute" style="padding:14px 0">Keine Buchungen.</p>'}</div>`;
   document.getElementById('lm').classList.add('show');
 }
-function closeList(){document.getElementById('lm').classList.remove('show');}
+function closeList(){S.list=null;document.getElementById('lm').classList.remove('show');}
 function listEdit(id){closeList();openEdit(id);}
+function listDel(id){
+  const t=S.tx.find(x=>x.id===id); if(!t) return;
+  if(!confirm(`${t.desc} über ${eur2(Math.abs(t.amt))} wirklich löschen?`)) return;
+  S.tx=S.tx.filter(x=>x.id!==id); save();
+  const L=S.list; render(true);
+  if(L&&monthTx(S.month).some(x=>L.kind==='cat'?x.cat===L.key:L.kind==='inc'?x.amt>0:x.amt<0)) openList(L.kind,L.key); else closeList();
+}
 
 /* ---------- Kündigung (Kündigungsbutton nach § 312k BGB) ---------- */
 const CONTRACTS=['Monatsklar Premium – monatlich','Monatsklar Premium – jährlich','Kostenlose Testphase / Basis-Version'];
