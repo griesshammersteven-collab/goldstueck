@@ -369,10 +369,10 @@ function fixCats(){
 }
 
 /* ---------- Zustand & Speicher ---------- */
-let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',people:2,days:3,diet:'all',bio:false,meals:{f:false,h:true}},plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
+let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true}},plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-22.1';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-22.2';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -1653,17 +1653,17 @@ const RECS=[
 ['m17','Gemüse-Nudelpfanne','h',20,[['nudeln',100],['gemuesemix',150],['zwiebeln',30],['knoblauch',1]],['Nudeln garen.','Zwiebel, Knoblauch und Gemüse anbraten.','Nudeln unterheben und würzen.']]
 ].map(([id,n,m,min,ing,steps])=>{const t=ing.map(([k])=>IT[k].t).join('');return{id,n,m,min,ing,steps,veg:!/[mf]/.test(t),vegan:!/[mfde]/.test(t)};});
 const RECI={}; RECS.forEach(r=>RECI[r.id]=r);
-const MEAL={f:'Frühstück',h:'Hauptgericht'};
+const MEAL={f:'Frühstück',l:'Mittagessen',a:'Abendessen'}, MEALS=['f','l','a'];
 const clamp=(v,a,b,d)=>{v=Math.round(+v);return v>=a&&v<=b?v:d;};
 function cleanShop(s){
   s=s&&typeof s==='object'?s:{}; const P=s.prefs||{}, M=P.meals||{};
   const d={store:STORES[s.store]?s.store:null,seed:clamp(s.seed,0,1e6,0),
     list:(Array.isArray(s.list)?s.list:[]).slice(0,200).map(x=>x||{}).map(x=>({id:String(x.id||uid()).replace(/[^A-Za-z0-9_-]/g,'').slice(0,40)||uid(),n:String(x.n||'').slice(0,60),q:String(x.q||'').slice(0,40),pid:IT[x.pid]?x.pid:null,packs:clamp(x.packs,1,99,1),done:!!x.done})).filter(x=>x.n),
-    prefs:{budget:String(P.budget||'').slice(0,8),people:clamp(P.people,1,6,2),days:clamp(P.days,1,7,3),diet:['all','veg','vegan'].includes(P.diet)?P.diet:'all',bio:!!P.bio,meals:{f:!!M.f,h:M.h!==false}},plan:null};
-  if(!d.prefs.meals.f&&!d.prefs.meals.h) d.prefs.meals.h=true;
+    prefs:{budget:String(P.budget||'').slice(0,8),people:clamp(P.people,1,6,2),days:clamp(P.days,1,7,3),diet:['all','veg','vegan'].includes(P.diet)?P.diet:'all',bio:!!P.bio,meals:{f:!!M.f,l:M.l===undefined?M.h!==false:!!M.l,a:!!M.a}},plan:null};
+  if(!MEALS.some(m=>d.prefs.meals[m])) d.prefs.meals.a=true;
   const pl=s.plan;
   if(pl&&Array.isArray(pl.days)){
-    const days=pl.days.slice(0,7).map(o=>({f:RECI[o&&o.f]?o.f:null,h:RECI[o&&o.h]?o.h:null})).filter(o=>o.f||o.h);
+    const days=pl.days.slice(0,7).map(o=>{o=o||{};const l=o.l===undefined?o.h:o.l,ok=id=>RECI[id]?id:null;return{f:ok(o.f),l:ok(l),a:ok(o.a)};}).filter(o=>o.f||o.l||o.a);
     if(days.length) d.plan={days,people:clamp(pl.people,1,6,2),bio:!!pl.bio,budget:Math.max(0,+pl.budget||0)};
   }
   return d;
@@ -1675,7 +1675,7 @@ function fmtQty(u,q){
   return (Math.round(q*10)/10).toString().replace('.',',')+' '+u;
 }
 function basket(days,people,bio){
-  const need={}; days.forEach(d=>[d.f,d.h].forEach(id=>{if(id)RECI[id].ing.forEach(([k,q])=>{need[k]=(need[k]||0)+q*people;});}));
+  const need={}; days.forEach(d=>MEALS.forEach(m=>{const id=d[m];if(id)RECI[id].ing.forEach(([k,q])=>{need[k]=(need[k]||0)+q*people;});}));
   const m=shopMult()*(bio?1.35:1);
   const lines=Object.entries(need).map(([k,q])=>{const it=IT[k],packs=Math.max(1,Math.ceil(q/it.p-1e-9));return{it,q,packs,price:packs*it.pr*m};});
   lines.sort((a,b)=>SHOP_CATS.indexOf(a.it.c)-SHOP_CATS.indexOf(b.it.c)||a.it.n.localeCompare(b.it.n,'de'));
@@ -1684,12 +1684,12 @@ function basket(days,people,bio){
 function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 /* Zufällige Speisepläne durchprobieren: erst alles im Budget, dann möglichst viel Abwechslung, dann der günstigste */
 function makePlan(){
-  const P=S.shop.prefs, budget=num(P.budget), meals=['f','h'].filter(m=>P.meals[m]);
-  const pool=m=>RECS.filter(r=>r.m===m&&(P.diet==='all'||(P.diet==='veg'&&r.veg)||(P.diet==='vegan'&&r.vegan)));
+  const P=S.shop.prefs, budget=num(P.budget), meals=MEALS.filter(m=>P.meals[m]);
+  const pool=m=>RECS.filter(r=>r.m===(m==='f'?'f':'h')&&(P.diet==='all'||(P.diet==='veg'&&r.veg)||(P.diet==='vegan'&&r.vegan)));
   S.shop.seed=(S.shop.seed||0)+1; const rnd=rng(S.shop.seed*7919+13); let best=null;
   for(let n=0;n<150;n++){
     const used=new Set(), days=[];
-    for(let d=0;d<P.days;d++){const day={f:null,h:null};meals.forEach(m=>{const pl=pool(m),fresh=pl.filter(r=>!used.has(r.id)),src=fresh.length?fresh:pl,r=src[Math.floor(rnd()*src.length)];used.add(r.id);day[m]=r.id;});days.push(day);}
+    for(let d=0;d<P.days;d++){const day={f:null,l:null,a:null};meals.forEach(m=>{const pl=pool(m),fresh=pl.filter(r=>!used.has(r.id)),src=fresh.length?fresh:pl,r=src[Math.floor(rnd()*src.length)];used.add(r.id);day[m]=r.id;});days.push(day);}
     const b=basket(days,P.people,P.bio), ok=b.total<=budget, sc=ok?[1,used.size,-b.total]:[0,-b.total,0];
     if(!best||sc[0]>best.sc[0]||(sc[0]===best.sc[0]&&(sc[1]>best.sc[1]||(sc[1]===best.sc[1]&&sc[2]>best.sc[2])))) best={days,sc};
   }
@@ -1698,7 +1698,7 @@ function makePlan(){
 function shopSave(){save();render(true);}
 function shopStore(k){S.shop.store=k;shopSave();}
 function shopTabSet(t){S.shopTab=t;render(true);}
-function shopPref(k,v){const P=S.shop.prefs;if(k==='meal'){P.meals[v]=!P.meals[v];if(!P.meals.f&&!P.meals.h)P.meals[v==='f'?'h':'f']=true;}else if(k==='bio')P.bio=!P.bio;else P[k]=v;shopSave();}
+function shopPref(k,v){const P=S.shop.prefs;if(k==='meal'){P.meals[v]=!P.meals[v];if(!MEALS.some(m=>P.meals[m]))P.meals[v]=true;}else if(k==='bio')P.bio=!P.bio;else P[k]=v;shopSave();}
 function shopBudget(v){S.shop.prefs.budget=v.replace(/[^0-9,.]/g,'').slice(0,8);save();}
 function shopBuild(){
   const b=num(S.shop.prefs.budget);
@@ -1742,7 +1742,7 @@ function vShop(){
      ${avg>0?`<p class="note">Zum Vergleich: Sie geben im Schnitt ${eur(avg)} pro Monat für Lebensmittel aus.</p>`:''}
      <label class="fl">Personen</label><div class="chips">${[1,2,3,4,5,6].map(n=>ch(P.people===n,`shopPref('people',${n})`,n)).join('')}</div>
      <label class="fl">Für wie viele Tage</label><div class="chips">${[1,2,3,4,5,6,7].map(n=>ch(P.days===n,`shopPref('days',${n})`,n)).join('')}</div>
-     <label class="fl">Mahlzeiten pro Tag</label><div class="chips">${ch(P.meals.f,"shopPref('meal','f')",'Frühstück')}${ch(P.meals.h,"shopPref('meal','h')",'Hauptgericht')}</div>
+     <label class="fl">Mahlzeiten pro Tag</label><div class="chips">${ch(P.meals.f,"shopPref('meal','f')",'Frühstück')}${ch(P.meals.l,"shopPref('meal','l')",'Mittagessen')}${ch(P.meals.a,"shopPref('meal','a')",'Abendessen')}</div>
      <label class="fl">Ernährung</label><div class="chips">${ch(P.diet==='all',"shopPref('diet','all')",'Alles')}${ch(P.diet==='veg',"shopPref('diet','veg')",'Vegetarisch')}${ch(P.diet==='vegan',"shopPref('diet','vegan')",'Vegan')}${ch(P.bio,"shopPref('bio')",'Bio-Qualität')}</div>
      <button class="btn" style="margin-top:20px" onclick="shopBuild()">${ic('sparkles')} ${H.plan?'Neu zusammenstellen':'Korb zusammenstellen'}</button>
      <p class="note">Die App wählt Rezepte, die zusammen in Ihr Budget passen. Salz, Pfeffer und Öl setzen wir als vorhanden voraus.</p></div><div id="sh_res"></div>`;
@@ -1754,7 +1754,7 @@ function vShop(){
        <p class="sm ${ok?'pos':''}" style="${ok?'':'color:var(--neg)'}">${ok?`${ic('check')} Im Budget, ${eur2(pl.budget-b.total)} bleiben übrig.`:`${ic('alert')} Das Budget reicht dafür nicht. Nötig wären ${eur2(b.total)}. Tipp: weniger Tage, ein günstigerer Laden, vegetarisch oder ohne Bio.`}</p>
        <p class="mute sm" style="margin-top:6px">Etwa ${eur2(b.total/pl.people/pl.days.length)} pro Person und Tag.</p>
        <div class="btns" style="margin-top:14px"><button class="btn" onclick="shopFromPlan()">${ic('cart')} Auf die Einkaufsliste</button><button class="btn ghost" onclick="shopBuild()">Neu mischen</button></div></div>
-       <h2>Speiseplan</h2>${pl.days.map((d,i)=>`<div class="card"><b>Tag ${i+1}</b>${['f','h'].filter(m=>d[m]).map(m=>{const r=RECI[d[m]];return `<details class="its big" style="margin-top:8px"><summary><b>${MEAL[m]}:</b> ${esc(r.n)} · ${r.min} Min.</summary><div class="sm" style="margin-top:6px"><b>Zutaten für ${pl.people} ${pl.people===1?'Person':'Personen'}</b><ul class="items" style="color:var(--text)">${r.ing.map(([k,q])=>`<li><span>${esc(IT[k].n)}</span><span>${fmtQty(IT[k].u,q*pl.people)}</span></li>`).join('')}</ul><ol class="rsteps">${r.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol></div></details>`;}).join('')}</div>`).join('')}
+       <h2>Speiseplan</h2>${pl.days.map((d,i)=>`<div class="card"><b>Tag ${i+1}</b>${MEALS.filter(m=>d[m]).map(m=>{const r=RECI[d[m]], mu=shopMult()*(pl.bio?1.35:1), cst=([k,q])=>q*pl.people/IT[k].p*IT[k].pr*mu, sub=r.ing.reduce((x,i)=>x+cst(i),0);return `<details class="its big" style="margin-top:8px"><summary><b>${MEAL[m]}:</b> ${esc(r.n)} · ${r.min} Min.</summary><div class="sm" style="margin-top:6px"><b>Einkaufskorb für ${pl.people} ${pl.people===1?'Person':'Personen'}: ${eur2(sub)}</b><ul class="items" style="color:var(--text)">${r.ing.map(i=>`<li><span>${esc(IT[i[0]].n)} · ${fmtQty(IT[i[0]].u,i[1]*pl.people)}</span><span>${eur2(cst(i))}</span></li>`).join('')}</ul><p class="note">Anteilig gerechnet. Gekauft werden ganze Packungen, siehe Gesamtkorb unten.</p><ol class="rsteps">${r.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol></div></details>`;}).join('')}</div>`).join('')}
        <h2>Einkaufskorb</h2><div class="card" style="padding:4px 16px">${b.lines.map((l,i)=>`${i===0||b.lines[i-1].it.c!==l.it.c?`<div class="mute sm" style="margin-top:12px;text-transform:uppercase;letter-spacing:.1em">${l.it.c}</div>`:''}<div class="tx"><div class="d"><div class="t1">${esc(l.it.n)}</div><div class="mute sm">${l.packs} × ${packLabel(l.it)}</div></div><div class="amt">${eur2(l.price)}</div></div>`).join('')}</div>`;
     }
   }
