@@ -366,7 +366,7 @@ function fixCats(){
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], customCats:[], ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-21.2';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-21.3';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -750,13 +750,13 @@ function saveForm(){
   if(F.editId){
     const t=S.tx.find(x=>x.id===F.editId); if(!t){closeAdd();return;}
     Object.assign(t,{d:F.date,desc,amt,cat:F.cat}); if(F.rep&&!t.recId){mkRec(t);S.tx.forEach(o=>{if(!o.recId&&key(o.desc)===key(t.desc)&&o.amt===t.amt)o.recId=t.recId;});}else if(!F.rep&&t.recId){const id=t.recId;S.tx.forEach(o=>{if(o.recId===id)delete o.recId;});S.rec=S.rec.filter(r=>r.id!==id);} if(F.catManual&&F.desc.trim()) S.rules[key(desc)]=F.cat;
-    save(); S.month=mk(F.date); closeAdd(); render(true); toast('Änderung gespeichert'); return;
+    autoPost(); save(); S.month=mk(F.date); closeAdd(); render(true); toast('Änderung gespeichert'); return;
   }
   const t={id:uid(),d:F.date,desc,amt,cat:F.cat};
   if(F.items&&F.items.length) t.items=F.items;
   if(F.desc.trim()&&F.catManual) S.rules[key(desc)]=F.cat;
   if(F.rep) mkRec(t);
-  S.tx.push(t); if(F.rcpt) fbTrigger('scan'); save();
+  S.tx.push(t); if(F.rcpt) fbTrigger('scan'); autoPost(); save();
   S.month=mk(F.date); closeAdd(); render(); toast(`${amt>0?'Einnahme':'Ausgabe'} gespeichert: ${eur2(Math.abs(amt))}`);
 }
 function mkRec(t){const k=key(t.desc),o=S.rec.find(r=>key(r.desc)===k&&r.amt===t.amt);if(o){t.recId=o.id;return;}const r={id:uid(),desc:t.desc,amt:t.amt,cat:t.cat,day:Math.min(+t.d.slice(8),28),from:mk(t.d)};S.rec.push(r);t.recId=r.id;}
@@ -767,7 +767,7 @@ function autoPost(){
     for(;;){
       const mm=`${y}-${pad(m)}`; if(mm>cm) break;
       const d=`${mm}-${pad(Math.min(r.day,dim(mm)))}`;
-      if(d<=now&&!S.tx.some(t=>t.recId===r.id&&mk(t.d)===mm)){S.tx.push({id:uid(),d,desc:r.desc,amt:r.amt,cat:r.cat,recId:r.id});n++;}
+      if(d<=now&&!S.tx.some(t=>mk(t.d)===mm&&(t.recId===r.id||(t.amt===r.amt&&key(t.desc)===key(r.desc))))){S.tx.push({id:uid(),d,desc:r.desc,amt:r.amt,cat:r.cat,recId:r.id});n++;}
       m++; if(m>12){m=1;y++;}
     }
   });
