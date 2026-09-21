@@ -108,6 +108,7 @@ svg{display:block;width:100%;height:auto}
 .tx .del:hover,.del:hover{color:var(--gold);background:rgba(255,255,255,.06)}
 .del{background:none;border:0;color:var(--mute);cursor:pointer;border-radius:10px;padding:6px 8px;line-height:1}
 .items{font-size:12px;color:var(--mute);margin:6px 0 0;padding-left:0;list-style:none}
+.its summary{cursor:pointer;font-size:12px;color:var(--gold,#C9AA22);padding:6px 0;list-style:revert}
 .items li{display:flex;justify-content:space-between;gap:10px}
 .amt{font-weight:700;white-space:nowrap}
 
@@ -366,7 +367,7 @@ function fixCats(){
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], customCats:[], ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-21.4';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-21.5';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -587,7 +588,7 @@ function vTx(){
   <div class="card">${list.map(t=>`<div class="tx"><span class="dot" style="background:${CATS[t.cat].c}"></span>
     <div class="d"><div class="t1">${esc(t.desc)}${t.items?' '+ic('receipt'):''}</div><div class="mute sm">${t.d.slice(8)}.${t.d.slice(5,7)}.
     <select onchange="setCat('${t.id}',this.value)" aria-label="Kategorie">${CAT_NAMES.map(c=>`<option ${c===t.cat?'selected':''}>${c}</option>`).join('')}</select></div>
-    ${t.items?`<ul class="items">${t.items.map(i=>`<li><span>${esc(i.n)}</span><span>${eur2(i.p)}</span></li>`).join('')}</ul>`:''}</div>
+    ${t.items?itemsHtml(t.items):''}</div>
     <div class="amt ${t.amt>0?'pos':''}">${t.amt>0?'+':''}${eur2(t.amt)}</div>
     <button class="del" onclick="openEdit('${t.id}')" aria-label="Bearbeiten">${ic('pencil')}</button><button class="del" onclick="delTx('${t.id}')" aria-label="Löschen">${ic('x')}</button></div>`).join('')||'<p class="mute">Keine Buchungen.</p>'}</div>`;
 }
@@ -711,6 +712,8 @@ function chipsHtml(){
   return list.map(c=>`<button type="button" class="chip ${F.cat===c?'on':''}" onclick="pickCat('${c}')">${ic(CATS[c].ic,'',`color:${CATS[c].c}`)} ${c}</button>`).join('')
     +`<button type="button" class="chip" onclick="openCat(null,'form')">${ic('plusSquare')} Neue Kategorie</button>`;
 }
+/* Kassenzettel-Positionen: standardmäßig zugeklappt, nur die Gesamtsumme steht in der Buchung */
+function itemsHtml(it){return `<details class="its"><summary>${it.length} ${it.length===1?'Position':'Positionen'} anzeigen</summary><ul class="items">${it.map(i=>`<li><span>${esc(i.n)}</span><span>${eur2(i.p)}</span></li>`).join('')}</ul></details>`;}
 function openEdit(id){
   const t=S.tx.find(x=>x.id===id); if(!t) return;
   S.form={type:t.amt>0?'inc':'exp',amt:String(Math.abs(t.amt)).replace('.',','),desc:t.desc,cat:t.cat,catManual:true,date:t.d,rep:!!t.recId,items:t.items||null,rcpt:!!t.items,editId:id};
@@ -729,7 +732,7 @@ function renderSheet(){
   <label class="fl">Kategorie</label><div class="chips" id="chips">${chipsHtml()}</div>
   <label class="fl">Datum</label><input class="f" type="date" value="${F.date}" onchange="S.form.date=this.value">
   <label class="chk"><input type="checkbox" ${F.rep?'checked':''} onchange="S.form.rep=this.checked"> Jeden Monat wiederholen (Dauerauftrag)</label>${ed?'<p class="note">Gilt auch rückwirkend für gleiche Buchungen aus früheren Monaten. Abwählen entfernt den Dauerauftrag.</p>':''}
-  ${F.rcpt&&F.items&&F.items.length?`<div class="rcpt"><b>${ic('receipt')} ${F.items.length} Positionen erkannt</b><ul class="items">${F.items.map(i=>`<li><span>${esc(i.n)}</span><span>${eur2(i.p)}</span></li>`).join('')}</ul></div>`:''}
+  ${F.rcpt&&F.items&&F.items.length?`<div class="rcpt"><b>${ic('receipt')} ${F.items.length} Positionen erkannt</b>${itemsHtml(F.items)}</div>`:''}
   ${sc&&sc.busy?`<div class="rcpt"><span class="spin"></span>${esc(sc.msg)}</div>`:''}
   ${sc&&sc.err?`<div class="rcpt" style="border-color:var(--neg)">${esc(sc.err)}</div>`:''}
   ${ed?'':`<button class="btn ghost" style="margin-top:14px" onclick="openStatement()">${ic('landmark')} Stattdessen Kontoauszug hochladen</button>`}
@@ -1119,7 +1122,7 @@ function openList(kind,key){
     <div class="card kpi" style="margin:0"><div class="lbl">${share!==null?'Anteil an den Ausgaben':'Durchschnitt pro Buchung'}</div><div class="val">${share!==null?share+' %':eur(list.length?spend/list.length:0)}</div></div></div>
    <div class="card" style="padding:4px 16px;margin-top:14px">${list.map(t=>`<div class="tx"><span class="dot" style="background:${CATS[t.cat].c}"></span>
      <div class="d"><div class="t1">${esc(t.desc)}${t.items?' '+ic('receipt'):''}</div><div class="mute sm">${t.d.slice(8)}.${t.d.slice(5,7)}.${kind!=='cat'?' · '+esc(t.cat):''}${t.recId?' · Dauerauftrag':''}</div>
-     ${t.items?`<ul class="items">${t.items.map(i=>`<li><span>${esc(i.n)}</span><span>${eur2(i.p)}</span></li>`).join('')}</ul>`:''}</div>
+     ${t.items?itemsHtml(t.items):''}</div>
      <div class="amt ${t.amt>0?'pos':''}">${t.amt>0?'+':''}${eur2(t.amt)}</div>
      <button class="del" onclick="listEdit('${t.id}')" aria-label="Bearbeiten">${ic('pencil')}</button></div>`).join('')||'<p class="mute" style="padding:14px 0">Keine Buchungen.</p>'}</div>`;
   document.getElementById('lm').classList.add('show');
