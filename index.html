@@ -366,7 +366,9 @@ const BASE_CATS = {
 };
 /* Aktive Kategorien = feste Kategorien + eigene (siehe rebuildCats). Alle Stellen lesen CATS/CAT_NAMES/EXP_CATS zur Laufzeit. */
 let CATS = BASE_CATS, CATS_P = BASE_CATS, CATS_B = BIZ_CATS;
+const jsq=v=>String(v).replace(/[\\']/g,m=>'\\'+m);
 const isBiz=()=>S.mode==='biz';
+const catOf=c=>CATS[c]||CATS_P[c]||CATS_B[c]||{c:'#8A8F98',ic:'package',kw:[],fixed:false};
 const catsFor=biz=>biz?CATS_B:CATS_P;
 const incIn=(map,c)=>!!(map[c]&&(map[c].type==='inc'));
 const defCat=(map,amt)=>amt>0?Object.keys(map).find(c=>incIn(map,c)):'Sonstiges';
@@ -416,7 +418,7 @@ function fixCats(){
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], mode:null, biz:{ust:'klein',mixed:false,fy:1}, refCode:null, refBy:null, upl:0, customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null, list:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-24.2';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-24.4';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -429,7 +431,7 @@ function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||'null'); if(j)
 function save(){try{localStorage.setItem(KEY,JSON.stringify({tx:S.tx,rules:S.rules,rec:S.rec,scans:S.scans,stmts:S.stmts,budgets:S.budgets,goals:S.goals,paid:S.paid,trialStart:S.trialStart,choice:S.choice,cancels:S.cancels,lastBackup:S.lastBackup,bkSnooze:S.bkSnooze,instSnooze:S.instSnooze,customCats:S.customCats,mode:S.mode,biz:S.biz,shop:S.shop,refCode:S.refCode,refBy:S.refBy,upl:S.upl,fb:S.fb}))}catch(e){toast('Speichern nicht möglich (Speicher voll oder gesperrt)')}}
 
 /* ---------- Helfer ---------- */
-const eur=(n,d=0)=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',minimumFractionDigits:d,maximumFractionDigits:d}).format(n);
+const eur=(n,d=0)=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',minimumFractionDigits:d,maximumFractionDigits:d}).format(n===0?0:n);
 const eur2=n=>eur(n,2);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pad=n=>String(n).padStart(2,'0');
@@ -516,7 +518,7 @@ function recDue(r,m){
 }
 function recurring(){
   const g={}, span=months().length;
-  S.tx.filter(t=>t.amt<0).forEach(t=>{const k=key(t.desc);(g[k]=g[k]||[]).push(t);});
+  S.tx.filter(t=>t.amt<0&&inMode(t)).forEach(t=>{const k=key(t.desc);(g[k]=g[k]||[]).push(t);});
   const out=[];
   for(const k in g){
     const list=g[k], ms=[...new Set(list.map(t=>mk(t.d)))];
@@ -526,7 +528,7 @@ function recurring(){
     if(sd/avg>0.15) continue;
     out.push({key:k,name:list[list.length-1].desc,avg,day:Math.round(list.reduce((x,t)=>x+ +t.d.slice(8),0)/list.length),months:ms.length,cat:list[list.length-1].cat});
   }
-  S.rec.forEach(r=>{const k=key(r.desc);if(r.amt<0&&!out.some(o=>o.key===k))out.push({key:k,name:r.desc,avg:-r.amt,day:r.day,months:1,cat:r.cat,iv:+r.iv||1,from:r.from});});
+  S.rec.forEach(r=>{const k=key(r.desc);if(r.amt<0&&!!r.biz===isBiz()&&!out.some(o=>o.key===k))out.push({key:k,name:r.desc,avg:-r.amt,day:r.day,months:1,cat:r.cat,iv:+r.iv||1,from:r.from});});
   return out.sort((a,b)=>b.avg-a.avg);
 }
 function forecast(m){
@@ -550,7 +552,7 @@ function whyHtml(t){
     <p class="sm" style="margin:8px 0 0">${esc(t.why)}</p>
     ${t.facts&&t.facts.length?`<dl class="kv">${t.facts.map(([k,v])=>`<dt>${esc(String(k))}</dt><dd>${esc(String(v))}</dd>`).join('')}</dl>`:''}
     ${t.tx&&t.tx.length?`<ul class="items" style="color:var(--text)">${t.tx.slice().sort((a,b)=>a.d.localeCompare(b.d)).map(x=>`<li><span>${x.d.slice(8)}.${x.d.slice(5,7)}. ${esc(x.desc)}</span><span>${eur2(-x.amt)}</span></li>`).join('')}</ul>`:''}
-    ${t.cat?`<button class="btn ghost sm" style="margin-top:12px" onclick="openList('cat','${esc(t.cat)}')">Alle Buchungen in ${esc(t.cat)}</button>`:''}</details>`;
+    ${t.cat?`<button class="btn ghost sm" style="margin-top:12px" onclick="openList('cat','${esc(jsq(t.cat))}')">Alle Buchungen in ${esc(t.cat)}</button>`:''}</details>`;
 }
 function fcWhy(f,m){
   if(!f.open) return `<details class="its big why"><summary>Wie kommt die Zahl zustande?</summary>
@@ -721,7 +723,8 @@ function vTips(){
 function scansLeft(){return Math.max(0,FREE_SCANS-(S.scans[mk(today())]||0));}
 /* ---------- Budgets & Sparziele ---------- */
 function budgetCard(m){
-  const b=Object.entries(S.budgets).filter(([,v])=>v>0); if(!b.length) return '';
+  if(isBiz()) return '';   /* Budgets werden privat gefuehrt */
+  const b=Object.entries(S.budgets).filter(([c,v])=>v>0&&CATS[c]); if(!b.length) return '';
   const s=sums(m);
   return `<h2>Budgets</h2><div class="card">${b.map(([c,lim])=>{
     const sp=s.by[c]||0, pct=sp/lim*100, col=pct>100?'var(--neg)':pct>=80?'#E8A04C':'';
@@ -802,7 +805,7 @@ function vMore(){
    <button class="btn sm" onclick="openMode()">Wechseln</button></div>
    <p class="note">Private und geschäftliche Buchungen bleiben getrennt. Beim Wechsel geht nichts verloren.</p></div>
   <h2>Wiederkehrende Buchungen</h2><div class="card">
-   ${S.rec.map(r=>`<div class="tx"><span class="dot" style="background:${CATS[r.cat].c}"></span><div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">${ivName(r.iv)} am ${r.day}.</div></div><div class="amt ${r.amt>0?'pos':''}">${r.amt>0?'+':''}${eur2(r.amt)}</div><button class="del" onclick="delRec('${r.id}')" aria-label="Entfernen">${ic('x')}</button></div>`).join('')||'<p class="mute sm">Noch keine. Beim Erfassen einer Buchung können Sie „Jeden Monat wiederholen" anhaken, z. B. für Miete und Gehalt.</p>'}</div>
+   ${S.rec.filter(r=>!!r.biz===isBiz()).map(r=>`<div class="tx"><span class="dot" style="background:${catOf(r.cat).c}"></span><div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">${ivName(r.iv)} am ${r.day}.</div></div><div class="amt ${r.amt>0?'pos':''}">${r.amt>0?'+':''}${eur2(r.amt)}</div><button class="del" onclick="delRec('${r.id}')" aria-label="Entfernen">${ic('x')}</button></div>`).join('')||'<p class="mute sm">Noch keine. Beim Erfassen einer Buchung können Sie „Jeden Monat wiederholen" anhaken, z. B. für Miete und Gehalt.</p>'}</div>
   <h2>Kassenzettel-Scans</h2><div class="card"><div class="row"><div><b>${S.premium?'Unbegrenzt':scansLeft()+' von '+FREE_SCANS+' übrig'}</b><div class="mute sm">${S.premium?'Mit Premium':'in diesem Monat (Gratis-Version)'}</div></div><button class="btn sm" onclick="openAdd(true)">${ic('camera')} Scannen</button></div></div>
   <h2>Premium</h2>${trialBanner()}<div class="card"><div class="row"><div><b>${S.paid?'Premium aktiv (Demo)':trialInfo().phase!=='ended'?'Premium-Testphase':'Basis-Version'}</b><div class="mute sm">${S.paid?'Alle Funktionen freigeschaltet':trialInfo().phase!=='ended'?`Alle Funktionen frei, noch ${trialInfo().left} Tage`:'Erfassen, Dashboard und Prognose sind kostenlos'}</div></div>
   <button class="btn sm" onclick="${S.paid?'togglePremium(false)':'openPaywall()'}">${S.paid?'Beenden':'Preise'}</button></div></div>
@@ -828,7 +831,7 @@ function openAdd(scan){
 function closeAdd(){document.getElementById('addm').classList.remove('show');S.form=null;S.scan=null;}
 function chipsHtml(){
   const F=S.form, list=F.type==='inc'?INC_CATS:EXP_CATS;
-  return list.map(c=>`<button type="button" class="chip ${F.cat===c?'on':''}" onclick="pickCat('${c}')">${ic(CATS[c].ic,'',`color:${CATS[c].c}`)} ${c}</button>`).join('')
+  return list.map(c=>`<button type="button" class="chip ${F.cat===c?'on':''}" onclick="pickCat('${esc(jsq(c))}')">${ic(CATS[c].ic,'',`color:${CATS[c].c}`)} ${c}</button>`).join('')
     +`<button type="button" class="chip" onclick="openCat(null,'form')">${ic('plusSquare')} Neue Kategorie</button>`;
 }
 /* Kassenzettel-Positionen: standardmäßig zugeklappt, nur die Gesamtsumme steht in der Buchung */
@@ -925,7 +928,7 @@ function saveForm(){
     Object.assign(t,{d:F.date,desc,amt:ps?-ps.main:amt,cat:F.cat});
     if(F.biz){t.biz=true;if(regel())t.ust=ustPick(F.ust);} else {delete t.biz;delete t.ust;}
     if(ps){ if(ps.mainItems.length) t.items=ps.mainItems; else delete t.items;
-      ps.others.forEach(o=>S.tx.push({id:uid(),d:F.date,desc:desc+' · '+o.cat,amt:-o.sum,cat:o.cat,items:o.items})); } if(F.rep&&!t.recId){mkRec(t,F.iv);S.tx.forEach(o=>{if(!o.recId&&key(o.desc)===key(t.desc)&&o.amt===t.amt)o.recId=t.recId;});}
+      ps.others.forEach(o=>S.tx.push(Object.assign({id:uid(),d:F.date,desc:desc+' · '+o.cat,amt:-o.sum,cat:o.cat,items:o.items},F.biz?{biz:true,...(regel()?{ust:ustPick(F.ust)}:{})}:{}))); } if(F.rep&&!t.recId){mkRec(t,F.iv);S.tx.forEach(o=>{if(!o.recId&&key(o.desc)===key(t.desc)&&o.amt===t.amt)o.recId=t.recId;});}
     else if(F.rep&&t.recId){const rr=S.rec.find(r=>r.id===t.recId);if(rr)rr.iv=ivOk(F.iv);}else if(!F.rep&&t.recId){const id=t.recId;S.tx.forEach(o=>{if(o.recId===id)delete o.recId;});S.rec=S.rec.filter(r=>r.id!==id);} if(F.catManual&&F.desc.trim()) S.rules[key(desc)]=F.cat;
     autoPost(); save(); S.month=mk(F.date); closeAdd(); render(true); toast('Änderung gespeichert'); return;
   }
@@ -1277,7 +1280,7 @@ function stFlip(i){const r=S.st.rows[i];r.amt=-r.amt;r.guess=false;r.cat=categor
 function closeStmt(){document.getElementById('sm').classList.remove('show');S.st=null;}
 function stImport(){
   const R=S.st.rows.filter(r=>r.inc); if(!R.length) return;
-  R.forEach(r=>{const t={id:uid(),d:r.d,desc:r.desc,amt:r.amt,cat:r.cat};if(isBiz()){t.biz=true;if(regel())t.ust=19;}S.tx.push(t);if(r.rep)mkRec(t);}); autoPost();
+  R.forEach(r=>{const t={id:uid(),d:r.d,desc:r.desc,amt:r.amt,cat:r.cat};if(isBiz())t.biz=true;   /* Steuersatz nicht raten: die Auswertung rechnet ohne Angabe mit 19 % und sagt das auch */S.tx.push(t);if(r.rep)mkRec(t);}); autoPost();
   const cnt={}; R.forEach(r=>cnt[mk(r.d)]=(cnt[mk(r.d)]||0)+1); const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0][0];
   S.stmts[mk(today())]=stmtsUsed()+1; S.upl++; fbTrigger('stmt'); save(); closeStmt(); S.month=top; S.tab='home'; render(); window.scrollTo(0,0);
   toast(`${R.length} Buchungen übernommen · ${mLabel(top)}`);
@@ -1409,7 +1412,7 @@ function delTx(id){if(!confirm('Diese Buchung löschen?'))return;S.tx=S.tx.filte
 function wipe(){if(confirm('Wirklich alle Daten (Buchungen, Budgets, Sparziele) von diesem Gerät löschen?')){S.tx=[];S.rules={};S.rec=[];S.scans={};S.budgets={};S.goals=[];S.customCats=[];S.shop=cleanShop(null);rebuildCats();save();render();}}
 /* ---------- Sicherung und Wiederherstellung (JSON) ---------- */
 function dlBackup(){
-  const data={format:'monatsklar-backup',version:1,created:new Date().toISOString(),tx:S.tx,rules:S.rules,rec:S.rec,budgets:S.budgets,goals:S.goals,cats:S.customCats,trialStart:S.trialStart,choice:S.choice};
+  const data={format:'monatsklar-backup',version:1,created:new Date().toISOString(),tx:S.tx,rules:S.rules,rec:S.rec,budgets:S.budgets,goals:S.goals,cats:S.customCats,mode:S.mode,biz:S.biz,trialStart:S.trialStart,choice:S.choice};
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));
   a.download=`monatsklar-sicherung-${today()}.json`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
@@ -1434,25 +1437,26 @@ function cleanBackup(d){
   if(!d||d.format!=='monatsklar-backup'||!Array.isArray(d.tx)) throw new Error('format');
   if(d.tx.length>100000) throw new Error('groesse');
   const str=(v,n)=>String(v==null?'':v).slice(0,n);
+  const sid=v=>String(v==null?'':v).replace(/[^A-Za-z0-9_-]/g,'').slice(0,40);
   const num0=v=>typeof v==='number'&&isFinite(v)?v:null;
   const cats=cleanCats(d.cats), known=(n,biz)=>!!(biz?BIZ_CATS:BASE_CATS)[n]||cats.some(c=>c.name===n)||S.customCats.some(c=>c.name===n);
   const seen=new Set(), tx=[];
   for(const t of d.tx){
     if(!t||!/^\d{4}-\d{2}-\d{2}$/.test(t.d)||num0(t.amt)===null||t.amt===0) continue;
-    const id=str(t.id,40)||uid(); if(seen.has(id)) continue; seen.add(id);
+    const id=sid(t.id)||uid(); if(seen.has(id)) continue; seen.add(id);
     const biz=!!t.biz;
     const o={id,d:t.d,desc:str(t.desc,120)||'Buchung',amt:Math.round(t.amt*100)/100,cat:known(t.cat,biz)?t.cat:(t.amt>0?(biz?'Umsatzerlöse':'Einkommen'):'Sonstiges')};
     if(biz){o.biz=true;if([0,7,19].includes(+t.ust))o.ust=+t.ust;}
     if(Array.isArray(t.items)) o.items=t.items.slice(0,200).filter(i=>i&&num0(i.p)!==null).map(i=>({n:str(i.n,60),p:i.p,c:known(i.c,biz)?i.c:''}));
-    if(t.recId) o.recId=str(t.recId,40);
+    if(t.recId) o.recId=sid(t.recId);
     tx.push(o);
   }
   const rules={}; if(d.rules&&typeof d.rules==='object') for(const k of Object.keys(d.rules).slice(0,5000)) if(known(d.rules[k])) rules[str(k,60)]=d.rules[k];
   const budgets={}; if(d.budgets&&typeof d.budgets==='object') for(const k of Object.keys(d.budgets)) if(known(k)&&k!=='Einkommen'&&num0(d.budgets[k])>0) budgets[k]=Math.round(d.budgets[k]);
-  const goals=(Array.isArray(d.goals)?d.goals:[]).slice(0,100).filter(g=>g&&num0(g.target)>0).map(g=>({id:str(g.id,40)||uid(),name:str(g.name,40)||'Sparziel',target:g.target,saved:num0(g.saved)||0,by:/^\d{4}-\d{2}-\d{2}$/.test(g.by)?g.by:''}));
-  const rec=(Array.isArray(d.rec)?d.rec:[]).slice(0,500).filter(r=>r&&num0(r.amt)!==null&&/^\d{4}-\d{2}$/.test(r.from)).map(r=>({id:str(r.id,40)||uid(),desc:str(r.desc,120),amt:r.amt,cat:known(r.cat)?r.cat:'Sonstiges',day:Math.min(28,Math.max(1,Math.round(+r.day)||1)),from:r.from,iv:ivOk(r.iv)}));
+  const goals=(Array.isArray(d.goals)?d.goals:[]).slice(0,100).filter(g=>g&&num0(g.target)>0).map(g=>({id:sid(g.id)||uid(),name:str(g.name,40)||'Sparziel',target:g.target,saved:num0(g.saved)||0,by:/^\d{4}-\d{2}-\d{2}$/.test(g.by)?g.by:''}));
+  const rec=(Array.isArray(d.rec)?d.rec:[]).slice(0,500).filter(r=>r&&num0(r.amt)!==null&&/^\d{4}-\d{2}$/.test(r.from)).map(r=>{const biz=!!r.biz;const o={id:sid(r.id)||uid(),desc:str(r.desc,120),amt:r.amt,cat:known(r.cat,biz)?r.cat:(r.amt>0?(biz?'Umsatzerlöse':'Einkommen'):'Sonstiges'),day:Math.min(28,Math.max(1,Math.round(+r.day)||1)),from:r.from,iv:ivOk(r.iv)};if(biz){o.biz=true;if([0,7,19].includes(+r.ust))o.ust=+r.ust;}return o;});
   const ts=/^\d{4}-\d{2}-\d{2}$/.test(d.trialStart)?d.trialStart:null;
-  return {tx,rules,budgets,goals,rec,cats,trialStart:ts,choice:d.choice==='basic'||d.choice==='premium'?d.choice:null,created:d.created};
+  return {tx,rules,budgets,goals,rec,cats,mode:d.mode==='biz'?'biz':(d.mode==='priv'?'priv':null),biz:cleanBiz(d.biz),trialStart:ts,choice:d.choice==='basic'||d.choice==='premium'?d.choice:null,created:d.created};
 }
 function onBackup(file){
   if(!file) return;
@@ -1480,12 +1484,15 @@ function bkApply(mode){
   if(mode==='replace'){
     if(S.tx.length&&!confirm(`Die ${S.tx.length} Buchungen auf diesem Gerät werden ersetzt. Fortfahren?`)) return;
     S.customCats=B.cats; S.tx=B.tx; S.rules=B.rules; S.budgets=B.budgets; S.goals=B.goals; S.rec=B.rec;
+    if(B.mode) S.mode=B.mode; if(B.biz) S.biz=B.biz;
     if(B.trialStart) S.trialStart=B.trialStart; if(B.choice) S.choice=B.choice;
   } else {
-    const known=new Set(S.tx.map(t=>t.id)), keys=new Set(S.tx.map(t=>t.d+'|'+t.amt+'|'+t.desc));
-    B.tx.forEach(t=>{const k=t.d+'|'+t.amt+'|'+t.desc; if(known.has(t.id)||keys.has(k)) return; known.add(t.id); keys.add(k); S.tx.push(t);});
+    const bk=t=>(t.biz?'B|':'P|')+t.d+'|'+t.amt+'|'+t.desc;
+    const known=new Set(S.tx.map(t=>t.id)), keys=new Set(S.tx.map(bk));
+    B.tx.forEach(t=>{const k=bk(t); if(known.has(t.id)||keys.has(k)) return; known.add(t.id); keys.add(k); S.tx.push(t);});
     S.rules={...B.rules,...S.rules}; S.budgets={...B.budgets,...S.budgets};
-    const have=new Set(Object.keys(CATS).map(x=>x.toLowerCase())); B.cats.forEach(c=>{if(!have.has(c.name.toLowerCase())){S.customCats.push(c);have.add(c.name.toLowerCase());}});
+    const have=new Set(S.customCats.map(c=>(c.m||'priv')+'|'+c.name.toLowerCase()).concat(Object.keys(CATS_P).map(x=>'priv|'+x.toLowerCase()),Object.keys(CATS_B).map(x=>'biz|'+x.toLowerCase())));
+    B.cats.forEach(c=>{const k=(c.m||'priv')+'|'+c.name.toLowerCase(); if(!have.has(k)){S.customCats.push(c);have.add(k);}});
     const gi=new Set(S.goals.map(g=>g.id)); B.goals.forEach(g=>{if(!gi.has(g.id)) S.goals.push(g);});
     const ri=new Set(S.rec.map(r=>r.id)); B.rec.forEach(r=>{if(!ri.has(r.id)) S.rec.push(r);});
     if(B.trialStart&&(!S.trialStart||B.trialStart<S.trialStart)) S.trialStart=B.trialStart;   /* die frühere Testphase gilt */
@@ -1495,8 +1502,9 @@ function bkApply(mode){
 function closeBackup(){document.getElementById('bm').classList.remove('show');S.bk=null;}
 
 function dlCsv(){
-  const text='Datum;Beschreibung;Betrag;Kategorie\n'+S.tx.slice().sort((a,b)=>a.d.localeCompare(b.d)).map(t=>`${t.d.slice(8)}.${t.d.slice(5,7)}.${t.d.slice(0,4)};"${t.desc.replace(/"/g,'""')}";${String(t.amt).replace('.',',')};${t.cat}`).join('\n');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+text],{type:'text/csv;charset=utf-8'}));a.download='monatsklar-export.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  const q=x=>'"'+(/^[=+\-@\t\r]/.test(x)?"'"+x:x).replace(/"/g,'""')+'"';
+  const text='Datum;Beschreibung;Betrag;Kategorie\n'+S.tx.filter(inMode).slice().sort((a,b)=>a.d.localeCompare(b.d)).map(t=>`${t.d.slice(8)}.${t.d.slice(5,7)}.${t.d.slice(0,4)};${q(t.desc)};${String(t.amt).replace('.',',')};${q(t.cat)}`).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+text],{type:'text/csv;charset=utf-8'}));a.download='MeinMoney-'+(isBiz()?'geschaeftlich':'privat')+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 function openPaywall(){
   const t=trialInfo(), n=document.getElementById('pwTrial');
@@ -2112,20 +2120,21 @@ const taxOf=t=>Math.round((t.amt-netOf(t))*100)/100;
 const fyOf=d=>{const y=+d.slice(0,4);return +d.slice(5,7)>=S.biz.fy?y:y-1;};
 const fyLabel=y=>S.biz.fy===1?String(y):y+'/'+String(y+1).slice(2);
 const fyMonths=y=>{const out=[];let yy=y,mm=S.biz.fy;for(let i=0;i<12;i++){out.push(yy+'-'+pad(mm));mm++;if(mm>12){mm=1;yy++;}}return out;};
-const r2=n=>Math.round(n*100)/100;
+const r2=n=>{const v=Math.round(n*100)/100;return v===0?0:v;};
 function bizSum(list){
   const inc=list.filter(t=>t.amt>0), exp=list.filter(t=>t.amt<0);
   const g=(a,f)=>r2(a.reduce((x,t)=>x+f(t),0));
-  const einn=g(inc,t=>t.amt), ausg=-g(exp,t=>t.amt);
-  const nEinn=g(inc,netOf), nAusg=-g(exp,netOf);
-  const ust=g(inc,taxOf), vst=-g(exp,taxOf);
+  const einn=g(inc,t=>t.amt), ausg=r2(-g(exp,t=>t.amt));
+  const nEinn=g(inc,netOf), nAusg=r2(-g(exp,netOf));
+  const ust=g(inc,taxOf), vst=r2(-g(exp,taxOf));
   const by={}; list.forEach(t=>{const k=t.cat;by[k]=by[k]||{brutto:0,netto:0,n:0};by[k].brutto+=t.amt;by[k].netto+=netOf(t);by[k].n++;});
   Object.values(by).forEach(o=>{o.brutto=r2(o.brutto);o.netto=r2(o.netto);});
   return {n:list.length,einn,ausg,nEinn,nAusg,ust,vst,zahllast:r2(ust-vst),ueber:r2(regel()?nEinn-nAusg:einn-ausg),by};
 }
 const bizTx=(a,b)=>S.tx.filter(t=>t.biz&&mk(t.d)>=a&&mk(t.d)<=b).sort((x,y)=>x.d.localeCompare(y.d));
 function csvDl(name,rows){
-  const f=v=>(v&&v.raw!==undefined)?String(v.raw):typeof v==='number'?String(v.toFixed(2)).replace('.',','):'"'+String(v).replace(/"/g,'""')+'"';
+  const safe=x=>/^[=+\-@\t\r]/.test(x)?"'"+x:x;
+  const f=v=>(v&&v.raw!==undefined)?String(v.raw):typeof v==='number'?String(v.toFixed(2)).replace('.',','):'"'+safe(String(v)).replace(/"/g,'""')+'"';
   const text=rows.map(r=>r.map(f).join(';')).join('\r\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob(['﻿'+text],{type:'text/csv;charset=utf-8'}));
@@ -2153,7 +2162,7 @@ function bizSet(k,v){const B=S.biz;if(k==='ust')B.ust=v==='regel'?'regel':'klein
 function vBiz(){
   const m=S.month||mk(today()), ms=bizSum(monthTx(m)), r=regel(), B=S.biz;
   const y=fyOf(m+'-01'), fm=fyMonths(y), ys=bizSum(bizTx(fm[0],fm[11]));
-  const kpi=(l,v,cls)=>`<div class="card kpi" style="margin:0"><div class="lbl">${l}</div><div class="val ${cls||''}">${eur(v)}</div></div>`;
+  const kpi=(l,v,cls)=>`<div class="card kpi"><div class="lbl">${l}</div><div class="val ${cls||''}">${eur(v)}</div></div>`;
   const tab=Z=>Object.entries(Z.by).sort((a,b)=>a[1].brutto-b[1].brutto).map(([k,o])=>{const C=CATS[k]||{c:'#8A8F98'};
     return `<div class="tx"><span class="dot" style="background:${C.c}"></span><div class="d"><div class="t1">${esc(k)}</div><div class="mute sm">${o.n} ${o.n===1?'Buchung':'Buchungen'}${r?' · netto '+eur2(Math.abs(o.netto)):''}</div></div><div class="amt ${o.brutto>0?'pos':''}">${eur2(o.brutto)}</div></div>`;}).join('')||'<p class="mute" style="padding:12px 0">Keine Buchungen in diesem Zeitraum.</p>';
   return monthBar()+`
@@ -2196,7 +2205,7 @@ function renderMode(){
      <p class="mute">Sie haben ${n} ${n===1?'Buchung':'Buchungen'} erfasst. Im Unternehmens-Modus zeigt MeinMoney nur geschäftliche Buchungen.</p>
      <div class="card" style="margin-top:14px"><b>Privat lassen</b><div class="mute sm">Die Buchungen bleiben im privaten Bereich und sind dort jederzeit erreichbar. Sie starten geschäftlich bei null.</div>
       <button class="btn ghost" style="margin-top:12px" onclick="setMode('biz',false)">Privat lassen</button></div>
-     <div class="card"><b>Ins Unternehmen übernehmen</b><div class="mute sm">Alle ${n} Buchungen werden geschäftlich. Die Kategorien werden dabei auf die geschäftlichen umgestellt, die meisten landen zunächst in „Sonstiges".</div>
+     <div class="card"><b>Ins Unternehmen übernehmen</b><div class="mute sm">Alle ${n} Buchungen werden geschäftlich. Die Kategorien werden dabei auf die geschäftlichen umgestellt, die meisten landen zunächst in „Sonstiges". <b>Das lässt sich nicht rückgängig machen.</b> Legen Sie vorher unter Mehr eine Sicherung an.</div>
       <button class="btn" style="margin-top:12px" onclick="setMode('biz',true)">Übernehmen</button></div>
      <button class="btn ghost" style="margin-top:6px" onclick="S.mo.step=1;renderMode()">Zurück</button>`;
     return;
@@ -2211,7 +2220,7 @@ function renderMode(){
 }
 function setMode(m,move){
   S.mode=m==='biz'?'biz':'priv';
-  if(move) S.tx.forEach(t=>{t.biz=true;});
+  if(move){ S.tx.forEach(t=>{t.biz=true;}); S.rec.forEach(r=>{r.biz=true;}); }
   rebuildCats(); fixCats(); save();
   document.getElementById('mm').classList.remove('show'); S.mo=null;
   S.tab='home'; S.month=null; render(); window.scrollTo(0,0);
