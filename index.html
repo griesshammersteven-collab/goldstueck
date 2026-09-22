@@ -276,7 +276,7 @@ details.note summary{color:var(--gold)}
 <nav><div class="wrap">
   <button data-t="home"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>Übersicht</button>
   <button data-t="tx"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/></svg>Buchungen</button>
-  <button data-t="shop"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>Einkaufen</button>
+  <button data-t="shop" id="navShop"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>Einkaufen</button>
   <button data-t="tips"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>Spartipps</button>
   <button data-t="more"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>Mehr</button>
 </div></nav>
@@ -302,6 +302,7 @@ details.note summary{color:var(--gold)}
 <div class="modal" id="dm" onclick="if(event.target===this)closeDecide()"><div class="sheet" id="dsheet"></div></div>
 
 <div class="modal" id="km" onclick="if(event.target===this)closeCat()"><div class="sheet" id="ksheet"></div></div>
+<div class="modal" id="mm"><div class="sheet" id="msheet"></div></div>
 
 <div class="modal" id="paywall" onclick="if(event.target===this)closePaywall()"><div class="sheet">
   <h3>MeinMoney <span class="gold">Premium</span></h3>
@@ -332,6 +333,24 @@ const IC={"download":"<path d=\"M12 15V3\"/><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2
 const ic=(n,cls='',style='')=>`<svg class="i ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"${style?` style="${style}"`:''}>${IC[n]||''}</svg>`;
 
 /* ---------- Kategorien ---------- */
+const BIZ_CATS = {
+  'Umsatzerlöse':{c:'#4CC38A',fixed:false,ic:'wallet',kw:[],type:'inc'},
+  'Sonstige Erträge':{c:'#6CC17B',fixed:false,ic:'coins',kw:['zuschuss','erstattung','zinsen'],type:'inc'},
+  'Wareneinkauf':{c:'#5B8DEF',fixed:false,ic:'cart',kw:['wareneinkauf','einkauf','lieferant','grosshandel','großhandel','metro']},
+  'Personal':{c:'#9B7FE0',fixed:true,ic:'star',kw:['lohn','gehalt','sozialversicherung','minijob','krankenkasse','berufsgenossenschaft']},
+  'Raumkosten':{c:'#E07FA8',fixed:true,ic:'home',kw:['miete','pacht','nebenkosten','strom','gas ','heizung','stadtwerke','büro miete','buero miete']},
+  'KFZ':{c:'#57C2E0',fixed:false,ic:'car',kw:['tankstelle','aral','shell','esso','jet ','werkstatt','kfz','leasing','parken','adac']},
+  'Werbung & Reisen':{c:'#E8A04C',fixed:false,ic:'sparkles',kw:['werbung','anzeige','google ads','meta','facebook','hotel','bahn','flug','lufthansa','booking']},
+  'Versicherungen & Beiträge':{c:'#3FB8AF',fixed:true,ic:'shield',kw:['versicherung','beitrag','ihk','kammer','innung','haftpflicht','allianz','huk','axa']},
+  'Telefon & Porto':{c:'#A3B18A',fixed:true,ic:'share',kw:['telekom','vodafone','o2 ','mobilfunk','internet','post','dhl','porto','hermes']},
+  'Büromaterial':{c:'#C9AA22',fixed:false,ic:'pencil',kw:['büro','buero','papier','drucker','toner','schreibwaren','amazon','ikea']},
+  'Software & IT':{c:'#E5735C',fixed:true,ic:'repeat',kw:['software','lizenz','hosting','domain','cloud','microsoft','adobe','apple.com','google workspace']},
+  'Fortbildung':{c:'#9B7FE0',fixed:false,ic:'trophy',kw:['seminar','schulung','fortbildung','kurs','coaching','fachbuch']},
+  'Beratung':{c:'#5B8DEF',fixed:false,ic:'fileText',kw:['steuerberater','rechtsanwalt','notar','beratung','buchhaltung']},
+  'Bewirtung':{c:'#E8A04C',fixed:false,ic:'utensils',kw:['restaurant','bewirtung','gaststätte','gaststaette','catering']},
+  'Bankgebühren':{c:'#8A8F98',fixed:true,ic:'landmark',kw:['kontoführung','kontofuehrung','bankgebühr','entgelt','gebühren']},
+  'Sonstiges':{c:'#8A8F98',fixed:false,ic:'package',kw:[]}
+};
 const BASE_CATS = {
   'Einkommen':{c:'#4CC38A',fixed:false,ic:'wallet',kw:[],type:'inc'},
   'Wohnen':{c:'#5B8DEF',fixed:true,ic:'home',kw:['darlehen','tilgung','baufinanz','hypothek','miete','wohnung','hausgeld','strom','stadtwerke','gas ','nebenkosten','vattenfall','eon','internet','telekom','vodafone','o2 ']},
@@ -346,7 +365,11 @@ const BASE_CATS = {
   'Sonstiges':{c:'#8A8F98',fixed:false,ic:'package',kw:[]}
 };
 /* Aktive Kategorien = feste Kategorien + eigene (siehe rebuildCats). Alle Stellen lesen CATS/CAT_NAMES/EXP_CATS zur Laufzeit. */
-let CATS = BASE_CATS;
+let CATS = BASE_CATS, CATS_P = BASE_CATS, CATS_B = BIZ_CATS;
+const isBiz=()=>S.mode==='biz';
+const catsFor=biz=>biz?CATS_B:CATS_P;
+const incIn=(map,c)=>!!(map[c]&&(map[c].type==='inc'));
+const defCat=(map,amt)=>amt>0?Object.keys(map).find(c=>incIn(map,c)):'Sonstiges';
 let CAT_NAMES = Object.keys(BASE_CATS), EXP_CATS = CAT_NAMES.filter(c=>c!=='Einkommen'), INC_CATS = ['Einkommen'];
 const isInc = c => c==='Einkommen' || !!(CATS[c] && CATS[c].type==='inc');
 const FREE_SCANS = 5;
@@ -357,19 +380,24 @@ const CAT_ICONS=['home','car','cart','utensils','bag','heart','package','coffee'
 const CAT_NAME_RE=/^[A-Za-zÄÖÜäöüß0-9 &\-+.,\/()]{1,24}$/;
 const cleanKw=k=>(Array.isArray(k)?k:[]).slice(0,15).map(w=>String(w).toLowerCase().replace(/[^a-zäöüß0-9 .&\-]/g,'').trim().slice(0,30)).filter(w=>w.length>=2);
 function cleanCats(a){
-  const out=[], seen=new Set(Object.keys(BASE_CATS).map(n=>n.toLowerCase()));
+  const out=[], seen=new Set();
   (Array.isArray(a)?a:[]).slice(0,60).forEach(c=>{
     if(!c||typeof c.name!=='string') return;
     const name=c.name.trim().replace(/\s+/g,' ');
-    if(!CAT_NAME_RE.test(name)||seen.has(name.toLowerCase())) return; seen.add(name.toLowerCase());
-    out.push({id:String(c.id||'').replace(/[^A-Za-z0-9_-]/g,'').slice(0,40)||uid(),name,color:CAT_COLORS.includes(c.color)?c.color:CAT_COLORS[0],icon:CAT_ICONS.includes(c.icon)?c.icon:'package',type:c.type==='inc'?'inc':'exp',kw:cleanKw(c.kw)});
+    const m=c.m==='biz'?'biz':'priv', key=m+'|'+name.toLowerCase();
+    if(!CAT_NAME_RE.test(name)||seen.has(key)||(m==='priv'?BASE_CATS:BIZ_CATS)[name]) return; seen.add(key);
+    out.push({id:String(c.id||'').replace(/[^A-Za-z0-9_-]/g,'').slice(0,40)||uid(),name,color:CAT_COLORS.includes(c.color)?c.color:CAT_COLORS[0],icon:CAT_ICONS.includes(c.icon)?c.icon:'package',type:c.type==='inc'?'inc':'exp',m,kw:cleanKw(c.kw)});
   });
   return out;
 }
+function buildCats(baseIn,mode){
+  const base={...baseIn}, son=base['Sonstiges']; delete base['Sonstiges'];
+  const cust={}; S.customCats.filter(c=>(c.m||'priv')===mode).forEach(c=>{cust[c.name]={c:c.color,fixed:false,ic:c.icon,kw:c.kw||[],custom:true,type:c.type,id:c.id};});
+  return {...base,...cust,'Sonstiges':son};
+}
 function rebuildCats(){
-  const base={...BASE_CATS}, son=base['Sonstiges']; delete base['Sonstiges'];
-  const cust={}; S.customCats.forEach(c=>{cust[c.name]={c:c.color,fixed:false,ic:c.icon,kw:c.kw||[],custom:true,type:c.type,id:c.id};});
-  CATS={...base,...cust,'Sonstiges':son};
+  CATS_P=buildCats(BASE_CATS,'priv'); CATS_B=buildCats(BIZ_CATS,'biz');
+  CATS=isBiz()?CATS_B:CATS_P;
   CAT_NAMES=Object.keys(CATS);
   EXP_CATS=CAT_NAMES.filter(c=>!isInc(c));
   INC_CATS=CAT_NAMES.filter(c=>isInc(c));
@@ -377,18 +405,18 @@ function rebuildCats(){
 /* Verweise auf nicht (mehr) vorhandene Kategorien reparieren */
 function fixCats(){
   let ch=false;
-  S.tx.forEach(t=>{if(!CATS[t.cat]){t.cat=t.amt>0?'Einkommen':'Sonstiges';ch=true;}});
-  Object.keys(S.rules).forEach(k=>{if(!CATS[S.rules[k]]){delete S.rules[k];ch=true;}});
-  Object.keys(S.budgets).forEach(k=>{if(!CATS[k]||isInc(k)){delete S.budgets[k];ch=true;}});
-  S.rec.forEach(r=>{if(!CATS[r.cat]){r.cat=r.amt>0?'Einkommen':'Sonstiges';ch=true;}});
+  S.tx.forEach(t=>{const m=catsFor(!!t.biz);if(!m[t.cat]){t.cat=defCat(m,t.amt);ch=true;}});
+  Object.keys(S.rules).forEach(k=>{if(!CATS_P[S.rules[k]]&&!CATS_B[S.rules[k]]){delete S.rules[k];ch=true;}});
+  Object.keys(S.budgets).forEach(k=>{if(!CATS_P[k]||incIn(CATS_P,k)){delete S.budgets[k];ch=true;}});
+  S.rec.forEach(r=>{const m=catsFor(!!r.biz);if(!m[r.cat]){r.cat=defCat(m,r.amt);ch=true;}});
   if(ch) save();
 }
 
 /* ---------- Zustand & Speicher ---------- */
-let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], refCode:null, refBy:null, upl:0, customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null, list:null};
+let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], mode:null, biz:{ust:'klein',mixed:false,fy:1}, refCode:null, refBy:null, upl:0, customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null, list:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-24.1';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-24.2';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -397,8 +425,8 @@ function trialInfo(){
 }
 /* S.premium gilt als aktiv, wenn gekauft (paid) oder die Testphase noch läuft */
 Object.defineProperty(S,'premium',{get(){return S.paid||trialInfo().phase!=='ended';},set(v){S.paid=!!v;}});
-function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||'null'); if(j){S.tx=j.tx||[];S.rules=j.rules||{};S.rec=j.rec||[];S.scans=j.scans||{};S.stmts=j.stmts||{};S.budgets=j.budgets||{};S.goals=j.goals||[];S.paid=!!j.paid;S.trialStart=j.trialStart||null;S.choice=j.choice||null;S.cancels=j.cancels||[];S.lastBackup=j.lastBackup||null;S.bkSnooze=j.bkSnooze||null;S.instSnooze=j.instSnooze||null;S.customCats=cleanCats(j.customCats);S.refCode=refOk(j.refCode);S.refBy=refOk(j.refBy);S.upl=Math.max(0,Math.min(99999,Math.round(+j.upl||0)));S.shop=cleanShop(j.shop);S.fb=Object.assign(S.fb,j.fb||{});}}catch(e){}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify({tx:S.tx,rules:S.rules,rec:S.rec,scans:S.scans,stmts:S.stmts,budgets:S.budgets,goals:S.goals,paid:S.paid,trialStart:S.trialStart,choice:S.choice,cancels:S.cancels,lastBackup:S.lastBackup,bkSnooze:S.bkSnooze,instSnooze:S.instSnooze,customCats:S.customCats,shop:S.shop,refCode:S.refCode,refBy:S.refBy,upl:S.upl,fb:S.fb}))}catch(e){toast('Speichern nicht möglich (Speicher voll oder gesperrt)')}}
+function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||'null'); if(j){S.tx=j.tx||[];S.rules=j.rules||{};S.rec=j.rec||[];S.scans=j.scans||{};S.stmts=j.stmts||{};S.budgets=j.budgets||{};S.goals=j.goals||[];S.paid=!!j.paid;S.trialStart=j.trialStart||null;S.choice=j.choice||null;S.cancels=j.cancels||[];S.lastBackup=j.lastBackup||null;S.bkSnooze=j.bkSnooze||null;S.instSnooze=j.instSnooze||null;S.customCats=cleanCats(j.customCats);S.mode=j.mode==='biz'?'biz':(j.mode==='priv'?'priv':null);S.biz=cleanBiz(j.biz);S.refCode=refOk(j.refCode);S.refBy=refOk(j.refBy);S.upl=Math.max(0,Math.min(99999,Math.round(+j.upl||0)));S.shop=cleanShop(j.shop);S.fb=Object.assign(S.fb,j.fb||{});}}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({tx:S.tx,rules:S.rules,rec:S.rec,scans:S.scans,stmts:S.stmts,budgets:S.budgets,goals:S.goals,paid:S.paid,trialStart:S.trialStart,choice:S.choice,cancels:S.cancels,lastBackup:S.lastBackup,bkSnooze:S.bkSnooze,instSnooze:S.instSnooze,customCats:S.customCats,mode:S.mode,biz:S.biz,shop:S.shop,refCode:S.refCode,refBy:S.refBy,upl:S.upl,fb:S.fb}))}catch(e){toast('Speichern nicht möglich (Speicher voll oder gesperrt)')}}
 
 /* ---------- Helfer ---------- */
 const eur=(n,d=0)=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',minimumFractionDigits:d,maximumFractionDigits:d}).format(n);
@@ -411,7 +439,8 @@ const MN=['Januar','Februar','März','April','Mai','Juni','Juli','August','Septe
 const mLabel=m=>MN[+m.slice(5)-1]+' '+m.slice(0,4);
 const mShort=m=>MN[+m.slice(5)-1].slice(0,3);
 const dim=m=>new Date(+m.slice(0,4),+m.slice(5),0).getDate();
-const months=()=>[...new Set(S.tx.map(t=>mk(t.d)))].sort();
+const inMode=t=>!!t.biz===isBiz();
+const months=()=>[...new Set(S.tx.filter(inMode).map(t=>mk(t.d)))].sort();
 const key=s=>s.toLowerCase().replace(/\d+/g,'').replace(/[^a-zäöüß ]/g,' ').split(/\s+/).filter(Boolean).slice(0,2).join(' ');
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function num(s){
@@ -466,7 +495,7 @@ function demo(){
 }
 
 /* ---------- Auswertungen ---------- */
-const monthTx=m=>S.tx.filter(t=>mk(t.d)===m);
+const monthTx=m=>S.tx.filter(t=>inMode(t)&&mk(t.d)===m);
 function sums(m){
   let inc=0,exp=0; const by={};
   monthTx(m).forEach(x=>{ if(x.amt>0){inc+=x.amt;} else {exp-=x.amt; by[x.cat]=(by[x.cat]||0)-x.amt;} });
@@ -769,6 +798,9 @@ function vMore(){
   <h2>Monatsbudgets pro Kategorie</h2><div class="card">
    ${EXP_CATS.map(c=>`<div class="row" style="padding:6px 0"><span><span class="dot" style="background:${CATS[c].c};display:inline-block"></span> ${c}</span><input class="f" style="width:110px;text-align:right;padding:8px 10px" inputmode="decimal" placeholder="kein Limit" value="${S.budgets[c]||''}" onchange="setBudget('${c}',this.value)" aria-label="Budget ${c}"></div>`).join('')}
    <p class="note">${S.premium?'Unbegrenzt viele Budgets.':`Gratis: bis zu ${FREE_BUDGETS} Budgets (${Object.keys(S.budgets).length} belegt).`}</p></div>
+  <h2>Nutzungsart</h2><div class="card"><div class="row"><div><b>${isBiz()?'Unternehmen':'Privat'}</b><div class="mute sm">${isBiz()?'Betriebseinnahmen, Betriebsausgaben und Auswertung für die Einnahmenüberschussrechnung.':'Haushaltsbuch mit Budgets, Sparzielen und Einkaufsplaner.'}</div></div>
+   <button class="btn sm" onclick="openMode()">Wechseln</button></div>
+   <p class="note">Private und geschäftliche Buchungen bleiben getrennt. Beim Wechsel geht nichts verloren.</p></div>
   <h2>Wiederkehrende Buchungen</h2><div class="card">
    ${S.rec.map(r=>`<div class="tx"><span class="dot" style="background:${CATS[r.cat].c}"></span><div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">${ivName(r.iv)} am ${r.day}.</div></div><div class="amt ${r.amt>0?'pos':''}">${r.amt>0?'+':''}${eur2(r.amt)}</div><button class="del" onclick="delRec('${r.id}')" aria-label="Entfernen">${ic('x')}</button></div>`).join('')||'<p class="mute sm">Noch keine. Beim Erfassen einer Buchung können Sie „Jeden Monat wiederholen" anhaken, z. B. für Miete und Gehalt.</p>'}</div>
   <h2>Kassenzettel-Scans</h2><div class="card"><div class="row"><div><b>${S.premium?'Unbegrenzt':scansLeft()+' von '+FREE_SCANS+' übrig'}</b><div class="mute sm">${S.premium?'Mit Premium':'in diesem Monat (Gratis-Version)'}</div></div><button class="btn sm" onclick="openAdd(true)">${ic('camera')} Scannen</button></div></div>
@@ -783,8 +815,11 @@ function vMore(){
 }
 
 /* ---------- Erfassen ---------- */
-function newForm(){return {type:'exp',amt:'',desc:'',cat:'Lebensmittel',catManual:false,date:today(),rep:false,iv:1,items:null,rcpt:false};}
+function newForm(){return {type:'exp',amt:'',desc:'',cat:isBiz()?'Wareneinkauf':'Lebensmittel',catManual:false,date:today(),rep:false,iv:1,biz:isBiz(),ust:19,items:null,rcpt:false};}
 function pickIv(n){S.form.iv=ivOk(n);keepInputs();}
+const ustPick=n=>[0,7,19].includes(+n)?+n:19;
+function pickUst(n){S.form.ust=ustPick(n);keepInputs();}
+function toggleBiz(on){S.form.biz=on;S.form.cat=on?'Wareneinkauf':'Lebensmittel';S.form.catManual=false;keepInputs();}
 function openAdd(scan){
   S.form=newForm(); S.scan=null; renderSheet();
   document.getElementById('addm').classList.add('show');
@@ -826,7 +861,7 @@ function splitInfo(){
 }
 function openEdit(id){
   const t=S.tx.find(x=>x.id===id); if(!t) return;
-  S.form={type:t.amt>0?'inc':'exp',amt:String(Math.abs(t.amt)).replace('.',','),desc:t.desc,cat:t.cat,catManual:true,date:t.d,rep:!!t.recId,iv:ivOk((S.rec.find(r=>r.id===t.recId)||{}).iv),items:t.items||null,rcpt:!!t.items,editId:id};
+  S.form={type:t.amt>0?'inc':'exp',amt:String(Math.abs(t.amt)).replace('.',','),desc:t.desc,cat:t.cat,catManual:true,date:t.d,rep:!!t.recId,iv:ivOk((S.rec.find(r=>r.id===t.recId)||{}).iv),biz:!!t.biz,ust:ustPick(t.ust),items:t.items||null,rcpt:!!t.items,editId:id};
   S.scan=null; renderSheet(); document.getElementById('addm').classList.add('show');
 }
 function renderSheet(){
@@ -841,6 +876,10 @@ function renderSheet(){
   <input class="f" id="f_desc" placeholder="${F.type==='inc'?'z. B. Gehalt':'z. B. REWE Einkauf'}" value="${esc(F.desc)}" oninput="onDesc(this.value)" autocomplete="off">
   <label class="fl">Kategorie</label><div class="chips" id="chips">${chipsHtml()}</div>
   <label class="fl">Datum</label><input class="f" type="date" value="${F.date}" onchange="S.form.date=this.value">
+  ${S.biz.mixed&&S.mode?`<label class="chk"><input type="checkbox" ${F.biz?'checked':''} onchange="toggleBiz(this.checked)"> Geschäftliche Buchung</label>
+  ${F.biz!==isBiz()?'<p class="note">Diese Buchung erscheint danach im '+(F.biz?'Unternehmens-':'Privat-')+'Bereich.</p>':''}`:''}
+  ${F.biz&&regel()?`<label class="fl">Umsatzsteuer</label><div class="chips">${[[19,'19 %'],[7,'7 %'],[0,'ohne']].map(([n,t])=>`<button type="button" class="chip ${ustPick(F.ust)===n?'on':''}" onclick="pickUst(${n})">${t}</button>`).join('')}</div>
+  <p class="note">Der Betrag ist brutto. Netto ${eur2((Math.abs(num(F.amt))||0)/(1+ustPick(F.ust)/100))}, davon ${eur2((Math.abs(num(F.amt))||0)-(Math.abs(num(F.amt))||0)/(1+ustPick(F.ust)/100))} Steuer.</p>`:''}
   <label class="chk"><input type="checkbox" ${F.rep?'checked':''} onchange="S.form.rep=this.checked;keepInputs()"> Regelmäßig wiederholen (Dauerauftrag)</label>
   ${F.rep?`<div class="chips" style="margin-top:10px">${IVS.map(([n,t])=>`<button type="button" class="chip ${(F.iv||1)===n?'on':''}" onclick="pickIv(${n})">${t}</button>`).join('')}</div>`:''}
   ${F.rep&&ed?'<p class="note">Gilt auch rückwirkend für gleiche Buchungen aus früheren Monaten. Abwählen entfernt den Dauerauftrag.</p>':''}
@@ -884,6 +923,7 @@ function saveForm(){
     const t=S.tx.find(x=>x.id===F.editId); if(!t){closeAdd();return;}
     const ps=F.type==='exp'?splitParts(F,a):null; if(ps===false) return;
     Object.assign(t,{d:F.date,desc,amt:ps?-ps.main:amt,cat:F.cat});
+    if(F.biz){t.biz=true;if(regel())t.ust=ustPick(F.ust);} else {delete t.biz;delete t.ust;}
     if(ps){ if(ps.mainItems.length) t.items=ps.mainItems; else delete t.items;
       ps.others.forEach(o=>S.tx.push({id:uid(),d:F.date,desc:desc+' · '+o.cat,amt:-o.sum,cat:o.cat,items:o.items})); } if(F.rep&&!t.recId){mkRec(t,F.iv);S.tx.forEach(o=>{if(!o.recId&&key(o.desc)===key(t.desc)&&o.amt===t.amt)o.recId=t.recId;});}
     else if(F.rep&&t.recId){const rr=S.rec.find(r=>r.id===t.recId);if(rr)rr.iv=ivOk(F.iv);}else if(!F.rep&&t.recId){const id=t.recId;S.tx.forEach(o=>{if(o.recId===id)delete o.recId;});S.rec=S.rec.filter(r=>r.id!==id);} if(F.catManual&&F.desc.trim()) S.rules[key(desc)]=F.cat;
@@ -892,16 +932,17 @@ function saveForm(){
   const parts=F.type==='exp'?splitParts(F,a):null;
   if(parts===false) return;
   const t={id:uid(),d:F.date,desc,amt:parts?-parts.main:amt,cat:F.cat};
+  if(F.biz){t.biz=true;if(regel())t.ust=ustPick(F.ust);}
   if(parts?parts.mainItems.length:(F.items&&F.items.length)) t.items=parts?parts.mainItems:F.items;
   if(F.desc.trim()&&F.catManual) S.rules[key(desc)]=F.cat;
   if(F.rep) mkRec(t,F.iv);
   if(!parts||parts.main>0.005||parts.mainItems.length) S.tx.push(t);
-  if(parts) parts.others.forEach(o=>S.tx.push({id:uid(),d:F.date,desc:desc+' · '+o.cat,amt:-o.sum,cat:o.cat,items:o.items}));
+  if(parts) parts.others.forEach(o=>S.tx.push(Object.assign({id:uid(),d:F.date,desc:desc+' · '+o.cat,amt:-o.sum,cat:o.cat,items:o.items},F.biz?{biz:true,...(regel()?{ust:ustPick(F.ust)}:{})}:{})));
   if(F.rcpt) fbTrigger('scan'); autoPost(); save();
   S.month=mk(F.date); closeAdd(); render();
   toast(parts?`${parts.others.length+1} Buchungen gespeichert: ${eur2(a)}`:`${amt>0?'Einnahme':'Ausgabe'} gespeichert: ${eur2(Math.abs(amt))}`);
 }
-function mkRec(t,iv){const k=key(t.desc),o=S.rec.find(r=>key(r.desc)===k&&r.amt===t.amt);if(o){o.iv=ivOk(iv);t.recId=o.id;return;}const r={id:uid(),desc:t.desc,amt:t.amt,cat:t.cat,day:Math.min(+t.d.slice(8),28),from:mk(t.d),iv:ivOk(iv)};S.rec.push(r);t.recId=r.id;}
+function mkRec(t,iv){const k=key(t.desc),o=S.rec.find(r=>key(r.desc)===k&&r.amt===t.amt);if(o){o.iv=ivOk(iv);t.recId=o.id;return;}const r={id:uid(),desc:t.desc,amt:t.amt,cat:t.cat,day:Math.min(+t.d.slice(8),28),from:mk(t.d),iv:ivOk(iv),biz:!!t.biz,ust:t.ust};S.rec.push(r);t.recId=r.id;}
 function autoPost(){
   const now=today(), cm=mk(now); let n=0;
   S.rec.forEach(r=>{
@@ -909,7 +950,7 @@ function autoPost(){
     for(;;){
       const mm=`${y}-${pad(m)}`; if(mm>cm) break;
       const d=`${mm}-${pad(Math.min(r.day,dim(mm)))}`;
-      if(d<=now&&!S.tx.some(t=>mk(t.d)===mm&&(t.recId===r.id||(t.amt===r.amt&&key(t.desc)===key(r.desc))))){S.tx.push({id:uid(),d,desc:r.desc,amt:r.amt,cat:r.cat,recId:r.id});n++;}
+      if(d<=now&&!S.tx.some(t=>!!t.biz===!!r.biz&&mk(t.d)===mm&&(t.recId===r.id||(t.amt===r.amt&&key(t.desc)===key(r.desc))))){S.tx.push(Object.assign({id:uid(),d,desc:r.desc,amt:r.amt,cat:r.cat,recId:r.id},r.biz?{biz:true,...(r.ust!==undefined?{ust:r.ust}:{})}:{}));n++;}
       m+=(+r.iv||1); while(m>12){m-=12;y++;}
     }
   });
@@ -1236,7 +1277,7 @@ function stFlip(i){const r=S.st.rows[i];r.amt=-r.amt;r.guess=false;r.cat=categor
 function closeStmt(){document.getElementById('sm').classList.remove('show');S.st=null;}
 function stImport(){
   const R=S.st.rows.filter(r=>r.inc); if(!R.length) return;
-  R.forEach(r=>{const t={id:uid(),d:r.d,desc:r.desc,amt:r.amt,cat:r.cat};S.tx.push(t);if(r.rep)mkRec(t);}); autoPost();
+  R.forEach(r=>{const t={id:uid(),d:r.d,desc:r.desc,amt:r.amt,cat:r.cat};if(isBiz()){t.biz=true;if(regel())t.ust=19;}S.tx.push(t);if(r.rep)mkRec(t);}); autoPost();
   const cnt={}; R.forEach(r=>cnt[mk(r.d)]=(cnt[mk(r.d)]||0)+1); const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0][0];
   S.stmts[mk(today())]=stmtsUsed()+1; S.upl++; fbTrigger('stmt'); save(); closeStmt(); S.month=top; S.tab='home'; render(); window.scrollTo(0,0);
   toast(`${R.length} Buchungen übernommen · ${mLabel(top)}`);
@@ -1394,13 +1435,15 @@ function cleanBackup(d){
   if(d.tx.length>100000) throw new Error('groesse');
   const str=(v,n)=>String(v==null?'':v).slice(0,n);
   const num0=v=>typeof v==='number'&&isFinite(v)?v:null;
-  const cats=cleanCats(d.cats), known=n=>!!BASE_CATS[n]||cats.some(c=>c.name===n)||S.customCats.some(c=>c.name===n);
+  const cats=cleanCats(d.cats), known=(n,biz)=>!!(biz?BIZ_CATS:BASE_CATS)[n]||cats.some(c=>c.name===n)||S.customCats.some(c=>c.name===n);
   const seen=new Set(), tx=[];
   for(const t of d.tx){
     if(!t||!/^\d{4}-\d{2}-\d{2}$/.test(t.d)||num0(t.amt)===null||t.amt===0) continue;
     const id=str(t.id,40)||uid(); if(seen.has(id)) continue; seen.add(id);
-    const o={id,d:t.d,desc:str(t.desc,120)||'Buchung',amt:Math.round(t.amt*100)/100,cat:known(t.cat)?t.cat:(t.amt>0?'Einkommen':'Sonstiges')};
-    if(Array.isArray(t.items)) o.items=t.items.slice(0,200).filter(i=>i&&num0(i.p)!==null).map(i=>({n:str(i.n,60),p:i.p,c:known(i.c)?i.c:''}));
+    const biz=!!t.biz;
+    const o={id,d:t.d,desc:str(t.desc,120)||'Buchung',amt:Math.round(t.amt*100)/100,cat:known(t.cat,biz)?t.cat:(t.amt>0?(biz?'Umsatzerlöse':'Einkommen'):'Sonstiges')};
+    if(biz){o.biz=true;if([0,7,19].includes(+t.ust))o.ust=+t.ust;}
+    if(Array.isArray(t.items)) o.items=t.items.slice(0,200).filter(i=>i&&num0(i.p)!==null).map(i=>({n:str(i.n,60),p:i.p,c:known(i.c,biz)?i.c:''}));
     if(t.recId) o.recId=str(t.recId,40);
     tx.push(o);
   }
@@ -1538,7 +1581,7 @@ function saveCat(){
       S.tx.forEach(t=>{if(t.cat===old)t.cat=name;}); Object.keys(S.rules).forEach(k=>{if(S.rules[k]===old)S.rules[k]=name;});
       if(S.budgets[old]!==undefined){S.budgets[name]=S.budgets[old];delete S.budgets[old];} S.rec.forEach(r=>{if(r.cat===old)r.cat=name;});
     }
-  } else S.customCats.push({id:uid(),name,color:K.color,icon:K.icon,type:K.type,kw});
+  } else S.customCats.push({id:uid(),name,color:K.color,icon:K.icon,type:K.type,m:isBiz()?'biz':'priv',kw});
   rebuildCats(); save();
   const after=K.after, edit=!!K.id, type=K.type; closeCat();
   if(after==='form'&&S.form){S.form.cat=name;S.form.catManual=true;S.form.type=type;keepInputs();}
@@ -1719,6 +1762,7 @@ function openInstall(m){
 function closeInstall(){document.getElementById('im').classList.remove('show');}
 async function copyLink(){try{await navigator.clipboard.writeText(location.origin+'/');toast('Link kopiert. Fügen Sie ihn in Ihren Browser ein.');}catch(e){toast(location.origin+'/');}}
 
+function cleanBiz(b){b=b&&typeof b==='object'?b:{};return {ust:b.ust==='regel'?'regel':'klein',mixed:!!b.mixed,fy:[1,2,3,4,5,6,7,8,9,10,11,12].includes(+b.fy)?+b.fy:1};}
 const refOk=c=>/^[A-Z0-9]{6}$/.test(String(c||''))?String(c):null;
 function myRef(){
   if(!S.refCode){const a=new Uint8Array(6);crypto.getRandomValues(a);S.refCode=[...a].map(x=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[x%32]).join('');save();}
@@ -2058,12 +2102,129 @@ function vShop(){
   return h;
 }
 
+/* ---------- Auswertung für Unternehmen ---------- */
+/* Umsatzsteuer: Kleinunternehmer rechnet brutto ohne Steuer, sonst wird sie aus dem Bruttobetrag herausgerechnet */
+const regel=()=>S.biz.ust==='regel';
+const ustOf=t=>regel()?(t.ust===0||t.ust===7||t.ust===19?t.ust:19):0;
+const netOf=t=>{const r=ustOf(t);return Math.round(t.amt/(1+r/100)*100)/100;};
+const taxOf=t=>Math.round((t.amt-netOf(t))*100)/100;
+/* Geschäftsjahr: fy ist der Startmonat */
+const fyOf=d=>{const y=+d.slice(0,4);return +d.slice(5,7)>=S.biz.fy?y:y-1;};
+const fyLabel=y=>S.biz.fy===1?String(y):y+'/'+String(y+1).slice(2);
+const fyMonths=y=>{const out=[];let yy=y,mm=S.biz.fy;for(let i=0;i<12;i++){out.push(yy+'-'+pad(mm));mm++;if(mm>12){mm=1;yy++;}}return out;};
+const r2=n=>Math.round(n*100)/100;
+function bizSum(list){
+  const inc=list.filter(t=>t.amt>0), exp=list.filter(t=>t.amt<0);
+  const g=(a,f)=>r2(a.reduce((x,t)=>x+f(t),0));
+  const einn=g(inc,t=>t.amt), ausg=-g(exp,t=>t.amt);
+  const nEinn=g(inc,netOf), nAusg=-g(exp,netOf);
+  const ust=g(inc,taxOf), vst=-g(exp,taxOf);
+  const by={}; list.forEach(t=>{const k=t.cat;by[k]=by[k]||{brutto:0,netto:0,n:0};by[k].brutto+=t.amt;by[k].netto+=netOf(t);by[k].n++;});
+  Object.values(by).forEach(o=>{o.brutto=r2(o.brutto);o.netto=r2(o.netto);});
+  return {n:list.length,einn,ausg,nEinn,nAusg,ust,vst,zahllast:r2(ust-vst),ueber:r2(regel()?nEinn-nAusg:einn-ausg),by};
+}
+const bizTx=(a,b)=>S.tx.filter(t=>t.biz&&mk(t.d)>=a&&mk(t.d)<=b).sort((x,y)=>x.d.localeCompare(y.d));
+function csvDl(name,rows){
+  const f=v=>(v&&v.raw!==undefined)?String(v.raw):typeof v==='number'?String(v.toFixed(2)).replace('.',','):'"'+String(v).replace(/"/g,'""')+'"';
+  const text=rows.map(r=>r.map(f).join(';')).join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['﻿'+text],{type:'text/csv;charset=utf-8'}));
+  a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function bizExport(a,b,label){
+  const list=bizTx(a,b), Z=bizSum(list), r=regel();
+  const rows=[['MeinMoney · Aufstellung für die Einnahmenüberschussrechnung'],['Zeitraum',label],
+    ['Besteuerung',r?'Regelbesteuerung, Netto mit ausgewiesener Umsatzsteuer':'Kleinunternehmer nach § 19 UStG, keine Umsatzsteuer'],
+    ['Erstellt am',fmtD(today())],['Grundlage','Zufluss- und Abflussprinzip, Datum der Zahlung'],[],
+    r?['Datum','Beschreibung','Kategorie','Art','Brutto','USt-Satz %','USt-Betrag','Netto']:['Datum','Beschreibung','Kategorie','Art','Betrag']];
+  list.forEach(t=>rows.push(r
+    ?[fmtD(t.d),t.desc,t.cat,t.amt>0?'Einnahme':'Ausgabe',t.amt,{raw:ustOf(t)},taxOf(t),netOf(t)]
+    :[fmtD(t.d),t.desc,t.cat,t.amt>0?'Einnahme':'Ausgabe',t.amt]));
+  rows.push([],['Zusammenfassung']);
+  if(r) rows.push(['Betriebseinnahmen netto',Z.nEinn],['Betriebsausgaben netto',Z.nAusg],['Überschuss netto',Z.ueber],[],
+    ['Vereinnahmte Umsatzsteuer',Z.ust],['Gezahlte Vorsteuer',Z.vst],['Zahllast',Z.zahllast]);
+  else rows.push(['Betriebseinnahmen',Z.einn],['Betriebsausgaben',Z.ausg],['Überschuss',Z.ueber]);
+  rows.push([],['Nach Kategorie'],r?['Kategorie','Anzahl','Brutto','Netto']:['Kategorie','Anzahl','Betrag']);
+  Object.entries(Z.by).sort((x,y)=>x[1].brutto-y[1].brutto).forEach(([k,o])=>rows.push(r?[k,{raw:o.n},o.brutto,o.netto]:[k,{raw:o.n},o.brutto]));
+  rows.push([],['Hinweis','Diese Aufstellung ist eine Vorbereitung für die Steuerberatung. Sie ersetzt keine Buchführung nach GoBD und keine Steuerberatung.']);
+  csvDl('MeinMoney-'+label.replace(/[^A-Za-z0-9]+/g,'-')+'.csv',rows);
+}
+function bizSet(k,v){const B=S.biz;if(k==='ust')B.ust=v==='regel'?'regel':'klein';else if(k==='mixed')B.mixed=!B.mixed;else if(k==='fy')B.fy=+v||1;save();render(true);}
+function vBiz(){
+  const m=S.month||mk(today()), ms=bizSum(monthTx(m)), r=regel(), B=S.biz;
+  const y=fyOf(m+'-01'), fm=fyMonths(y), ys=bizSum(bizTx(fm[0],fm[11]));
+  const kpi=(l,v,cls)=>`<div class="card kpi" style="margin:0"><div class="lbl">${l}</div><div class="val ${cls||''}">${eur(v)}</div></div>`;
+  const tab=Z=>Object.entries(Z.by).sort((a,b)=>a[1].brutto-b[1].brutto).map(([k,o])=>{const C=CATS[k]||{c:'#8A8F98'};
+    return `<div class="tx"><span class="dot" style="background:${C.c}"></span><div class="d"><div class="t1">${esc(k)}</div><div class="mute sm">${o.n} ${o.n===1?'Buchung':'Buchungen'}${r?' · netto '+eur2(Math.abs(o.netto)):''}</div></div><div class="amt ${o.brutto>0?'pos':''}">${eur2(o.brutto)}</div></div>`;}).join('')||'<p class="mute" style="padding:12px 0">Keine Buchungen in diesem Zeitraum.</p>';
+  return monthBar()+`
+  <h2>Monat ${mLabel(m)}</h2>
+  <div class="grid2">${kpi('Betriebseinnahmen',r?ms.nEinn:ms.einn,'pos')}${kpi('Betriebsausgaben',r?ms.nAusg:ms.ausg)}</div>
+  <div class="card total"><div class="gold sm" style="font-weight:700">ÜBERSCHUSS${r?' (NETTO)':''}</div><div class="big ${ms.ueber>=0?'pos':'neg'}">${eur(ms.ueber)}</div>
+   <div class="mute sm">${ms.n} ${ms.n===1?'Buchung':'Buchungen'} · gerechnet nach Zufluss und Abfluss</div></div>
+  ${r?`<div class="card"><div class="row"><span>Vereinnahmte Umsatzsteuer</span><b>${eur2(ms.ust)}</b></div>
+   <div class="row" style="margin-top:8px"><span>Gezahlte Vorsteuer</span><b>${eur2(ms.vst)}</b></div>
+   <div class="row" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><span><b>Zahllast</b></span><b class="${ms.zahllast>0?'neg':'pos'}">${eur2(ms.zahllast)}</b></div>
+   <p class="note">Richtwert für die Umsatzsteuer-Voranmeldung. Buchungen ohne eigenen Satz rechnet die App mit 19 %.</p></div>`:''}
+  <div class="card" style="padding:4px 16px">${tab(ms)}</div>
+  <button class="btn" onclick="bizExport('${m}','${m}','${mLabel(m)}')">${ic('download')} Monat als Tabelle laden</button>
+  <h2>Geschäftsjahr ${fyLabel(y)}</h2>
+  <div class="grid2">${kpi('Einnahmen',r?ys.nEinn:ys.einn,'pos')}${kpi('Ausgaben',r?ys.nAusg:ys.ausg)}</div>
+  <div class="card total"><div class="gold sm" style="font-weight:700">ÜBERSCHUSS${r?' (NETTO)':''}</div><div class="big ${ys.ueber>=0?'pos':'neg'}">${eur(ys.ueber)}</div>
+   <div class="mute sm">${fmtD(fm[0]+'-01')} bis ${fmtD(fm[11]+'-'+dim(fm[11]))} · ${ys.n} ${ys.n===1?'Buchung':'Buchungen'}</div></div>
+  <div class="card" style="padding:4px 16px">${fm.map(x=>{const o=bizSum(S.tx.filter(t=>t.biz&&mk(t.d)===x));if(!o.n)return '';
+    return `<div class="tx"><div class="d"><div class="t1">${mLabel(x)}</div><div class="mute sm">${o.n} ${o.n===1?'Buchung':'Buchungen'}</div></div><div class="amt ${o.ueber>=0?'pos':''}">${eur2(o.ueber)}</div></div>`;}).join('')||'<p class="mute" style="padding:12px 0">Noch keine Buchungen in diesem Geschäftsjahr.</p>'}</div>
+  <button class="btn" onclick="bizExport('${fm[0]}','${fm[11]}','Geschäftsjahr ${fyLabel(y)}')">${ic('download')} Geschäftsjahr als Tabelle laden</button>
+  <p class="note">Die Datei öffnen Sie in Excel per Doppelklick, in Google Sheets über Datei, Importieren, Hochladen.</p>
+  <h2>Einstellungen</h2><div class="card">
+   <label class="fl" style="margin-top:0">Umsatzsteuer</label><div class="chips">
+    <button type="button" class="chip ${B.ust==='klein'?'on':''}" onclick="bizSet('ust','klein')">Kleinunternehmer § 19</button>
+    <button type="button" class="chip ${B.ust==='regel'?'on':''}" onclick="bizSet('ust','regel')">Regelbesteuert</button></div>
+   <label class="fl">Geschäftsjahr beginnt im</label>
+   <select class="f" onchange="bizSet('fy',this.value)" aria-label="Startmonat des Geschäftsjahres">${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${B.fy===i+1?'selected':''}>${mLabel('2026-'+pad(i+1)).split(' ')[0]}</option>`).join('')}</select>
+   <label class="chk"><input type="checkbox" ${B.mixed?'checked':''} onchange="bizSet('mixed')"> Gemischtes Konto: bei jeder Buchung wählbar, ob sie geschäftlich ist</label>
+   <p class="note">Ohne Haken gilt alles, was Sie im Unternehmens-Modus erfassen, als geschäftlich.</p></div>
+  <p class="note">MeinMoney ist keine Buchführung nach GoBD und ersetzt keine Steuerberatung. Diese Auswertung ist eine Vorbereitung für Ihren Steuerberater.</p>`;
+}
+/* ---------- Privat oder Unternehmen ---------- */
+function openMode(first){
+  S.mo={first:!!first,step:1}; renderMode(); document.getElementById('mm').classList.add('show');
+}
+function renderMode(){
+  const M=S.mo, n=S.tx.length, box=document.getElementById('msheet'); if(!M||!box) return;
+  if(M.step===2){
+    box.innerHTML=`<h3>Und Ihre bisherigen Buchungen?</h3>
+     <p class="mute">Sie haben ${n} ${n===1?'Buchung':'Buchungen'} erfasst. Im Unternehmens-Modus zeigt MeinMoney nur geschäftliche Buchungen.</p>
+     <div class="card" style="margin-top:14px"><b>Privat lassen</b><div class="mute sm">Die Buchungen bleiben im privaten Bereich und sind dort jederzeit erreichbar. Sie starten geschäftlich bei null.</div>
+      <button class="btn ghost" style="margin-top:12px" onclick="setMode('biz',false)">Privat lassen</button></div>
+     <div class="card"><b>Ins Unternehmen übernehmen</b><div class="mute sm">Alle ${n} Buchungen werden geschäftlich. Die Kategorien werden dabei auf die geschäftlichen umgestellt, die meisten landen zunächst in „Sonstiges".</div>
+      <button class="btn" style="margin-top:12px" onclick="setMode('biz',true)">Übernehmen</button></div>
+     <button class="btn ghost" style="margin-top:6px" onclick="S.mo.step=1;renderMode()">Zurück</button>`;
+    return;
+  }
+  box.innerHTML=`<h3>Wie nutzen Sie MeinMoney?</h3>
+   <p class="mute">Das legt fest, welche Kategorien und Auswertungen Sie sehen. Sie können jederzeit unter Mehr wechseln.</p>
+   <div class="card" style="margin-top:14px"><b>${ic('home')} Privat</b><div class="mute sm">Haushaltsbuch mit Budgets, Sparzielen, Spartipps und dem Einkaufsplaner.</div>
+    <button class="btn" style="margin-top:12px" onclick="setMode('priv')">Privat nutzen</button></div>
+   <div class="card"><b>${ic('landmark')} Unternehmen</b><div class="mute sm">Betriebseinnahmen und Betriebsausgaben, Monats- und Jahresauswertung als Grundlage für die Einnahmenüberschussrechnung. Ohne Einkaufsplaner.</div>
+    <button class="btn" style="margin-top:12px" onclick="${S.tx.length?"S.mo.step=2;renderMode()":"setMode('biz')"}">Geschäftlich nutzen</button></div>
+   <p class="note">MeinMoney ersetzt keine Buchhaltungssoftware und keine Steuerberatung. Die Auswertungen sind eine Vorbereitung für Ihren Steuerberater.</p>`;
+}
+function setMode(m,move){
+  S.mode=m==='biz'?'biz':'priv';
+  if(move) S.tx.forEach(t=>{t.biz=true;});
+  rebuildCats(); fixCats(); save();
+  document.getElementById('mm').classList.remove('show'); S.mo=null;
+  S.tab='home'; S.month=null; render(); window.scrollTo(0,0);
+  toast(S.mode==='biz'?'Unternehmens-Modus aktiv':'Privat-Modus aktiv');
+}
 /* ---------- Render ---------- */
 function render(keepScroll){
   const y=window.scrollY, ms=months();
   if(!S.month||!ms.includes(S.month)) S.month=ms[ms.length-1]||mk(today());
-  document.getElementById('app').innerHTML={home:vHome,tx:vTx,shop:vShop,tips:vTips,more:vMore}[S.tab]();
+  document.getElementById('app').innerHTML={home:vHome,tx:vTx,shop:isBiz()?vBiz:vShop,tips:vTips,more:vMore}[S.tab]();
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tab));
+  const ns=document.getElementById('navShop');
+  if(ns) ns.innerHTML=isBiz()?ic('fileText','ico')+'Auswertung':ic('cart','ico')+'Einkaufen';
   const p=document.getElementById('premPill'), ti=trialInfo();p.classList.toggle('on',S.premium);p.innerHTML=ic('star')+' '+(S.paid?'Premium aktiv':ti.phase!=='ended'?`Test · ${ti.left} Tage`:'Premium');
   if(keepScroll) window.scrollTo(0,y);
   const s=document.querySelector('input[type=search]'); if(s&&S.filter&&document.activeElement===document.body){s.focus();s.setSelectionRange(s.value.length,s.value.length);}
@@ -2071,6 +2232,7 @@ function render(keepScroll){
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.t));
 load(); rebuildCats(); fixCats(); catchRef(); autoPost();
 if(!S.trialStart){S.trialStart=today();save();}   /* Testphase startet beim ersten Öffnen */
+if(!S.mode) setTimeout(()=>openMode(true),400);   /* Frage nach der Nutzungsart, auch bei vorhandenen Daten */
 render();
 /* Direktlink zur Kündigung, z. B. von der Website: …/#kuendigen */
 if(location.hash==='#kuendigen') setTimeout(openCancel,250);
