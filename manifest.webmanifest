@@ -1,6 +1,6 @@
 {
-  "name": "Monatsklar – Ihr Haushaltsbuch",
-  "short_name": "Monatsklar",
+  "name": "MeinMoney – Ihr Haushaltsbuch",
+  "short_name": "MeinMoney",
   "description": "Haushaltsbuch mit Kassenzettel-Scan, Budgets, Sparzielen und ehrlichen Spartipps. Alle Daten bleiben auf Ihrem Gerät.",
   "lang": "de",
   "start_url": "./",

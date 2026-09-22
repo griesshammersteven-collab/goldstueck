@@ -1,5 +1,5 @@
 /* Offline-Cache für die App-Hülle. Nutzerdaten liegen in localStorage, nicht hier. */
-const CACHE = 'monatsklar-v5';
+const CACHE = 'meinmoney-v6';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

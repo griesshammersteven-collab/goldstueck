@@ -4,19 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0B0C0F">
-<meta name="description" content="Monatsklar: Haushaltsbuch mit Kassenzettel-Scan, Budgets, Sparzielen und Spartipps. Ihre Daten bleiben auf Ihrem Gerät.">
+<meta name="description" content="MeinMoney: Haushaltsbuch mit Kassenzettel-Scan, Budgets, Sparzielen und Spartipps. Ihre Daten bleiben auf Ihrem Gerät.">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="https://monatsklar.de/">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Monatsklar">
+<meta property="og:site_name" content="MeinMoney">
 <meta property="og:locale" content="de_DE">
 <meta property="og:url" content="https://monatsklar.de/">
-<meta property="og:title" content="Monatsklar – Ihr Haushaltsbuch ohne Tabellen">
+<meta property="og:title" content="MeinMoney – Ihr Haushaltsbuch ohne Tabellen">
 <meta property="og:description" content="Kassenzettel scannen, Kontoauszug hochladen, ehrliche Spartipps. Ihre Daten bleiben auf Ihrem Gerät. 8 Wochen Premium gratis.">
 <meta property="og:image" content="https://monatsklar.de/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Monatsklar – das Haushaltsbuch, das Excel ersetzt">
+<meta property="og:image:alt" content="MeinMoney – das Haushaltsbuch, das Excel ersetzt">
 <meta name="twitter:card" content="summary_large_image">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' data: blob:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <link rel="manifest" href="manifest.webmanifest">
@@ -24,9 +24,9 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Monatsklar">
+<meta name="apple-mobile-web-app-title" content="MeinMoney">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Monatsklar – Ihr Haushaltsbuch</title>
+<title>MeinMoney – Ihr Haushaltsbuch</title>
 <style>
 :root{
   --bg:#0B0C0F; --ink:#111318; --card:rgba(255,255,255,.04); --card2:rgba(255,255,255,.06); --line:rgba(255,255,255,.1);
@@ -265,7 +265,7 @@ details.note summary{color:var(--gold)}
 <body>
 <div class="glow" aria-hidden="true"><i></i><i></i></div>
 <header><div class="wrap">
-  <div class="logo"><span class="coin">M</span><span>Monats<b>klar</b></span></div>
+  <div class="logo"><span class="coin">M</span><span>Mein<b>Money</b></span></div>
   <div class="pill" id="premPill" onclick="openPaywall()" role="button" tabindex="0">Premium</div>
 </div>
 <div class="killbar"><button type="button" onclick="openCancel()">Verträge hier kündigen <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></div></header>
@@ -304,7 +304,7 @@ details.note summary{color:var(--gold)}
 <div class="modal" id="km" onclick="if(event.target===this)closeCat()"><div class="sheet" id="ksheet"></div></div>
 
 <div class="modal" id="paywall" onclick="if(event.target===this)closePaywall()"><div class="sheet">
-  <h3>Monatsklar <span class="gold">Premium</span></h3>
+  <h3>MeinMoney <span class="gold">Premium</span></h3>
   <p class="mute">Unbegrenzt Kassenzettel scannen, alle Spartipps und das Abo-Radar. Ohne Werbung, ohne Datenverkauf, ohne Provisionen.</p>
   <p class="gold sm" id="pwTrial" style="font-weight:700;margin-top:6px"></p>
   <ul class="ck">
@@ -388,7 +388,7 @@ function fixCats(){
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], refCode:null, refBy:null, upl:0, customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null, list:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-23.6';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-24.1';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -756,9 +756,9 @@ function vMore(){
   return `<div class="card" style="border-color:rgba(229,115,92,.45);background:linear-gradient(180deg,rgba(229,115,92,.12),rgba(255,255,255,.02));margin-top:16px"><div class="row"><div><b>Vertrag beenden?</b><div class="mute sm">Sie können jederzeit kündigen, ohne Anmeldung und in wenigen Schritten.</div></div></div>
    <button class="btn danger" style="margin-top:12px" onclick="openCancel()">Verträge hier kündigen</button></div>
   ${installCard()}
-  <div class="card" style="border-color:rgba(201,170,34,.45)"><div><b>${ic('share')} Monatsklar weiterempfehlen</b><div class="mute sm">Monatsklar lebt von Weiterempfehlung, nicht von Werbung. Wenn die App Ihnen hilft, schicken Sie sie jemandem, der seine Ausgaben in den Griff bekommen will.</div></div>
+  <div class="card" style="border-color:rgba(201,170,34,.45)"><div><b>${ic('share')} MeinMoney weiterempfehlen</b><div class="mute sm">MeinMoney lebt von Weiterempfehlung, nicht von Werbung. Wenn die App Ihnen hilft, schicken Sie sie jemandem, der seine Ausgaben in den Griff bekommen will.</div></div>
    <button class="btn" style="margin-top:12px" onclick="shareApp()">${ic('share')} Teilen</button></div>
-  <div class="card"><div><b>Ihre Meinung zählt</b><div class="mute sm">Was gefällt Ihnen, was fehlt, was funktioniert nicht? Ihr Feedback macht Monatsklar besser.</div></div>
+  <div class="card"><div><b>Ihre Meinung zählt</b><div class="mute sm">Was gefällt Ihnen, was fehlt, was funktioniert nicht? Ihr Feedback macht MeinMoney besser.</div></div>
    <button class="btn" style="margin-top:12px" onclick="openFeedback()">Feedback geben</button>
    <label class="chk" style="margin-top:12px"><input type="checkbox" ${S.fb.off?'':'checked'} onchange="S.fb.off=!this.checked;save()"> Gelegentlich nach Feedback fragen</label></div>
   <h2>Kontoauszug analysieren</h2><div class="card"><div class="row"><div><b>Kontoauszug hochladen</b><div class="mute sm">PDF oder CSV aus dem Online-Banking. Einnahmen und Kategorien erkennt die App selbst.</div></div></div>
@@ -779,7 +779,7 @@ function vMore(){
    <div class="btns" style="margin-top:10px"><button class="btn sm" onclick="dlBackup()">Sicherung speichern</button><button class="btn ghost sm" onclick="document.getElementById('bfile').click()">Sicherung einspielen</button></div></div>
   <div class="btns" style="margin-top:14px"><button class="btn ghost sm" onclick="dlCsv()">Exportieren (CSV)</button><button class="btn ghost sm" onclick="loadDemo()">Beispieldaten laden</button><button class="btn ghost sm" onclick="wipe()">Alles löschen</button></div></div>
   <h2>Rechtliches</h2><div class="card"><div class="legal"><a href="info/impressum.html" target="_blank" rel="noopener">Impressum</a><a href="info/datenschutz.html" target="_blank" rel="noopener">Datenschutz</a><a href="info/agb.html" target="_blank" rel="noopener">AGB</a><a href="mailto:griesshammersteven@gmail.com">Kontakt</a></div>
-  <p class="note" style="margin-top:12px">Monatsklar gibt keine Anlage-, Steuer- oder Rechtsberatung. Die Spartipps dienen der Orientierung.</p></div>`;
+  <p class="note" style="margin-top:12px">MeinMoney gibt keine Anlage-, Steuer- oder Rechtsberatung. Die Spartipps dienen der Orientierung.</p></div>`;
 }
 
 /* ---------- Erfassen ---------- */
@@ -1277,7 +1277,7 @@ function listDel(id){
 }
 
 /* ---------- Kündigung (Kündigungsbutton nach § 312k BGB) ---------- */
-const CONTRACTS=['Monatsklar Premium – monatlich','Monatsklar Premium – jährlich','Kostenlose Testphase / Basis-Version'];
+const CONTRACTS=['MeinMoney Premium – monatlich','MeinMoney Premium – jährlich','Kostenlose Testphase / Basis-Version'];
 const OP_MAIL='griesshammersteven@gmail.com';
 const fmtDT=d=>d.toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'})+' Uhr';
 const fmtD=s=>s.slice(8)+'.'+s.slice(5,7)+'.'+s.slice(0,4);
@@ -1343,12 +1343,12 @@ function cxConfirm(){
   const rec={ref:'GS-'+today().replace(/-/g,'')+'-'+Math.random().toString(36).slice(2,7).toUpperCase(),ts:now.toISOString(),name:C.name.trim(),email:C.email.trim(),contract:C.contract,cid:C.cid.trim(),kind:C.kind,when:C.when,reason:C.reason.trim()};
   S.cancels.push(rec);
   /* Wirkung in dieser Version: Premium endet, die App wechselt zur Basis-Version. Daten bleiben erhalten. */
-  if(rec.contract.startsWith('Monatsklar Premium')){S.paid=false;S.choice='basic';}
+  if(rec.contract.startsWith('MeinMoney Premium')){S.paid=false;S.choice='basic';}
   else{const d=new Date();d.setDate(d.getDate()-TRIAL_DAYS);S.trialStart=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;S.choice='basic';}
   save(); C.rec=rec; C.step=3; renderCancel(); render(true);
 }
 function cxText(r){
-  return `Kündigung – Monatsklar\n\nReferenz: ${r.ref}\nEingang (Gerätezeit): ${fmtDT(new Date(r.ts))}\n\nName: ${r.name}\nE-Mail: ${r.email}\nVertrag: ${r.contract}\n${r.cid?`Vertrags-/Bestellnummer: ${r.cid}\n`:''}Kündigung: ${kindText(r)}\n\nHiermit kündige ich den oben genannten Vertrag. Bitte bestätigen Sie mir den Eingang und den Zeitpunkt der Beendigung in Textform an die angegebene E-Mail-Adresse.\n`;
+  return `Kündigung – MeinMoney\n\nReferenz: ${r.ref}\nEingang (Gerätezeit): ${fmtDT(new Date(r.ts))}\n\nName: ${r.name}\nE-Mail: ${r.email}\nVertrag: ${r.contract}\n${r.cid?`Vertrags-/Bestellnummer: ${r.cid}\n`:''}Kündigung: ${kindText(r)}\n\nHiermit kündige ich den oben genannten Vertrag. Bitte bestätigen Sie mir den Eingang und den Zeitpunkt der Beendigung in Textform an die angegebene E-Mail-Adresse.\n`;
 }
 function cxMail(){
   const r=S.cx.rec, u=`mailto:${OP_MAIL}?cc=${encodeURIComponent(r.email)}&subject=${encodeURIComponent('Kündigung '+r.ref)}&body=${encodeURIComponent(cxText(r))}`;
@@ -1415,7 +1415,7 @@ function onBackup(file){
   if(!file) return;
   file.text().then(t=>{
     try{ S.bk=cleanBackup(JSON.parse(t)); renderBackup(); document.getElementById('bm').classList.add('show'); }
-    catch(e){ S.bk={err:e.message==='groesse'?'Die Sicherung ist zu groß.':'Das ist keine gültige Monatsklar-Sicherung. Bitte wählen Sie eine Datei, die Sie mit „Sicherung speichern“ erstellt haben.'}; renderBackup(); document.getElementById('bm').classList.add('show'); }
+    catch(e){ S.bk={err:e.message==='groesse'?'Die Sicherung ist zu groß.':'Das ist keine gültige MeinMoney-Sicherung. Bitte wählen Sie eine Datei, die Sie mit „Sicherung speichern“ erstellt haben.'}; renderBackup(); document.getElementById('bm').classList.add('show'); }
   }).catch(()=>{S.bk={err:'Die Datei konnte nicht gelesen werden.'};renderBackup();document.getElementById('bm').classList.add('show');});
 }
 function renderBackup(){
@@ -1469,7 +1469,7 @@ function chooseBasic(){
 function openDecide(){
   const t=trialInfo();
   document.getElementById('dsheet').innerHTML=`<div class="row" style="margin-bottom:6px"><h3>Wie geht es weiter?</h3><button class="del" style="font-size:20px" onclick="closeDecide()" aria-label="Später">${ic('x')}</button></div>
-   <p class="mute">${t.phase==='ended'?'Ihre Premium-Testphase ist beendet.':`Ihre Premium-Testphase endet in <b class="gold">${t.left} Tagen</b>.`} Bitte entscheiden Sie, wie Sie Monatsklar weiter nutzen möchten.</p>
+   <p class="mute">${t.phase==='ended'?'Ihre Premium-Testphase ist beendet.':`Ihre Premium-Testphase endet in <b class="gold">${t.left} Tagen</b>.`} Bitte entscheiden Sie, wie Sie MeinMoney weiter nutzen möchten.</p>
    <div class="card" style="border-color:var(--gold);margin-top:14px"><b>${ic('star')} Premium</b> <span class="gold sm">3,99 € im Monat · 29,99 € im Jahr</span>
     <ul class="ck"><li>Unbegrenzt Kassenzettel und Kontoauszüge</li><li>Alle Spartipps und Abo-Radar</li><li>Einkaufsplaner mit Speiseplan und Rezepten</li><li>Unbegrenzt Budgets und Sparziele</li></ul>
     <button class="btn" onclick="togglePremium(true)">Premium behalten (Demo)</button></div>
@@ -1575,7 +1575,7 @@ function fbDue(){
 function fbBanner(){
   const k=fbDue(); if(!k) return '';
   const wrap=(inner)=>`<div class="card" style="margin-top:14px;padding:14px 16px;border-color:rgba(201,170,34,.4)">${inner}</div>`;
-  if(k==='general') return wrap(`<div class="sm"><b>Wie gefällt Ihnen Monatsklar?</b></div><div class="mute sm" style="margin:6px 0 12px">Sie nutzen die App jetzt seit einer Woche. Zwei Minuten Feedback helfen uns, sie besser zu machen.</div><div class="btns"><button class="btn sm" onclick="openFeedback({ask:'general'})">Feedback geben</button><button class="btn ghost sm" onclick="fbLater('general')">Nicht jetzt</button></div>`);
+  if(k==='general') return wrap(`<div class="sm"><b>Wie gefällt Ihnen MeinMoney?</b></div><div class="mute sm" style="margin:6px 0 12px">Sie nutzen die App jetzt seit einer Woche. Zwei Minuten Feedback helfen uns, sie besser zu machen.</div><div class="btns"><button class="btn sm" onclick="openFeedback({ask:'general'})">Feedback geben</button><button class="btn ghost sm" onclick="fbLater('general')">Nicht jetzt</button></div>`);
   return wrap(`<div class="sm"><b>${FB_KINDS[k].q}</b></div><div class="btns" style="margin-top:12px"><button class="btn sm" onclick="fbAnswer('${k}','ok')">Alles richtig</button><button class="btn ghost sm" onclick="fbAnswer('${k}','minor')">Kleine Fehler</button><button class="btn ghost sm" onclick="fbAnswer('${k}','major')">Viele Fehler</button></div><div style="margin-top:10px"><button class="del sm" style="padding-left:0" onclick="fbLater('${k}')">Nicht jetzt</button></div>`);
 }
 function fbAnswer(kind,v){
@@ -1609,7 +1609,7 @@ function techInfo(){
 }
 function feedbackText(){
   const f=S.ff, L=[];
-  L.push('Feedback zu Monatsklar','');
+  L.push('Feedback zu MeinMoney','');
   if(f.rating) L.push(`Bewertung: ${f.rating} von 5`);
   if(f.nps!==null) L.push(`Weiterempfehlung: ${f.nps} von 10`);
   L.push(`Art: ${FB_CATS[f.cat]}`);
@@ -1629,14 +1629,14 @@ function renderFeedback(){
   const kind=FB_KINDS[f.ask];
   box.innerHTML=`<div class="row" style="margin-bottom:6px"><h3>Ihr Feedback</h3><button class="del" style="font-size:20px" onclick="closeFeedback()" aria-label="Schließen">${ic('x')}</button></div>
    <p class="mute sm">Danke, dass Sie sich Zeit nehmen. Jede Rückmeldung wird gelesen.</p>
-   <label class="fl">Wie zufrieden sind Sie mit Monatsklar?</label>
+   <label class="fl">Wie zufrieden sind Sie mit MeinMoney?</label>
    <div class="stars" role="radiogroup" aria-label="Bewertung">${[1,2,3,4,5].map(n=>`<button type="button" class="${f.rating>=n?'on':''}" role="radio" aria-checked="${f.rating===n}" aria-label="${n} von 5" onclick="ffSet('rating',${n===f.rating?0:n})">${ic('star')}</button>`).join('')}</div>
    <label class="fl">Worum geht es?</label>
    <div class="chips">${Object.entries(FB_CATS).map(([k,l])=>`<button type="button" class="chip ${f.cat===k?'on':''}" onclick="ffSet('cat','${k}')">${l}</button>`).join('')}</div>
    ${kind?`<label class="fl">Was war falsch? (${esc(kind.topic)})</label><div class="chips">${kind.errs.map(e=>`<button type="button" class="chip ${f.errs.includes(e)?'on':''}" onclick="ffErr('${e}')">${e}</button>`).join('')}</div>`:''}
    <label class="fl">${f.cat==='problem'?'Was ist passiert? Was haben Sie erwartet?':f.cat==='idee'?'Was sollen wir verbessern oder ergänzen?':f.cat==='lob'?'Was gefällt Ihnen besonders?':'Ihre Frage'}</label>
    <textarea class="f" rows="4" maxlength="1000" placeholder="Ihre Nachricht …" oninput="S.ff.text=this.value">${esc(f.text)}</textarea>
-   <label class="fl">Würden Sie Monatsklar weiterempfehlen? (0 = nein, 10 = auf jeden Fall)</label>
+   <label class="fl">Würden Sie MeinMoney weiterempfehlen? (0 = nein, 10 = auf jeden Fall)</label>
    <div class="nps">${Array.from({length:11},(_,n)=>`<button type="button" class="${f.nps===n?'on':''}" aria-label="${n} von 10" onclick="ffSet('nps',${f.nps===n?'null':n})">${n}</button>`).join('')}</div>
    <label class="chk"><input type="checkbox" ${f.reply?'checked':''} onchange="ffSet('reply',this.checked)"> Ich möchte eine Antwort</label>
    ${f.reply?`<input class="f" type="email" inputmode="email" placeholder="Ihre E-Mail-Adresse" value="${esc(f.email)}" oninput="S.ff.email=this.value" style="margin-top:8px" autocomplete="email">`:''}
@@ -1657,7 +1657,7 @@ function ffValid(){
 function ffDone(){S.fb.sent=(S.fb.sent||0)+1;S.fb.done.general=true;if(S.ff.ask){S.fb.done[S.ff.ask]=true;S.fb.pending[S.ff.ask]=false;}S.fb.asked[S.ff.ask||'general']=today();save();}
 function ffSend(){
   const t=document.querySelector('#fsheet textarea');if(t)S.ff.text=t.value; if(!ffValid()) return;
-  const f=S.ff, sub=`Monatsklar Feedback${f.rating?` (${f.rating}/5`:' ('}${f.rating?', ':''}${FB_CATS[f.cat]})`;
+  const f=S.ff, sub=`MeinMoney Feedback${f.rating?` (${f.rating}/5`:' ('}${f.rating?', ':''}${FB_CATS[f.cat]})`;
   ffDone(); location.href=`mailto:${OP_MAIL}?subject=${encodeURIComponent(sub)}&body=${encodeURIComponent(feedbackText())}`;
   closeFeedback(); render(true); toast('Danke! Bitte senden Sie die E-Mail noch ab.');
 }
@@ -1683,10 +1683,10 @@ function installMode(){
   return 'none';
 }
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();S.inst=e;if(document.getElementById('app'))render(true);});
-window.addEventListener('appinstalled',()=>{S.inst=null;S.instSnooze=null;save();render(true);toast('Monatsklar ist jetzt installiert');});
+window.addEventListener('appinstalled',()=>{S.inst=null;S.instSnooze=null;save();render(true);toast('MeinMoney ist jetzt installiert');});
 function installBanner(){
   const m=installMode(); if(m==='none'||(S.instSnooze&&S.instSnooze>today())) return '';
-  const t={prompt:'Monatsklar startet dann direkt vom Startbildschirm, schnell und ohne Adressleiste.',ios:'Fügen Sie Monatsklar Ihrem Home-Bildschirm hinzu, damit es sich wie eine App öffnet.',inapp:'Öffnen Sie den Link in Ihrem Browser, dann können Sie Monatsklar als App auf dem Startbildschirm installieren.',manual:'Installieren Sie Monatsklar über das Browser-Menü, dann öffnet es sich direkt vom Startbildschirm.'}[m];
+  const t={prompt:'MeinMoney startet dann direkt vom Startbildschirm, schnell und ohne Adressleiste.',ios:'Fügen Sie MeinMoney Ihrem Home-Bildschirm hinzu, damit es sich wie eine App öffnet.',inapp:'Öffnen Sie den Link in Ihrem Browser, dann können Sie MeinMoney als App auf dem Startbildschirm installieren.',manual:'Installieren Sie MeinMoney über das Browser-Menü, dann öffnet es sich direkt vom Startbildschirm.'}[m];
   return `<div class="card" style="margin-top:14px;padding:14px 16px;border-color:rgba(201,170,34,.4)"><div class="sm">${ic('download')} <b>Als App installieren</b></div><div class="mute sm" style="margin:6px 0 12px">${t}</div><div class="btns"><button class="btn sm" onclick="installApp()">Als App downloaden</button><button class="btn ghost sm" onclick="installLater()">Nicht jetzt</button></div></div>`;
 }
 function installCard(){
@@ -1697,7 +1697,7 @@ async function installApp(){
   const m=installMode();
   if(m==='prompt'){
     const e=S.inst;
-    try{ await e.prompt(); const c=await e.userChoice; if(c&&c.outcome==='accepted') toast('Monatsklar wird installiert …'); else installLater(); }catch(x){}
+    try{ await e.prompt(); const c=await e.userChoice; if(c&&c.outcome==='accepted') toast('MeinMoney wird installiert …'); else installLater(); }catch(x){}
     S.inst=null; render(true); return;
   }
   if(m!=='none') openInstall(m);
@@ -1705,12 +1705,12 @@ async function installApp(){
 function installLater(){const d=new Date();d.setDate(d.getDate()+7);S.instSnooze=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;save();render(true);}
 function openInstall(m){
   const steps={
-    ios:[`Tippen Sie unten (iPad: oben) auf das <b>Teilen-Symbol</b> ${ic('share')}.`,`Scrollen Sie und wählen Sie <b>„Zum Home-Bildschirm“</b> ${ic('plusSquare')}.`,`Tippen Sie oben rechts auf <b>„Hinzufügen“</b>. Fertig: Monatsklar liegt jetzt auf Ihrem Startbildschirm.`],
+    ios:[`Tippen Sie unten (iPad: oben) auf das <b>Teilen-Symbol</b> ${ic('share')}.`,`Scrollen Sie und wählen Sie <b>„Zum Home-Bildschirm“</b> ${ic('plusSquare')}.`,`Tippen Sie oben rechts auf <b>„Hinzufügen“</b>. Fertig: MeinMoney liegt jetzt auf Ihrem Startbildschirm.`],
     inapp:[`Tippen Sie auf das Menü (<b>⋯</b> oder das <b>Kompass-/Teilen-Symbol</b>).`,`Wählen Sie <b>„In Safari öffnen“</b> bzw. <b>„Im Browser öffnen“</b>.`,`Dort erscheint der Button „Als App downloaden“ wieder und Sie können installieren.`],
     manual:[`Öffnen Sie das <b>Browser-Menü</b> (drei Punkte oben rechts).`,`Wählen Sie <b>„App installieren“</b> oder <b>„Zum Startbildschirm hinzufügen“</b>.`,`Bestätigen Sie mit <b>„Installieren“</b>.`],
   }[m]||[];
   document.getElementById('isheet').innerHTML=`<div class="row" style="margin-bottom:6px"><h3>${m==='inapp'?'Zuerst im Browser öffnen':'Als App installieren'}</h3><button class="del" style="font-size:20px" onclick="closeInstall()" aria-label="Schließen">${ic('x')}</button></div>
-   <p class="mute sm">${m==='ios'?'Auf dem iPhone geht das in wenigen Schritten (Apple erlaubt keine automatische Installation):':m==='inapp'?'Sie haben den Link in einem eingebauten Browser geöffnet, zum Beispiel aus WhatsApp. Dort lässt sich keine App installieren.':'So installieren Sie Monatsklar auf Ihrem Gerät:'}</p>
+   <p class="mute sm">${m==='ios'?'Auf dem iPhone geht das in wenigen Schritten (Apple erlaubt keine automatische Installation):':m==='inapp'?'Sie haben den Link in einem eingebauten Browser geöffnet, zum Beispiel aus WhatsApp. Dort lässt sich keine App installieren.':'So installieren Sie MeinMoney auf Ihrem Gerät:'}</p>
    <ol class="steps">${steps.map(s=>`<li><span>${s}</span></li>`).join('')}</ol>
    ${m==='inapp'?`<button class="btn ghost" style="margin-top:6px" onclick="copyLink()">Link kopieren</button>`:''}
    <button class="btn" style="margin-top:12px" onclick="closeInstall()">Verstanden</button>`;
@@ -1729,10 +1729,10 @@ function catchRef(){
   if(c&&!S.refBy&&c!==S.refCode&&!S.tx.length){S.refBy=c;save();}   /* nur bei einer frischen Installation */
   if(new URLSearchParams(location.search).has('r')) history.replaceState(null,'',location.pathname);
 }
-const SHARE_TXT='Ich nutze Monatsklar als Haushaltsbuch: Kassenzettel abfotografieren, Kontoauszug hochladen, und die App sortiert alles selbst. Läuft komplett auf dem Handy, keine Anmeldung, keine Werbung. 8 Wochen alles gratis testen:';
+const SHARE_TXT='Ich nutze MeinMoney als Haushaltsbuch: Kassenzettel abfotografieren, Kontoauszug hochladen, und die App sortiert alles selbst. Läuft komplett auf dem Handy, keine Anmeldung, keine Werbung. 8 Wochen alles gratis testen:';
 async function shareApp(){
   const url='https://monatsklar.de/?r='+myRef();
-  if(navigator.share){ try{ await navigator.share({title:'Monatsklar',text:SHARE_TXT,url}); return; }catch(e){ if(e&&e.name==='AbortError') return; } }
+  if(navigator.share){ try{ await navigator.share({title:'MeinMoney',text:SHARE_TXT,url}); return; }catch(e){ if(e&&e.name==='AbortError') return; } }
   try{ await navigator.clipboard.writeText(SHARE_TXT+' '+url); toast('Text und Link kopiert. Jetzt einfügen und senden.'); }
   catch(e){ toast('Link: '+url); }
 }
