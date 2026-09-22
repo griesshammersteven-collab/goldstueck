@@ -277,7 +277,7 @@ details.note summary{color:var(--gold)}
   <div class="logo"><span class="coin">M</span><span>Mein<b>Money</b></span></div>
   <div class="pill" id="premPill" onclick="openPaywall()" role="button" tabindex="0">Premium</div>
 </div>
-<div class="killbar"><button type="button" onclick="openCancel()">Verträge hier kündigen <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></div></header>
+<div class="killbar" id="killbar" hidden><button type="button" onclick="openCancel()">Verträge hier kündigen <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></div></header>
 
 <main class="wrap" id="app"></main>
 
@@ -430,7 +430,7 @@ function fixCats(){
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], mode:null, biz:{ust:'klein',mixed:false,fy:1}, tourDone:false, tour:null, chat:null, refCode:null, refBy:null, upl:0, customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null, list:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-25.5';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-25.6';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -2407,6 +2407,7 @@ function render(keepScroll){
   if(!S.month||!ms.includes(S.month)) S.month=ms[ms.length-1]||mk(today());
   document.getElementById('app').innerHTML={home:vHome,tx:vTx,shop:isBiz()?vBiz:vShop,tips:vTips,more:vMore}[S.tab]();
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tab));
+  const kb=document.getElementById('killbar'); if(kb) kb.hidden=!S.paid;
   const ns=document.getElementById('navShop');
   if(ns) ns.innerHTML=isBiz()?navIco('fileText')+'Auswertung':navIco('cart')+'Einkaufen';
   const p=document.getElementById('premPill'), ti=trialInfo();p.classList.toggle('on',S.premium);p.innerHTML=ic('star')+' '+(S.paid?'Premium aktiv':ti.phase!=='ended'?`Test · ${ti.left} Tage`:'Premium');
