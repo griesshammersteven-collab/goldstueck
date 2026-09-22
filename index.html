@@ -77,7 +77,7 @@ h2::before{content:"";width:18px;height:2px;border-radius:2px;background:var(--g
 .kpi .lbl{font-size:12px;color:var(--mute);margin-bottom:4px}
 .kpi .val{font-size:22px;font-weight:800;letter-spacing:-.01em}
 .monthbar{display:flex;align-items:center;justify-content:space-between;margin:20px 0 8px}
-.monthbar button{background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--text);width:42px;height:42px;border-radius:14px;font-size:18px;cursor:pointer;transition:all .3s}
+.monthbar button{min-width:44px;min-height:44px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--text);width:42px;height:42px;border-radius:14px;font-size:18px;cursor:pointer;transition:all .3s}
 .monthbar button:not(:disabled):hover{border-color:rgba(201,170,34,.5);color:var(--gold);transform:translateY(-1px)}
 .monthbar button:disabled{opacity:.3;cursor:default}
 .monthbar .m{font-weight:800;font-size:19px;letter-spacing:-.01em}
@@ -114,9 +114,9 @@ svg{display:block;width:100%;height:auto}
 .tx:last-child{border:0}
 .tx .d{flex:1;min-width:0}
 .tx .d .t1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
-.tx select{background:rgba(255,255,255,.06);color:var(--mute);border:1px solid var(--line);border-radius:10px;font-size:12px;padding:4px 8px;margin-top:4px;max-width:100%}
+.tx select{background:rgba(255,255,255,.06);color:var(--mute);border:1px solid var(--line);border-radius:10px;font-size:13px;padding:7px 10px;margin-top:4px;max-width:100%}
 .tx select option{background:#171A21;color:#fff}
-.tx .del{background:none;border:0;color:var(--mute);font-size:16px;cursor:pointer;padding:8px;border-radius:10px;transition:all .2s}
+.tx .del{background:none;border:0;color:var(--mute);font-size:16px;cursor:pointer;padding:8px;border-radius:10px;transition:all .2s;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
 .tx .del:hover,.del:hover{color:var(--gold);background:rgba(255,255,255,.06)}
 .del{background:none;border:0;color:var(--mute);cursor:pointer;border-radius:10px;padding:6px 8px;line-height:1}
 .items{font-size:12px;color:var(--mute);margin:6px 0 0;padding-left:0;list-style:none}
@@ -134,7 +134,7 @@ svg{display:block;width:100%;height:auto}
 
 input.f,select.f,input[type=search]{width:100%;background:rgba(255,255,255,.05);color:var(--text);border:1px solid var(--line);border-radius:16px;padding:13px 14px;font-size:15px;transition:border-color .2s,box-shadow .2s}
 input.f:focus,select.f:focus,input[type=search]:focus{outline:none;border-color:rgba(201,170,34,.7);box-shadow:0 0 0 3px rgba(201,170,34,.15)}
-input::placeholder{color:rgba(255,255,255,.35)}
+input::placeholder,textarea::placeholder{color:rgba(255,255,255,.5)}
 label.fl{display:block;font-size:12px;color:var(--mute);margin:16px 0 6px}
 .amtin{font-size:36px;font-weight:800;text-align:center;padding:16px}
 .seg{display:grid;grid-template-columns:1fr 1fr;background:rgba(255,255,255,.05);border-radius:16px;padding:4px;gap:4px}
@@ -142,11 +142,11 @@ label.fl{display:block;font-size:12px;color:var(--mute);margin:16px 0 6px}
 .seg button.on.e{background:var(--neg);color:#0B0C0F}
 .seg button.on.i{background:var(--pos);color:#0B0C0F}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--text);border-radius:99px;padding:9px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .25s}
+.chip{border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--text);border-radius:99px;padding:12px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .25s}
 .chip:hover{border-color:rgba(201,170,34,.5);transform:translateY(-1px)}
 .chip.on{border-color:rgba(201,170,34,.7);background:var(--gold-soft);color:var(--gold);font-weight:700}
 .chk{display:flex;align-items:center;gap:10px;margin-top:16px;font-size:14px}
-.chk input{width:20px;height:20px;accent-color:#C9AA22}
+.chk input{width:24px;height:24px;accent-color:var(--gold);flex:none}
 .scanbtn{display:flex;align-items:center;gap:12px;width:100%;border:1.5px dashed rgba(201,170,34,.45);background:var(--gold-soft);color:var(--text);border-radius:20px;padding:16px;cursor:pointer;text-align:left;margin-top:14px;transition:all .3s}
 .scanbtn:hover{transform:translateY(-2px);border-color:var(--gold);background:rgba(201,170,34,.2)}
 .scanbtn .e{font-size:28px}
@@ -258,14 +258,17 @@ details.note summary{color:var(--gold)}
 .chat{display:flex;flex-direction:column;gap:10px;max-height:52vh;overflow-y:auto;overscroll-behavior:contain;padding:2px}
 .msg{max-width:88%;align-self:flex-start;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:16px 16px 16px 4px;padding:12px 14px;font-size:14px;line-height:1.5}
 .msg.me{align-self:flex-end;background:var(--gold-soft);border-color:rgba(201,170,34,.45);border-radius:16px 16px 4px 16px}
-.msg .chip{font-size:12px;padding:7px 11px}
+.msg .chip{font-size:12px;padding:8px 12px}
 .tour{position:fixed;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:30;max-width:696px;margin:0 auto;padding:16px 18px 14px;border-radius:20px;border:1px solid rgba(201,170,34,.55);background:linear-gradient(180deg,#1c1a10,#14151a);box-shadow:0 18px 50px -10px rgba(0,0,0,.8);display:none}
 .tour.show{display:block}
 .tour .btns .btn{min-width:0}
 .tourskip{display:block;margin:10px auto 0;background:none;border:0;color:var(--mute);font-size:13px;text-decoration:underline;cursor:pointer;padding:6px}
 .tourhl{z-index:31;outline:2px solid var(--gold);outline-offset:3px;border-radius:14px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.scanbtn:disabled{opacity:.5;pointer-events:none}
+.card.flush{padding:4px 16px}
 .legal{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:6px}
-.legal a{color:var(--mute);font-size:13px;text-decoration:none;transition:color .2s}
+.legal a{color:var(--mute);font-size:13px;text-decoration:none;transition:color .2s;padding:6px 0;display:inline-block}
 .legal a:hover{color:var(--gold)}
 @media(min-width:720px){.sheet{border-radius:28px;margin-bottom:6vh}.modal{align-items:center}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:.01ms!important}}
@@ -273,9 +276,9 @@ details.note summary{color:var(--gold)}
 </head>
 <body>
 <div class="glow" aria-hidden="true"><i></i><i></i></div>
-<header><div class="wrap">
+<header><h1 class="sr-only">MeinMoney – Ihr Haushaltsbuch</h1><div class="wrap">
   <div class="logo"><span class="coin">M</span><span>Mein<b>Money</b></span></div>
-  <div class="pill" id="premPill" onclick="openPaywall()" role="button" tabindex="0">Premium</div>
+  <div class="pill" id="premPill" onclick="openPaywall()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openPaywall();}" role="button" tabindex="0">Premium</div>
 </div>
 <div class="killbar" id="killbar" hidden><button type="button" onclick="openCancel()">Verträge hier kündigen <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></div></header>
 
@@ -290,32 +293,32 @@ details.note summary{color:var(--gold)}
   <button data-t="more"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>Mehr</button>
 </div></nav>
 
-<div class="modal" id="addm" onclick="if(event.target===this)closeAdd()"><div class="sheet" id="addsheet"></div></div>
+<div class="modal" id="addm" onclick="if(event.target===this)closeAdd()"><div class="sheet" role="dialog" aria-modal="true" id="addsheet"></div></div>
 
 <input type="file" id="stfile" accept=".pdf,.csv,.txt,application/pdf,text/csv" hidden onchange="onStmt(this.files[0]);this.value=''">
-<div class="modal" id="sm" onclick="if(event.target===this)closeStmt()"><div class="sheet" id="ssheet"></div></div>
+<div class="modal" id="sm" onclick="if(event.target===this)closeStmt()"><div class="sheet" role="dialog" aria-modal="true" id="ssheet"></div></div>
 
-<div class="modal" id="gm" onclick="if(event.target===this)closeGoal()"><div class="sheet" id="gsheet"></div></div>
+<div class="modal" id="gm" onclick="if(event.target===this)closeGoal()"><div class="sheet" role="dialog" aria-modal="true" id="gsheet"></div></div>
 
-<div class="modal" id="lm" onclick="if(event.target===this)closeList()"><div class="sheet" id="lsheet"></div></div>
+<div class="modal" id="lm" onclick="if(event.target===this)closeList()"><div class="sheet" role="dialog" aria-modal="true" id="lsheet"></div></div>
 
 <input type="file" id="bfile" accept=".json,application/json" hidden onchange="onBackup(this.files[0]);this.value=''">
-<div class="modal" id="bm" onclick="if(event.target===this)closeBackup()"><div class="sheet" id="bsheet"></div></div>
+<div class="modal" id="bm" onclick="if(event.target===this)closeBackup()"><div class="sheet" role="dialog" aria-modal="true" id="bsheet"></div></div>
 
-<div class="modal" id="im" onclick="if(event.target===this)closeInstall()"><div class="sheet" id="isheet"></div></div>
+<div class="modal" id="im" onclick="if(event.target===this)closeInstall()"><div class="sheet" role="dialog" aria-modal="true" id="isheet"></div></div>
 
-<div class="modal" id="fm" onclick="if(event.target===this)closeFeedback()"><div class="sheet" id="fsheet"></div></div>
+<div class="modal" id="fm" onclick="if(event.target===this)closeFeedback()"><div class="sheet" role="dialog" aria-modal="true" id="fsheet"></div></div>
 
-<div class="modal" id="cm" onclick="if(event.target===this)closeCancel()"><div class="sheet" id="csheet"></div></div>
+<div class="modal" id="cm" onclick="if(event.target===this)closeCancel()"><div class="sheet" role="dialog" aria-modal="true" id="csheet"></div></div>
 
-<div class="modal" id="dm" onclick="if(event.target===this)closeDecide()"><div class="sheet" id="dsheet"></div></div>
+<div class="modal" id="dm" onclick="if(event.target===this)closeDecide()"><div class="sheet" role="dialog" aria-modal="true" id="dsheet"></div></div>
 
-<div class="modal" id="km" onclick="if(event.target===this)closeCat()"><div class="sheet" id="ksheet"></div></div>
-<div class="modal" id="mm"><div class="sheet" id="msheet"></div></div>
-<div class="modal" id="hm" onclick="if(event.target===this)closeHelp()"><div class="sheet" id="hsheet"></div></div>
+<div class="modal" id="km" onclick="if(event.target===this)closeCat()"><div class="sheet" role="dialog" aria-modal="true" id="ksheet"></div></div>
+<div class="modal" id="mm"><div class="sheet" role="dialog" aria-modal="true" id="msheet"></div></div>
+<div class="modal" id="hm" onclick="if(event.target===this)closeHelp()"><div class="sheet" role="dialog" aria-modal="true" id="hsheet"></div></div>
 <div class="tour" id="tourbox"></div>
 
-<div class="modal" id="paywall" onclick="if(event.target===this)closePaywall()"><div class="sheet">
+<div class="modal" id="paywall" onclick="if(event.target===this)closePaywall()"><div class="sheet" role="dialog" aria-modal="true">
   <h3>MeinMoney <span class="gold">Premium</span></h3>
   <p class="mute">Unbegrenzt Kassenzettel scannen, alle Spartipps und das Abo-Radar. Ohne Werbung, ohne Datenverkauf, ohne Provisionen.</p>
   <p class="gold sm" id="pwTrial" style="font-weight:700;margin-top:6px"></p>
@@ -357,9 +360,9 @@ const BIZ_CATS = {
   'Telefon & Porto':{c:'#A3B18A',fixed:true,ic:'share',kw:['telekom','vodafone','o2 ','mobilfunk','internet','post','dhl','porto','hermes']},
   'Büromaterial':{c:'#C9AA22',fixed:false,ic:'pencil',kw:['büro','buero','papier','drucker','toner','schreibwaren','amazon','ikea']},
   'Software & IT':{c:'#E5735C',fixed:true,ic:'repeat',kw:['software','lizenz','hosting','domain','cloud','microsoft','adobe','apple.com','google workspace']},
-  'Fortbildung':{c:'#9B7FE0',fixed:false,ic:'trophy',kw:['seminar','schulung','fortbildung','kurs','coaching','fachbuch']},
-  'Beratung':{c:'#5B8DEF',fixed:false,ic:'fileText',kw:['steuerberater','rechtsanwalt','notar','beratung','buchhaltung']},
-  'Bewirtung':{c:'#E8A04C',fixed:false,ic:'utensils',kw:['restaurant','bewirtung','gaststätte','gaststaette','catering']},
+  'Fortbildung':{c:'#D98CC1',fixed:false,ic:'trophy',kw:['seminar','schulung','fortbildung','kurs','coaching','fachbuch']},
+  'Beratung':{c:'#7FB0E0',fixed:false,ic:'fileText',kw:['steuerberater','rechtsanwalt','notar','beratung','buchhaltung']},
+  'Bewirtung':{c:'#C77D3A',fixed:false,ic:'utensils',kw:['restaurant','bewirtung','gaststätte','gaststaette','catering']},
   'Bankgebühren':{c:'#8A8F98',fixed:true,ic:'landmark',kw:['kontoführung','kontofuehrung','bankgebühr','entgelt','gebühren']},
   'Sonstiges':{c:'#8A8F98',fixed:false,ic:'package',kw:[]}
 };
@@ -389,7 +392,7 @@ const isInc = c => c==='Einkommen' || !!(CATS[c] && CATS[c].type==='inc');
 const FREE_SCANS = 5;
 
 /* Eigene Kategorien: Werte werden streng geprüft (auch aus gespeicherten Daten und Sicherungsdateien), da Namen an vielen Stellen im HTML stehen */
-const CAT_COLORS=['#5B8DEF','#9B7FE0','#E07FA8','#E5735C','#E8A04C','#C9AA22','#6CC17B','#3FB8AF','#57C2E0','#A3B18A'];
+const CAT_COLORS=['#5B8DEF','#9B7FE0','#E07FA8','#E5735C','#E8A04C','#D98CC1','#6CC17B','#3FB8AF','#57C2E0','#A3B18A'];
 const CAT_ICONS=['home','car','cart','utensils','bag','heart','package','coffee','target','trophy','landmark','camera','gift','star','coins','receipt','shield','repeat','wallet','sparkles'];
 const CAT_NAME_RE=/^[A-Za-zÄÖÜäöüß0-9 &\-+.,\/()]{1,24}$/;
 const cleanKw=k=>(Array.isArray(k)?k:[]).slice(0,15).map(w=>String(w).toLowerCase().replace(/[^a-zäöüß0-9 .&\-]/g,'').trim().slice(0,30)).filter(w=>w.length>=2);
@@ -430,7 +433,7 @@ function fixCats(){
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], mode:null, biz:{ust:'klein',mixed:false,fy:1}, tourDone:false, tour:null, chat:null, refCode:null, refBy:null, upl:0, customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null, list:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-25.6';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-25.7';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -440,7 +443,7 @@ function trialInfo(){
 /* S.premium gilt als aktiv, wenn gekauft (paid) oder die Testphase noch läuft */
 Object.defineProperty(S,'premium',{get(){return S.paid||trialInfo().phase!=='ended';},set(v){S.paid=!!v;}});
 function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||'null'); if(j){S.tx=j.tx||[];S.rules=j.rules||{};S.rec=j.rec||[];S.scans=j.scans||{};S.stmts=j.stmts||{};S.budgets=j.budgets||{};S.goals=j.goals||[];S.paid=!!j.paid;S.trialStart=j.trialStart||null;S.choice=j.choice||null;S.cancels=j.cancels||[];S.lastBackup=j.lastBackup||null;S.bkSnooze=j.bkSnooze||null;S.instSnooze=j.instSnooze||null;S.customCats=cleanCats(j.customCats);S.mode=j.mode==='biz'?'biz':(j.mode==='priv'?'priv':null);S.tourDone=!!j.tourDone;S.biz=cleanBiz(j.biz);S.refCode=refOk(j.refCode);S.refBy=refOk(j.refBy);S.upl=Math.max(0,Math.min(99999,Math.round(+j.upl||0)));S.shop=cleanShop(j.shop);S.fb=Object.assign(S.fb,j.fb||{});}}catch(e){}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify({tx:S.tx,rules:S.rules,rec:S.rec,scans:S.scans,stmts:S.stmts,budgets:S.budgets,goals:S.goals,paid:S.paid,trialStart:S.trialStart,choice:S.choice,cancels:S.cancels,lastBackup:S.lastBackup,bkSnooze:S.bkSnooze,instSnooze:S.instSnooze,customCats:S.customCats,mode:S.mode,biz:S.biz,tourDone:S.tourDone,shop:S.shop,refCode:S.refCode,refBy:S.refBy,upl:S.upl,fb:S.fb}))}catch(e){toast('Speichern nicht möglich (Speicher voll oder gesperrt)')}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({tx:S.tx,rules:S.rules,rec:S.rec,scans:S.scans,stmts:S.stmts,budgets:S.budgets,goals:S.goals,paid:S.paid,trialStart:S.trialStart,choice:S.choice,cancels:S.cancels,lastBackup:S.lastBackup,bkSnooze:S.bkSnooze,instSnooze:S.instSnooze,customCats:S.customCats,mode:S.mode,biz:S.biz,tourDone:S.tourDone,shop:S.shop,refCode:S.refCode,refBy:S.refBy,upl:S.upl,fb:S.fb}))}catch(e){toast('Speichern nicht möglich. Bitte geben Sie Speicherplatz frei oder verlassen Sie den privaten Modus des Browsers.')}}
 
 /* ---------- Helfer ---------- */
 const eur=(n,d=0)=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',minimumFractionDigits:d,maximumFractionDigits:d}).format(n===0?0:n);
@@ -606,7 +609,7 @@ function tips(m){
       if(avg>20&&cur>avg*1.25&&cur-avg>20){
         out.push({ic:'trendUp',t:`${c}: ${Math.round((cur/avg-1)*100)} % über Ihrem Schnitt`,
           p:`Sie liegen bei ca. ${eur(cur)} im Monat, sonst bei ${eur(avg)}. Kommen Sie zurück auf Ihren üblichen Wert, bleibt das Geld bei Ihnen.`,save:cur-avg,
-          why:`Wir vergleichen Ihre Ausgaben der Kategorie „${c}" in ${mLabel(m)} mit dem Durchschnitt der letzten ${prior.length} Monate. Der Tipp erscheint, sobald Sie mehr als 25 % darüber liegen und der Unterschied über 20 € beträgt.${isOpen(m)?` Da ${mLabel(m)} noch läuft, rechnen wir Ihr bisheriges Tempo auf den ganzen Monat hoch. Erkannte Fixkosten werden dabei nicht hochgerechnet.`:''}`,
+          why:`Wir vergleichen Ihre Ausgaben der Kategorie „${c}“ in ${mLabel(m)} mit dem Durchschnitt der letzten ${prior.length} Monate. Der Tipp erscheint, sobald Sie mehr als 25 % darüber liegen und der Unterschied über 20 € beträgt.${isOpen(m)?` Da ${mLabel(m)} noch läuft, rechnen wir Ihr bisheriges Tempo auf den ganzen Monat hoch. Erkannte Fixkosten werden dabei nicht hochgerechnet.`:''}`,
           facts:[[`${mLabel(m)}${isOpen(m)?' (hochgerechnet)':''}`,eur(cur)],...prior.map(x=>[mLabel(x),eur(sums(x).by[c]||0)]),['Durchschnitt',eur(avg)],['Unterschied',eur(cur-avg)]],
           cat:c});
       }
@@ -617,7 +620,7 @@ function tips(m){
     const sum=small.reduce((x,t)=>x-t.amt,0)*scale, avg=sum/(small.length*scale);
     out.push({ic:'coffee',t:`${small.length} kleine Käufe im Café`,
       p:`Im Schnitt ${eur2(avg)} pro Kauf, zusammen ca. ${eur(sum)} im Monat. Nur jeden zweiten Kauf zu ersparen, schafft spürbar Luft.`,save:sum/2,
-      why:`Gezählt werden alle Buchungen in „Restaurants & Café" unter 8 €. Ab sechs solcher Käufe im Monat erscheint der Tipp. Als Ersparnis rechnen wir die Hälfte, weil Sie kaum alle streichen werden.${isOpen(m)?` ${mLabel(m)} läuft noch, deshalb ist die Summe auf den ganzen Monat hochgerechnet.`:''}`,
+      why:`Gezählt werden alle Buchungen in „Restaurants & Café“ unter 8 €. Ab sechs solcher Käufe im Monat erscheint der Tipp. Als Ersparnis rechnen wir die Hälfte, weil Sie kaum alle streichen werden.${isOpen(m)?` ${mLabel(m)} läuft noch, deshalb ist die Summe auf den ganzen Monat hochgerechnet.`:''}`,
       facts:[['Kleine Käufe',small.length],['Schnitt pro Kauf',eur2(avg)],['Zusammen',eur(sum)],['Davon die Hälfte',eur(sum/2)]],
       tx:small});
   }
@@ -626,7 +629,7 @@ function tips(m){
     const tot=abos.reduce((x,r)=>x+r.avg,0), top=abos[0];
     out.push({ic:'repeat',t:`${abos.length} laufende Abos: ${eur(tot)} pro Monat`,
       p:`Am teuersten: ${top.name} mit ${eur2(top.avg)} im Monat. Nutzen Sie wirklich alle? Ein gekündigtes Abo entlastet sofort.`,save:top.avg,
-      why:`Als Abo zählt eine Zahlung in „Abos & Medien", die in mindestens drei Monaten mit fast gleichem Betrag auftaucht. Als Ersparnis setzen wir nur das teuerste an, weil Sie vermutlich nicht alle kündigen wollen.`,
+      why:`Als Abo zählt eine Zahlung in „Abos & Medien“, die in mindestens drei Monaten mit fast gleichem Betrag auftaucht. Als Ersparnis setzen wir nur das teuerste an, weil Sie vermutlich nicht alle kündigen wollen.`,
       facts:abos.map(r=>[r.name+' (ca. am '+r.day+'.)',eur2(r.avg)+' · '+eur(r.avg*12)+'/Jahr'])});
   }
   if(f.inc>0){
@@ -650,11 +653,11 @@ function donut(by){
   if(!tot) return '';
   const R=54,C=2*Math.PI*R; let off=0, arcs='';
   ent.forEach(([c,v])=>{const len=v/tot*C;
-    arcs+=`<circle class="seg" data-c="${c}" role="button" tabindex="0" aria-label="${c}: ${eur(v)}, Buchungen anzeigen" onclick="openList('cat',this.dataset.c)" onkeydown="if(event.key==='Enter')openList('cat',this.dataset.c)" r="${R}" cx="80" cy="80" fill="none" stroke="${CATS[c].c}" stroke-width="22" stroke-dasharray="${Math.max(len-2,0.1)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 80 80)"/>`; off+=len;});
+    arcs+=`<circle class="seg" data-c="${c}" role="button" tabindex="0" aria-label="${c}: ${eur(v)}, Buchungen anzeigen" onclick="openList('cat',this.dataset.c)" onkeydown="if(event.key==='Enter'||event.key===' ')event.preventDefault(),openList('cat',this.dataset.c)" r="${R}" cx="80" cy="80" fill="none" stroke="${CATS[c].c}" stroke-width="22" stroke-dasharray="${Math.max(len-2,0.1)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 80 80)"/>`; off+=len;});
   const svg=`<svg viewBox="0 0 160 160" class="donut" style="max-width:190px;margin:0 auto" aria-label="Ausgaben nach Kategorie. Tippen Sie auf einen Abschnitt, um die Buchungen zu sehen.">${arcs}
     <text x="80" y="76" text-anchor="middle" fill="#9AA1AD" font-size="9">Ausgaben</text>
     <text x="80" y="94" text-anchor="middle" fill="#F2F3F5" font-size="15" font-weight="800">${eur(tot)}</text></svg>`;
-  const leg=ent.map(([c,v])=>`<div class="li click" data-c="${c}" role="button" tabindex="0" onclick="openList('cat',this.dataset.c)" onkeydown="if(event.key==='Enter')openList('cat',this.dataset.c)"><span class="dot" style="background:${CATS[c].c}"></span><span class="n">${c}</span><span class="mute sm">${Math.round(v/tot*100)} %</span><b>${eur(v)}</b>${ic('chevR','mute')}</div>`).join('');
+  const leg=ent.map(([c,v])=>`<div class="li click" data-c="${c}" role="button" tabindex="0" onclick="openList('cat',this.dataset.c)" onkeydown="if(event.key==='Enter'||event.key===' ')event.preventDefault(),openList('cat',this.dataset.c)"><span class="dot" style="background:${CATS[c].c}"></span><span class="n">${c}</span><span class="mute sm">${Math.round(v/tot*100)} %</span><b>${eur(v)}</b>${ic('chevR','mute')}</div>`).join('');
   return svg+`<div class="legend" style="margin-top:12px">${leg}</div>`;
 }
 function trend(m){
@@ -663,7 +666,7 @@ function trend(m){
   const W=320,H=150,pl=6,bw=16,gap=(W-pl*2)/d.length; let g='';
   d.forEach((x,i)=>{const cx=pl+gap*i+gap/2, hi=x.inc/max*110, he=x.exp/max*110;
     const sel=x.m===m;
-    g+=`<g class="tb" role="button" tabindex="0" aria-label="${mLabel(x.m)} anzeigen" onclick="setMonth('${x.m}')" onkeydown="if(event.key==='Enter')setMonth('${x.m}')">
+    g+=`<g class="tb" role="button" tabindex="0" aria-label="${mLabel(x.m)} anzeigen" onclick="setMonth('${x.m}')" onkeydown="if(event.key==='Enter'||event.key===' ')event.preventDefault(),setMonth('${x.m}')">
         <rect x="${cx-gap/2}" y="0" width="${gap}" height="${H}" fill="transparent"/>
         <rect x="${cx-bw-1}" y="${118-hi}" width="${bw}" height="${hi}" rx="4" fill="#4CC38A" opacity="${sel?1:.55}"/>
         <rect x="${cx+1}" y="${118-he}" width="${bw}" height="${he}" rx="4" fill="#C9AA22" opacity="${sel?1:.55}"/>
@@ -678,8 +681,8 @@ function monthBar(){
   return `<div class="monthbar"><button ${i<=0?'disabled':''} onclick="mv(-1)" aria-label="Vorheriger Monat">${ic('chevL')}</button><div class="m">${mLabel(S.month)}</div><button ${i>=ms.length-1?'disabled':''} onclick="mv(1)" aria-label="Nächster Monat">${ic('chevR')}</button></div>`;
 }
 function empty(){
-  return `<div class="empty"><div class="big gold">${ic('coins')}</div><h2 style="margin:8px 0;color:var(--text);font-size:22px;text-transform:none;letter-spacing:0">Ihr Haushaltsbuch. Ohne Tabellen.</h2>
-  <p class="mute" style="margin-bottom:20px">Erfassen Sie Einnahmen und Ausgaben mit wenigen Taps, oder fotografieren Sie einfach den Kassenzettel.</p>
+  return `<div class="empty"><div class="big gold">${ic('coins')}</div><h2 style="margin:8px 0;color:var(--text);font-size:22px;text-transform:none;letter-spacing:0">${isBiz()?'Ihre Einnahmen und Ausgaben. Ohne Tabellen.':'Ihr Haushaltsbuch. Ohne Tabellen.'}</h2>
+  <p class="mute" style="margin-bottom:20px">${isBiz()?'Erfassen Sie Betriebseinnahmen und Betriebsausgaben mit wenigen Taps, oder fotografieren Sie den Beleg. Am Monatsende ziehen Sie daraus eine Tabelle für Ihren Steuerberater.':'Erfassen Sie Einnahmen und Ausgaben mit wenigen Taps, oder fotografieren Sie einfach den Kassenzettel.'}</p>
   <div class="btns"><button class="btn" onclick="openStatement()">${ic('landmark')} Kontoauszug hochladen</button><button class="btn ghost" onclick="openAdd()">Buchung erfassen</button><button class="btn ghost" onclick="openAdd(true)">${ic('camera')} Kassenzettel scannen</button></div>
   <p class="note" style="margin-top:18px"><a href="#" style="color:var(--gold)" onclick="loadDemo();return false">Oder erst mit Beispieldaten ansehen</a></p></div>`;
 }
@@ -696,8 +699,8 @@ function vHome(){
     ${fcWhy(f,S.month)}
   </div>
   <div class="grid2">
-    <div class="card kpi click" role="button" tabindex="0" onclick="openList('inc')" onkeydown="if(event.key==='Enter')openList('inc')"><div class="lbl">Einnahmen</div><div class="val pos">${eur(s.inc)}</div></div>
-    <div class="card kpi click" role="button" tabindex="0" onclick="openList('exp')" onkeydown="if(event.key==='Enter')openList('exp')"><div class="lbl">Ausgaben</div><div class="val">${eur(s.exp)}</div></div>
+    <div class="card kpi click" role="button" tabindex="0" onclick="openList('inc')" onkeydown="if(event.key==='Enter'||event.key===' ')event.preventDefault(),openList('inc')"><div class="lbl">Einnahmen</div><div class="val pos">${eur(s.inc)}</div></div>
+    <div class="card kpi click" role="button" tabindex="0" onclick="openList('exp')" onkeydown="if(event.key==='Enter'||event.key===' ')event.preventDefault(),openList('exp')"><div class="lbl">Ausgaben</div><div class="val">${eur(s.exp)}</div></div>
   </div>
   ${sv>0?`<div class="card total" onclick="go('tips')" style="cursor:pointer"><div class="row"><div><div class="gold sm" style="font-weight:700">SPARPOTENZIAL</div><div class="big gold">${eur(sv)}</div><div class="mute sm">pro Monat · ${tp.filter(t=>t.save>0).length===1?'1 Tipp':tp.filter(t=>t.save>0).length+' Tipps'} für Sie</div></div><div class="gold" style="font-size:34px">${ic('sparkles')}</div></div></div>`:''}
   ${budgetCard(S.month)}${goalsCard(false)}
@@ -740,7 +743,7 @@ function budgetCard(m){
   const s=sums(m);
   return `<h2>Budgets</h2><div class="card">${b.map(([c,lim])=>{
     const sp=s.by[c]||0, pct=sp/lim*100, col=pct>100?'var(--neg)':pct>=80?'#E8A04C':'';
-    return `<div class="click" data-c="${c}" role="button" tabindex="0" onclick="openList('cat',this.dataset.c)" onkeydown="if(event.key==='Enter')openList('cat',this.dataset.c)" style="margin-bottom:14px"><div class="row"><span><span class="dot" style="background:${CATS[c].c};display:inline-block"></span> ${c}</span><b>${eur(sp)} <span class="mute sm" style="font-weight:400">von ${eur(lim)}</span></b></div>
+    return `<div class="click" data-c="${c}" role="button" tabindex="0" onclick="openList('cat',this.dataset.c)" onkeydown="if(event.key==='Enter'||event.key===' ')event.preventDefault(),openList('cat',this.dataset.c)" style="margin-bottom:14px"><div class="row"><span><span class="dot" style="background:${CATS[c].c};display:inline-block"></span> ${c}</span><b>${eur(sp)} <span class="mute sm" style="font-weight:400">von ${eur(lim)}</span></b></div>
       <div class="bar" style="margin:6px 0 2px"><i style="width:${Math.min(100,pct)}%;${col?`background:${col}`:''}"></i></div>
       <div class="sm ${pct>100?'neg':'mute'}">${pct>100?`${eur(sp-lim)} über dem Budget`:`noch ${eur(lim-sp)} übrig`}</div></div>`;}).join('')}</div>`;
 }
@@ -774,13 +777,13 @@ function renderGoal(){
   const G=S.gf; if(!G) return; const g=S.goals.find(x=>x.id===G.id);
   document.getElementById('gsheet').innerHTML=G.mode==='dep'
    ?`<div class="row" style="margin-bottom:10px"><h3>Einzahlen: ${esc(g?g.name:'')}</h3><button class="del" style="font-size:20px" onclick="closeGoal()" aria-label="Schließen">${ic('x')}</button></div>
-     <label class="fl">Betrag in €</label><input class="f amtin" inputmode="decimal" placeholder="0,00" oninput="S.gf.amt=this.value" autocomplete="off">
+     <label class="fl">Betrag in €</label><input class="f amtin" inputmode="decimal" placeholder="0,00" oninput="S.gf.amt=this.value" autocomplete="off" aria-label="Betrag in Euro">
      <button class="btn" style="margin-top:20px" onclick="saveGoal()">Einzahlen</button>`
    :`<div class="row" style="margin-bottom:10px"><h3>Neues Sparziel</h3><button class="del" style="font-size:20px" onclick="closeGoal()" aria-label="Schließen">${ic('x')}</button></div>
-     <label class="fl">Wofür sparen Sie?</label><input class="f" placeholder="z. B. Urlaub, Notgroschen" oninput="S.gf.name=this.value" autocomplete="off">
-     <label class="fl">Zielbetrag in €</label><input class="f" inputmode="decimal" placeholder="z. B. 2500" oninput="S.gf.target=this.value" autocomplete="off">
-     <label class="fl">Schon gespart in € (optional)</label><input class="f" inputmode="decimal" placeholder="0" oninput="S.gf.saved=this.value" autocomplete="off">
-     <label class="fl">Bis wann? (optional)</label><input class="f" type="date" min="${today()}" onchange="S.gf.by=this.value">
+     <label class="fl">Wofür sparen Sie?</label><input class="f" placeholder="z. B. Urlaub, Notgroschen" oninput="S.gf.name=this.value" autocomplete="off" aria-label="Name des Sparziels">
+     <label class="fl">Zielbetrag in €</label><input class="f" inputmode="decimal" placeholder="z. B. 2500" oninput="S.gf.target=this.value" autocomplete="off" aria-label="Zielbetrag in Euro">
+     <label class="fl">Schon gespart in € (optional)</label><input class="f" inputmode="decimal" placeholder="0" oninput="S.gf.saved=this.value" autocomplete="off" aria-label="Bereits gespart in Euro">
+     <label class="fl">Bis wann? (optional)</label><input class="f" type="date" min="${today()}" onchange="S.gf.by=this.value" aria-label="Zieldatum">
      <button class="btn" style="margin-top:20px" onclick="saveGoal()">Ziel anlegen</button>`;
 }
 function saveGoal(){
@@ -819,7 +822,7 @@ function vMore(){
    <button class="btn sm" onclick="openMode()">Wechseln</button></div>
    <p class="note">Private und geschäftliche Buchungen bleiben getrennt. Beim Wechsel geht nichts verloren.</p></div>
   <h2>Wiederkehrende Buchungen</h2><div class="card">
-   ${S.rec.filter(r=>!!r.biz===isBiz()).map(r=>`<div class="tx"><span class="dot" style="background:${catOf(r.cat).c}"></span><div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">${ivName(r.iv)} am ${r.day}.</div></div><div class="amt ${r.amt>0?'pos':''}">${r.amt>0?'+':''}${eur2(r.amt)}</div><button class="del" onclick="delRec('${r.id}')" aria-label="Entfernen">${ic('x')}</button></div>`).join('')||'<p class="mute sm">Noch keine. Beim Erfassen einer Buchung können Sie „Jeden Monat wiederholen" anhaken, z. B. für Miete und Gehalt.</p>'}</div>
+   ${S.rec.filter(r=>!!r.biz===isBiz()).map(r=>`<div class="tx"><span class="dot" style="background:${catOf(r.cat).c}"></span><div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">${ivName(r.iv)} am ${r.day}.</div></div><div class="amt ${r.amt>0?'pos':''}">${r.amt>0?'+':''}${eur2(r.amt)}</div><button class="del" onclick="delRec('${r.id}')" aria-label="Entfernen">${ic('x')}</button></div>`).join('')||'<p class="mute sm">Noch keine. Beim Erfassen einer Buchung können Sie „Jeden Monat wiederholen“ anhaken, z. B. für Miete und Gehalt.</p>'}</div>
   <h2>Kassenzettel-Scans</h2><div class="card"><div class="row"><div><b>${S.premium?'Unbegrenzt':scansLeft()+' von '+FREE_SCANS+' übrig'}</b><div class="mute sm">${S.premium?'Mit Premium':'in diesem Monat (Gratis-Version)'}</div></div><button class="btn sm" onclick="openAdd(true)">${ic('camera')} Scannen</button></div></div>
   <h2>Premium</h2>${trialBanner()}<div class="card"><div class="row"><div><b>${S.paid?'Premium aktiv (Demo)':trialInfo().phase!=='ended'?'Premium-Testphase':'Basis-Version'}</b><div class="mute sm">${S.paid?'Alle Funktionen freigeschaltet':trialInfo().phase!=='ended'?`Alle Funktionen frei, noch ${trialInfo().left} Tage`:'Erfassen, Dashboard und Prognose sind kostenlos'}</div></div>
   <button class="btn sm" onclick="${S.paid?'togglePremium(false)':'openPaywall()'}">${S.paid?'Beenden':'Preise'}</button></div></div>
@@ -854,7 +857,7 @@ function itemsEdit(items){
   const F=S.form;
   return `<details class="its" open><summary>${items.length} ${items.length===1?'Position':'Positionen'} · Kategorie je Position</summary>
     <div style="margin-top:8px">${items.map((i,n)=>`<div class="tx" style="padding:8px 0"><div class="d"><div class="t1" style="font-size:14px">${esc(i.n)}</div>
-      <select onchange="setItemCat(${n},this.value)" aria-label="Kategorie für ${esc(i.n)}"><option value="">${esc(F.cat)} (wie Beleg)</option>${EXP_CATS.filter(c=>c!==F.cat).map(c=>`<option value="${esc(c)}" ${i.c===c?'selected':''}>${esc(c)}</option>`).join('')}</select></div>
+      <select onchange="setItemCat(${n},this.value)" aria-label="Kategorie für ${esc(i.n)}"><option value="">${esc(F.cat)} (wie Kassenzettel)</option>${EXP_CATS.filter(c=>c!==F.cat).map(c=>`<option value="${esc(c)}" ${i.c===c?'selected':''}>${esc(c)}</option>`).join('')}</select></div>
       <div class="amt" style="font-size:14px">${eur2(i.p)}</div></div>`).join('')}</div>
     <p class="note" id="splitInfo">${splitInfo()}</p></details>`;
 }
@@ -874,7 +877,7 @@ function splitInfo(){
   const F=S.form, {others}=itemGroups(F);
   if(!others.length) return `Alle Positionen zählen zu ${esc(F.cat)}. Tippen Sie auf eine Kategorie, um eine Position herauszunehmen, z. B. Tabak.`;
   const sum=others.reduce((x,o)=>x+o.sum,0), a=Math.abs(num(F.amt))||0;
-  return `Wird als ${others.length+1} Buchungen gespeichert: ${others.map(o=>esc(o.cat)+' '+eur2(o.sum)).join(', ')} und ${esc(F.cat)} ${eur2(Math.max(0,Math.round((a-sum)*100)/100))}.`;
+  return `Wird als ${others.length+1} Buchungen gespeichert: ${others.map(o=>esc(o.cat)+' '+eur2(o.sum)).join(', ')} und ${esc(F.cat)} ${eur2(Math.max(0,Math.round((a-sum)*100)/100))}. Sie erscheinen danach als eigene Buchungen in Ihrer Liste.`;
 }
 function openEdit(id){
   const t=S.tx.find(x=>x.id===id); if(!t) return;
@@ -888,11 +891,11 @@ function renderSheet(){
   <div class="row" style="margin-bottom:14px"><h3>${ed?'Buchung bearbeiten':'Neue Buchung'}</h3><button class="del" style="font-size:20px" onclick="closeAdd()" aria-label="Schließen">${ic('x')}</button></div>
   <div class="seg"><button class="e ${F.type==='exp'?'on':''}" onclick="setType('exp')">Ausgabe</button><button class="i ${F.type==='inc'?'on':''}" onclick="setType('inc')">Einnahme</button></div>
   <label class="fl">Betrag in €</label>
-  <input class="f amtin" id="f_amt" inputmode="decimal" placeholder="0,00" value="${esc(F.amt)}" oninput="S.form.amt=this.value" autocomplete="off">
+  <input class="f amtin" id="f_amt" inputmode="decimal" placeholder="0,00" value="${esc(F.amt)}" oninput="S.form.amt=this.value" autocomplete="off" aria-label="Betrag in Euro">
   <label class="fl">Beschreibung</label>
-  <input class="f" id="f_desc" placeholder="${F.type==='inc'?'z. B. Gehalt':'z. B. REWE Einkauf'}" value="${esc(F.desc)}" oninput="onDesc(this.value)" autocomplete="off">
+  <input class="f" id="f_desc" placeholder="${F.type==='inc'?'z. B. Gehalt':'z. B. REWE Einkauf'}" value="${esc(F.desc)}" oninput="onDesc(this.value)" autocomplete="off" aria-label="Beschreibung">
   <label class="fl">Kategorie</label><div class="chips" id="chips">${chipsHtml()}</div>
-  <label class="fl">Datum</label><input class="f" type="date" value="${F.date}" onchange="S.form.date=this.value">
+  <label class="fl">Datum</label><input class="f" type="date" value="${F.date}" onchange="S.form.date=this.value" aria-label="Datum der Buchung">
   ${S.biz.mixed&&S.mode?`<label class="chk"><input type="checkbox" ${F.biz?'checked':''} onchange="toggleBiz(this.checked)"> Geschäftliche Buchung</label>
   ${F.biz!==isBiz()?'<p class="note">Diese Buchung erscheint danach im '+(F.biz?'Unternehmens-':'Privat-')+'Bereich.</p>':''}`:''}
   ${F.biz&&regel()?`<label class="fl">Umsatzsteuer</label><div class="chips">${[[19,'19 %'],[7,'7 %'],[0,'ohne']].map(([n,t])=>`<button type="button" class="chip ${ustPick(F.ust)===n?'on':''}" onclick="pickUst(${n})">${t}</button>`).join('')}</div>
@@ -927,7 +930,7 @@ function splitParts(F,a){
   const {others,mainItems}=itemGroups(F);
   if(!others.length) return null;
   const sum=others.reduce((x,o)=>x+o.sum,0), main=Math.round((a-sum)*100)/100;
-  if(main<-0.005){toast(`Die herausgenommenen Positionen ergeben ${eur2(sum)}, mehr als der Betrag des Belegs.`);return false;}
+  if(main<-0.005){toast(`Die herausgenommenen Positionen ergeben ${eur2(sum)}, mehr als der Beleg. Bitte prüfen Sie die Beträge der Positionen.`);return false;}
   return {others,mainItems,main:Math.max(0,main)};
 }
 function saveForm(){
@@ -1282,7 +1285,7 @@ function renderStmt(){
    ${guess?`<div class="rcpt" style="margin:0 0 12px">${ic('alert')} Bei ${guess} Buchungen war das Vorzeichen nicht eindeutig. Tippen Sie auf den Betrag, um zwischen Einnahme und Ausgabe zu wechseln.</div>`:''}
    ${dups?`<p class="note" style="margin:0 0 8px">${dups} bereits vorhandene Buchungen sind abgewählt.</p>`:''}
    ${trans?`<p class="note" style="margin:0 0 8px">${trans} Umbuchungen und Stornos sind abgewählt, damit sie Einnahmen und Ausgaben nicht doppelt zählen bzw. sich aufheben. Sie können sie bei Bedarf anwählen. Bargeldabhebungen zählen als Ausgabe.</p>`:''}
-   <div class="card" style="padding:4px 14px;max-height:46vh;overflow:auto">${st.rows.map((r,i)=>`<div class="tx" style="${r.inc?'':'opacity:.45'}"><input type="checkbox" style="width:20px;height:20px;accent-color:#C9AA22;flex:none" ${r.inc?'checked':''} onchange="stToggle(${i})" aria-label="Übernehmen">
+   <div class="card flush" style="max-height:46vh;overflow:auto">${st.rows.map((r,i)=>`<div class="tx" style="${r.inc?'':'opacity:.45'}"><input type="checkbox" style="width:24px;height:24px;accent-color:var(--gold);flex:none" ${r.inc?'checked':''} onchange="stToggle(${i})" aria-label="Übernehmen">
      <div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">${r.d.slice(8)}.${r.d.slice(5,7)}. <select onchange="stCat(${i},this.value)" aria-label="Kategorie">${CAT_NAMES.map(c=>`<option ${c===r.cat?'selected':''}>${c}</option>`).join('')}</select><label style="white-space:nowrap"><input type="checkbox" style="accent-color:#C9AA22" ${r.rep?'checked':''} onchange="S.st.rows[${i}].rep=this.checked"> Dauerauftrag</label> ${r.guess?' <span class="gold">Vorzeichen prüfen</span>':''}${r.transfer?` <span class="gold">${r.reversal?'Storno':'Umbuchung'}</span>`:''}</div></div>
      <button class="amt ${r.amt>0?'pos':''}" style="background:none;border:0;font-size:15px;cursor:pointer;color:${r.amt>0?'':'var(--text)'}" onclick="stFlip(${i})" aria-label="Vorzeichen wechseln">${r.amt>0?'+':''}${eur2(r.amt)}</button></div>`).join('')}</div>
    <button class="btn" style="margin-top:16px" ${T.n?'':'disabled'} onclick="stImport()">${T.n} Buchungen übernehmen</button>
@@ -1316,7 +1319,7 @@ function openList(kind,key){
    <p class="mute sm">${mLabel(m)} · ${list.length} ${list.length===1?'Buchung':'Buchungen'}</p>
    <div class="grid2" style="margin:14px 0 4px"><div class="card kpi" style="margin:0"><div class="lbl">Summe</div><div class="val ${kind==='inc'?'pos':''}">${eur(spend)}</div></div>
     <div class="card kpi" style="margin:0"><div class="lbl">${share!==null?'Anteil an den Ausgaben':'Durchschnitt pro Buchung'}</div><div class="val">${share!==null?share+' %':eur(list.length?spend/list.length:0)}</div></div></div>
-   <div class="card" style="padding:4px 16px;margin-top:14px">${list.map(t=>`<div class="tx"><span class="dot" style="background:${CATS[t.cat].c}"></span>
+   <div class="card flush" style="margin-top:14px">${list.map(t=>`<div class="tx"><span class="dot" style="background:${CATS[t.cat].c}"></span>
      <div class="d"><div class="t1">${esc(t.desc)}${t.items?' '+ic('receipt'):''}</div><div class="mute sm">${t.d.slice(8)}.${t.d.slice(5,7)}.${kind!=='cat'?' · '+esc(t.cat):''}${t.recId?' · Dauerauftrag':''}</div>
      ${t.items?itemsHtml(t.items):''}</div>
      <div class="amt ${t.amt>0?'pos':''}">${t.amt>0?'+':''}${eur2(t.amt)}</div>
@@ -1355,17 +1358,17 @@ function renderCancel(){
   if(C.step===1){
     box.innerHTML=head('Verträge kündigen')+`
      <p class="mute sm">Sie brauchen dafür kein Konto. Bitte machen Sie die folgenden Angaben. Im nächsten Schritt prüfen Sie alles und kündigen verbindlich.</p>
-     <label class="fl">Ihr Name *</label><input class="f" value="${esc(C.name)}" oninput="S.cx.name=this.value" autocomplete="name">
-     <label class="fl">Ihre E-Mail-Adresse * (für die Bestätigung)</label><input class="f" type="email" inputmode="email" value="${esc(C.email)}" oninput="S.cx.email=this.value" autocomplete="email">
+     <label class="fl">Ihr Name *</label><input class="f" value="${esc(C.name)}" oninput="S.cx.name=this.value" autocomplete="name" aria-label="Ihr Name">
+     <label class="fl">Ihre E-Mail-Adresse * (für die Bestätigung)</label><input class="f" type="email" inputmode="email" value="${esc(C.email)}" oninput="S.cx.email=this.value" autocomplete="email" aria-label="Ihre E-Mail-Adresse">
      <label class="fl">Welchen Vertrag möchten Sie kündigen? *</label>
-     <select class="f" onchange="S.cx.contract=this.value">${CONTRACTS.map(c=>`<option ${c===C.contract?'selected':''}>${c}</option>`).join('')}</select>
-     <label class="fl">Vertrags- oder Bestellnummer (optional)</label><input class="f" placeholder="z. B. Bestellnummer aus Ihrem Store" value="${esc(C.cid)}" oninput="S.cx.cid=this.value">
+     <select class="f" onchange="S.cx.contract=this.value" aria-label="Vertrag">${CONTRACTS.map(c=>`<option ${c===C.contract?'selected':''}>${c}</option>`).join('')}</select>
+     <label class="fl">Vertrags- oder Bestellnummer (optional)</label><input class="f" placeholder="z. B. Bestellnummer aus Ihrem Store" value="${esc(C.cid)}" oninput="S.cx.cid=this.value" aria-label="Kunden- oder Vertragsnummer">
      <label class="fl">Art und Zeitpunkt der Kündigung *</label>
      <label class="radio"><input type="radio" name="kind" ${C.kind==='next'?'checked':''} onchange="cxKind('next')"><span><b>Zum nächstmöglichen Zeitpunkt</b><br><span class="mute sm">Ordentliche Kündigung zum Ende des laufenden Abrechnungszeitraums</span></span></label>
      <label class="radio"><input type="radio" name="kind" ${C.kind==='date'?'checked':''} onchange="cxKind('date')"><span><b>Zu einem bestimmten Datum</b><br><span class="mute sm">Ordentliche Kündigung, sofern zu diesem Termin möglich</span></span></label>
      ${C.kind==='date'?`<input class="f" type="date" min="${today()}" value="${esc(C.when)}" onchange="S.cx.when=this.value" style="margin-top:8px" aria-label="Kündigungsdatum">`:''}
      <label class="radio"><input type="radio" name="kind" ${C.kind==='extra'?'checked':''} onchange="cxKind('extra')"><span><b>Außerordentlich (fristlos)</b><br><span class="mute sm">Nur bei wichtigem Grund, den Sie unten angeben</span></span></label>
-     ${C.kind==='extra'?`<input class="f" placeholder="Grund der außerordentlichen Kündigung" value="${esc(C.reason)}" oninput="S.cx.reason=this.value" style="margin-top:8px">`:''}
+     ${C.kind==='extra'?`<input class="f" placeholder="Grund der außerordentlichen Kündigung" value="${esc(C.reason)}" oninput="S.cx.reason=this.value" style="margin-top:8px" aria-label="Grund der außerordentlichen Kündigung">`:''}
      ${C.err?`<div class="rcpt" style="border-color:var(--neg)">${esc(C.err)}</div>`:''}
      <button class="btn" style="margin-top:20px" onclick="cxNext()">Weiter zur Bestätigung</button>`;
   } else if(C.step===2){
@@ -1420,7 +1423,25 @@ function cxDownload(){
 /* ---------- Aktionen ---------- */
 function mv(d){const ms=months(),i=ms.indexOf(S.month)+d;if(ms[i]){S.month=ms[i];render(true);}}
 function go(t){S.tab=t;render();window.scrollTo(0,0);}
-function loadDemo(){if(S.tx.length&&!confirm('Vorhandene Buchungen werden durch Beispieldaten ersetzt. Fortfahren?'))return;S.tx=demo();S.rules={};S.rec=[];save();S.month=mk(today());S.tab='home';render();}
+/* Im Unternehmens-Modus zeigten die privaten Beispieldaten in der Auswertung nichts an */
+function demoBiz(){
+  const tx=[], now=new Date(), D=(k,d)=>{const x=new Date(now.getFullYear(),now.getMonth()-k,Math.min(d,28));return x.getFullYear()+'-'+pad(x.getMonth()+1)+'-'+pad(x.getDate());};
+  const add=(k,d,desc,amt,cat,ust)=>tx.push({id:'b'+tx.length,d:D(k,d),desc,amt:Math.round(amt*100)/100,cat,biz:true,ust});
+  for(let k=2;k>=0;k--){
+    add(k,5,'Rechnung '+(2026-0)+'-0'+(41+k)+' Meier GmbH',2380,'Umsatzerlöse',19);
+    add(k,18,'Rechnung '+(2026-0)+'-0'+(44+k)+' Schuster KG',1190,'Umsatzerlöse',19);
+    add(k,3,'Büromiete',-595,'Raumkosten',19);
+    add(k,8,'Wareneinkauf Großhandel',-476,'Wareneinkauf',19);
+    add(k,10,'Tankstelle',-89.25,'KFZ',19);
+    add(k,12,'Telefon und Internet',-59.5,'Telefon & Porto',19);
+    add(k,15,'Betriebshaftpflicht',-42,'Versicherungen & Beiträge',0);
+    add(k,20,'Software-Lizenz',-29.75,'Software & IT',19);
+    add(k,22,'Steuerberater',-178.5,'Beratung',19);
+    if(k===1) add(k,24,'Fachseminar',-357,'Fortbildung',19);
+  }
+  return tx;
+}
+function loadDemo(){if(S.tx.length&&!confirm('Vorhandene Buchungen werden durch Beispieldaten ersetzt. Fortfahren?'))return;S.tx=isBiz()?demoBiz():demo();S.rules={};S.rec=[];save();S.month=mk(today());S.tab='home';render();}
 function setCat(id,c){const t=S.tx.find(x=>x.id===id);if(!t)return;t.cat=c;S.rules[key(t.desc)]=c;S.tx.forEach(x=>{if(key(x.desc)===key(t.desc))x.cat=c;});save();render(true);toast('Gemerkt: ähnliche Buchungen landen künftig hier');}
 function delTx(id){if(!confirm('Diese Buchung löschen?'))return;S.tx=S.tx.filter(t=>t.id!==id);save();render(true);}
 function wipe(){if(confirm('Wirklich alle Daten (Buchungen, Budgets, Sparziele) von diesem Gerät löschen?')){S.tx=[];S.rules={};S.rec=[];S.scans={};S.budgets={};S.goals=[];S.customCats=[];S.shop=cleanShop(null);rebuildCats();save();render();}}
@@ -1555,7 +1576,7 @@ function trialBanner(){
   if(t.phase==='ended'&&S.choice!=='basic') return `<div class="card total" style="margin-top:14px"><div class="gold sm" style="font-weight:700">TESTPHASE BEENDET</div><div style="margin:6px 0 12px">Sie nutzen jetzt die Basis-Version. Premium gibt es für 3,99 € im Monat.</div><button class="btn" onclick="openDecide()">Optionen ansehen</button></div>`;
   return '';
 }
-let tt;function toast(m){let e=document.getElementById('toast');if(!e){e=document.createElement('div');e.id='toast';e.style.cssText='position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:#F2F3F5;color:#111;padding:10px 16px;border-radius:12px;font-weight:600;font-size:13px;z-index:30;max-width:90%;text-align:center';document.body.appendChild(e);}e.textContent=m;e.style.display='block';clearTimeout(tt);tt=setTimeout(()=>e.style.display='none',2800);}
+let tt;function toast(m){let e=document.getElementById('toast');if(!e){e=document.createElement('div');e.id='toast';e.setAttribute('role','status');e.setAttribute('aria-live','polite');e.style.cssText='position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:#F2F3F5;color:#111;padding:10px 16px;border-radius:12px;font-weight:600;font-size:13px;z-index:30;max-width:90%;text-align:center';document.body.appendChild(e);}e.textContent=m;e.style.display='block';clearTimeout(tt);tt=setTimeout(()=>e.style.display='none',2800);}
 
 /* ---------- Eigene Kategorien: anlegen, bearbeiten, löschen ---------- */
 function catsCard(){
@@ -1577,7 +1598,7 @@ function renderCat(){
   const edit=!!K.id;
   box.innerHTML=`<div class="row" style="margin-bottom:6px"><h3>${edit?'Kategorie bearbeiten':'Neue Kategorie'}</h3><button class="del" style="font-size:20px" onclick="closeCat()" aria-label="Schließen">${ic('x')}</button></div>
    <div class="chips" style="margin:10px 0 4px"><span class="chip on" style="border-color:${K.color};color:${K.color}">${ic(K.icon,'',`color:${K.color}`)} ${esc(K.name.trim()||'Vorschau')}</span></div>
-   <label class="fl">Name</label><input class="f" data-f="name" maxlength="24" placeholder="z. B. Haustier, Sport, Kinder" value="${esc(K.name)}" oninput="S.ck.name=this.value" autocomplete="off">
+   <label class="fl">Name</label><input class="f" data-f="name" maxlength="24" placeholder="z. B. Haustier, Sport, Kinder" value="${esc(K.name)}" oninput="S.ck.name=this.value" autocomplete="off" aria-label="Name der Kategorie">
    <label class="fl">Art</label>
    ${edit?`<p class="mute sm">${K.type==='inc'?'Einnahme':'Ausgabe'} (lässt sich nach dem Anlegen nicht mehr ändern)</p>`:`<div class="seg"><button type="button" class="e ${K.type==='exp'?'on':''}" onclick="ckSet('type','exp')">Ausgabe</button><button type="button" class="i ${K.type==='inc'?'on':''}" onclick="ckSet('type','inc')">Einnahme</button></div>`}
    <label class="fl">Farbe</label>
@@ -1585,7 +1606,7 @@ function renderCat(){
    <label class="fl">Symbol</label>
    <div class="icons">${CAT_ICONS.map(n=>`<button type="button" class="${K.icon===n?'on':''}" aria-label="Symbol ${n}" aria-pressed="${K.icon===n}" onclick="ckSet('icon','${n}')">${ic(n)}</button>`).join('')}</div>
    <label class="fl">Stichwörter (optional)</label>
-   <textarea class="f" rows="2" maxlength="200" placeholder="z. B. Fitness, Yoga, Sportverein" oninput="S.ck.kw=this.value">${esc(K.kw)}</textarea>
+   <textarea class="f" rows="2" maxlength="200" placeholder="z. B. Fitness, Yoga, Sportverein" oninput="S.ck.kw=this.value" aria-label="Stichwörter, mit Komma getrennt">${esc(K.kw)}</textarea>
    <p class="note">Mit Kommas trennen. Buchungen, deren Text ein Stichwort enthält, ordnet die App künftig automatisch dieser Kategorie zu.</p>
    ${K.err?`<div class="rcpt" style="border-color:var(--neg)">${esc(K.err)}</div>`:''}
    <button class="btn" style="margin-top:16px" onclick="saveCat()">${edit?'Speichern':'Kategorie anlegen'}</button>
@@ -1700,11 +1721,11 @@ function renderFeedback(){
    <div class="chips">${Object.entries(FB_CATS).map(([k,l])=>`<button type="button" class="chip ${f.cat===k?'on':''}" onclick="ffSet('cat','${k}')">${l}</button>`).join('')}</div>
    ${kind?`<label class="fl">Was war falsch? (${esc(kind.topic)})</label><div class="chips">${kind.errs.map(e=>`<button type="button" class="chip ${f.errs.includes(e)?'on':''}" onclick="ffErr('${e}')">${e}</button>`).join('')}</div>`:''}
    <label class="fl">${f.cat==='problem'?'Was ist passiert? Was haben Sie erwartet?':f.cat==='idee'?'Was sollen wir verbessern oder ergänzen?':f.cat==='lob'?'Was gefällt Ihnen besonders?':'Ihre Frage'}</label>
-   <textarea class="f" rows="4" maxlength="1000" placeholder="Ihre Nachricht …" oninput="S.ff.text=this.value">${esc(f.text)}</textarea>
+   <textarea class="f" rows="4" maxlength="1000" placeholder="Ihre Nachricht …" oninput="S.ff.text=this.value" aria-label="Ihre Nachricht">${esc(f.text)}</textarea>
    <label class="fl">Würden Sie MeinMoney weiterempfehlen? (0 = nein, 10 = auf jeden Fall)</label>
    <div class="nps">${Array.from({length:11},(_,n)=>`<button type="button" class="${f.nps===n?'on':''}" aria-label="${n} von 10" onclick="ffSet('nps',${f.nps===n?'null':n})">${n}</button>`).join('')}</div>
    <label class="chk"><input type="checkbox" ${f.reply?'checked':''} onchange="ffSet('reply',this.checked)"> Ich möchte eine Antwort</label>
-   ${f.reply?`<input class="f" type="email" inputmode="email" placeholder="Ihre E-Mail-Adresse" value="${esc(f.email)}" oninput="S.ff.email=this.value" style="margin-top:8px" autocomplete="email">`:''}
+   ${f.reply?`<input class="f" type="email" inputmode="email" placeholder="Ihre E-Mail-Adresse" value="${esc(f.email)}" oninput="S.ff.email=this.value" aria-label="Ihre E-Mail-Adresse" style="margin-top:8px" autocomplete="email">`:''}
    <label class="chk"><input type="checkbox" ${f.tech?'checked':''} onchange="ffSet('tech',this.checked)"> Technische Angaben mitsenden</label>
    <details class="note" style="margin:6px 0 0 30px"><summary style="cursor:pointer">Was wird mitgesendet?</summary><div style="margin-top:6px">${techInfo().map(([k,v])=>`${esc(k)}: ${esc(v)}`).join('<br>')}<br><b>Nie:</b> Beträge, Beschreibungen oder andere Inhalte Ihrer Buchungen.</div></details>
    ${f.err?`<div class="rcpt" style="border-color:var(--neg)">${esc(f.err)}</div>`:''}
@@ -1896,7 +1917,7 @@ function basket(days,people,bio,basics){
   return{lines,total:lines.reduce((x,l)=>x+l.price,0)};
 }
 function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
-/* Was der Nutzer ausschließt: Oberbegriffe wie „Fleisch" oder „Pilze" auf Merkmale und Produktwörter abbilden */
+/* Was der Nutzer ausschließt: Oberbegriffe wie „Fleisch“ oder „Pilze“ auf Merkmale und Produktwörter abbilden */
 const NO_SYN=[[/^(fleisch|fleischlos|wurst)/,'m',''],[/^(fisch|meeresfr|meerestier)/,'f',''],[/^(milch|laktose|milchprod)/,'d',''],[/^(nuss|nuesse|nüsse|nuessen)/,'n',''],[/^pilz/,'','champignon|pilz'],[/^zwiebel/,'','zwiebel'],[/^tomat/,'','tomat'],[/^paprika/,'','paprika'],[/^oliv/,'','oliv'],[/^sellerie/,'','sellerie'],[/^koriander/,'','koriander'],[/^kohl/,'','kohl'],[/^schwein/,'','schwein|speck|schinken|kassler|bratwurst'],[/^rind/,'','rind|hack'],[/^h(ü|ue)hn|^h(ä|ae)hnchen|^gefl(ü|ue)gel/,'','h(ä|ae)hnchen|h(ü|ue)hner|pute'],[/^scharf|^chili/,'','chili|harissa|sambal|currypaste']];
 function noMatch(r,w){for(const [re,tag,words] of NO_SYN){if(re.test(w))return (tag&&r.tags.includes(tag))||(words&&new RegExp(words).test(r.names));}return r.names.includes(w);}
 const inSeason=r=>{if(!r.season)return true;const [a,b]=r.season.split('-').map(Number),m=new Date().getMonth()+1;return a<=b?m>=a&&m<=b:m>=a||m<=b;};
@@ -1989,7 +2010,7 @@ function parsePriceTag(text){
 }
 function shopAdd(e){
   e.preventDefault(); const el=document.getElementById('sh_in'), n=el.value.trim().slice(0,60); if(!n) return;
-  if(S.shop.list.length>=200){toast('Die Liste ist voll (200 Artikel)');return;}
+  if(S.shop.list.length>=200){toast('Die Liste ist voll (200 Artikel). Haken Sie zuerst Erledigtes ab oder entfernen Sie Artikel.');return;}
   const pe=document.getElementById('sh_pr'), pv=pe?num(pe.value):NaN, pr=(pv>0&&pv<10000)?Math.round(pv*100)/100:null;
   shopPush(n,pr); if(pe) pe.value='';
   const i=document.getElementById('sh_in'); if(i) i.focus();
@@ -2074,18 +2095,18 @@ function vShop(){
   if(tab==='list'){
     const tot=H.list.reduce((s,x)=>s+(listPrice(x)||0),0), un=H.list.filter(x=>listPrice(x)===null).length, done=H.list.filter(x=>x.done).length;
     const grp={}; H.list.forEach(x=>{const c=x.pid&&IT[x.pid]?IT[x.pid].c:'Sonstiges';(grp[c]=grp[c]||[]).push(x);});
-    const row=x=>{const p=listPrice(x);return `<div class="tx"><input type="checkbox" style="width:22px;height:22px;accent-color:#C9AA22;flex:none" ${x.done?'checked':''} onchange="shopTick('${x.id}')" aria-label="Erledigt"><div class="d"><div class="t1" style="${x.done?'text-decoration:line-through;opacity:.5':''}">${esc(x.n)}</div>${x.q?`<div class="mute sm">${esc(x.q)}</div>`:''}</div>${p!==null?`<div class="amt">${eur2(p)}</div>`:''}<button class="del" onclick="shopDel('${x.id}')" aria-label="Entfernen">${ic('x')}</button></div>`;};
+    const row=x=>{const p=listPrice(x);return `<div class="tx"><input type="checkbox" style="width:24px;height:24px;accent-color:var(--gold);flex:none" ${x.done?'checked':''} onchange="shopTick('${x.id}')" aria-label="Erledigt"><div class="d"><div class="t1" style="${x.done?'text-decoration:line-through;opacity:.5':''}">${esc(x.n)}</div>${x.q?`<div class="mute sm">${esc(x.q)}</div>`:''}</div>${p!==null?`<div class="amt">${eur2(p)}</div>`:''}<button class="del" onclick="shopDel('${x.id}')" aria-label="Entfernen">${ic('x')}</button></div>`;};
     const sc=S.shopScan;
     h+=`<form style="margin-bottom:12px" onsubmit="shopAdd(event)"><div class="row" style="gap:8px"><input class="f" id="sh_in" list="sh_dl" placeholder="Artikel, z. B. Nudeln" maxlength="60" autocomplete="off" aria-label="Artikel hinzufügen"><input class="f" id="sh_pr" inputmode="decimal" placeholder="Preis" style="width:86px;flex:none;text-align:right" autocomplete="off" aria-label="Preis in Euro"><button class="btn sm" type="submit" style="flex:none;width:auto;padding:13px 14px" aria-label="Hinzufügen">${ic('plusSquare')}</button></div>
      <datalist id="sh_dl">${Object.values(IT).map(i=>`<option value="${esc(i.n)}">`).join('')}</datalist>
      <button class="btn ghost sm" type="button" style="margin-top:8px;width:100%" onclick="shopPhoto()">${ic('camera')} Preisschild fotografieren${S.premium?'':' '+ic('lock')}</button>
      <input type="file" id="sh_cam" accept="image/*" capture="environment" hidden onchange="shopScanFile(this.files[0]);this.value=''"></form>
      ${sc?(sc.busy?`<div class="rcpt" id="sh_sc"><span class="spin"></span>${esc(sc.msg)}</div>`:sc.err?`<div class="rcpt" style="border-color:var(--neg)">${esc(sc.err)}<button class="btn ghost sm" style="margin-top:10px" onclick="shopScanClose()">Schließen</button></div>`:`<div class="card" style="border-color:rgba(201,170,34,.5)"><div class="row" style="margin-bottom:6px"><b>${ic('camera')} Erkannt</b><button class="del" onclick="shopScanClose()" aria-label="Verwerfen">${ic('x')}</button></div>
-      <label class="fl" style="margin-top:4px">Artikel</label><input class="f" id="sc_n" value="${esc(sc.n||'')}" maxlength="60" placeholder="Name des Artikels">
-      <label class="fl">Preis in €</label><input class="f" id="sc_p" inputmode="decimal" value="${esc(sc.pr||'')}" placeholder="0,00">
+      <label class="fl" style="margin-top:4px">Artikel</label><input class="f" id="sc_n" value="${esc(sc.n||'')}" maxlength="60" placeholder="Name des Artikels" aria-label="Name des Artikels">
+      <label class="fl">Preis in €</label><input class="f" id="sc_p" inputmode="decimal" value="${esc(sc.pr||'')}" placeholder="0,00" aria-label="Preis in Euro">
       <p class="note">Bitte kurz prüfen. Die Erkennung liest das größte Preisfeld und blendet Grundpreise je Kilo oder Liter aus.</p>
       <button class="btn" style="margin-top:12px" onclick="shopScanSave()">Auf die Einkaufsliste</button></div>`):''}
-     <div class="card" style="padding:4px 16px">${[...SHOP_CATS,'Sonstiges'].filter(c=>grp[c]).map(c=>`<div class="mute sm" style="margin-top:12px;text-transform:uppercase;letter-spacing:.1em">${c}</div>${grp[c].map(row).join('')}`).join('')||`<p class="mute" style="padding:14px 0">Ihre Liste ist leer. Tippen Sie oben einen Artikel ein oder lassen Sie sich unter „Plan &amp; Korb" einen Einkauf zusammenstellen. Unter „Rezepte" können Sie Zutaten direkt übernehmen.</p>`}</div>
+     <div class="card flush">${[...SHOP_CATS,'Sonstiges'].filter(c=>grp[c]).map(c=>`<div class="mute sm" style="margin-top:12px;text-transform:uppercase;letter-spacing:.1em">${c}</div>${grp[c].map(row).join('')}`).join('')||`<p class="mute" style="padding:14px 0">Ihre Liste ist leer. Tippen Sie oben einen Artikel ein oder lassen Sie sich unter „Plan &amp; Korb“ einen Einkauf zusammenstellen. Unter „Rezepte“ können Sie Zutaten direkt übernehmen.</p>`}</div>
      ${H.list.length?`<div class="card kpi"><div class="lbl">Geschätzte Summe</div><div class="val">${eur2(tot)}</div>${un?`<div class="mute sm">${un} ${un===1?'Artikel':'Artikel'} ohne Preis</div>`:''}</div>
      <div class="btns"><button class="btn" onclick="shopToExpense()">${ic('wallet')} Als Ausgabe erfassen</button>${done?`<button class="btn ghost" onclick="shopClean()">${done} erledigte entfernen</button>`:''}</div>`:''}`;
   } else if(tab==='rec'){
@@ -2093,7 +2114,7 @@ function vShop(){
     const rm=S.shopRm||'all';
     h+=`<input type="search" placeholder="Rezept oder Zutat suchen …" value="${esc(S.shopQ||'')}" oninput="shopRecSearch(this.value)" style="margin-bottom:10px" aria-label="Rezepte durchsuchen">
      <div class="chips" style="margin-bottom:12px">${[['all','Alle'],['f','Frühstück'],['l','Mittagessen'],['a','Abendessen']].map(([k,t])=>ch(rm===k,`S.shopRm='${k}';S.shopMore=30;render(true)`,t)).join('')}</div>
-     <p class="note" style="margin:0 0 10px">Es gelten Ihre Einstellungen für Ernährung und Unverträglichkeiten aus „Plan &amp; Korb" und die Jahreszeit.</p><div id="sh_rl">${recListHtml()}</div>`;
+     <p class="note" style="margin:0 0 10px">Es gelten Ihre Einstellungen für Ernährung und Unverträglichkeiten aus „Plan &amp; Korb" und die Jahreszeit.</p><div id="sh_rl“>${recListHtml()}</div>`;
   } else {
     const prior=months().filter(x=>x<mk(today())).slice(-3), avg=prior.length?prior.map(x=>sums(x).by['Lebensmittel']||0).reduce((a,b)=>a+b,0)/prior.length:0;
     h+=(!S.premium?`<div class="card tip locked" onclick="openPaywall()" style="cursor:pointer;text-align:center;padding:26px 20px"><span class="lockmsg">${ic('lock')} Premium</span><h3 style="margin:0 0 6px">Neuen Einkauf zusammenstellen</h3><p class="mute">Budget, Personen, Kinder nach Alter, Ernährung und Ausschlüsse. Die App baut daraus einen Speiseplan im Budget.</p></div>`:`<div class="card"><label class="fl" style="margin-top:0">Budget für diesen Einkauf (€)</label><input class="f amtin" id="sh_bud" inputmode="decimal" placeholder="z. B. 60" value="${esc(P.budget)}" onchange="shopBudget(this.value)" autocomplete="off">
@@ -2118,7 +2139,7 @@ function vShop(){
        <p class="mute sm" style="margin-top:6px">Etwa ${eur2(b.total/(pl.n||pl.people)/pl.days.length)} pro Person und Tag.</p>
        <div class="btns" style="margin-top:14px"><button class="btn" onclick="shopFromPlan()">${ic('cart')} Auf die Einkaufsliste</button>${S.premium?`<button class="btn ghost" onclick="shopBuild()">Neu mischen</button>`:''}</div></div>
        <h2>Speiseplan</h2>${pl.days.map((d,i)=>`<div class="card"><b>Tag ${i+1}</b>${MEALS.filter(m=>d[m]).map(m=>{const r=RECI[d[m]];return `<details class="its big" style="margin-top:8px"><summary><b>${MEAL[m]}:</b> ${esc(r.n)}<span class="mute sm" style="display:block;font-weight:400">${recMeta(r)}</span></summary>${recHtml(r,pl.people,pl.bio,pl.basics,S.premium?`<button class="btn ghost sm" onclick="shopSwap(${i},'${m}')">Anderes Rezept</button>`:'',pl.txt||pl.n+' Personen')}</details>`;}).join('')}</div>`).join('')}
-       <h2>Einkaufskorb</h2><div class="card" style="padding:12px 16px"><details class="its big"><summary><b>${b.lines.length} Artikel</b> · ${eur2(b.total)}${dn?` · ${dn} erledigt`:''}</summary><div style="margin-top:6px">${b.lines.map((l,i)=>{const on=pl.done.includes(l.it.id);return `${i===0||b.lines[i-1].it.c!==l.it.c?`<div class="mute sm" style="margin-top:12px;text-transform:uppercase;letter-spacing:.1em">${l.it.c}</div>`:''}<div class="tx"><input type="checkbox" style="width:22px;height:22px;accent-color:#C9AA22;flex:none" ${on?'checked':''} onchange="korbTick('${l.it.id}')" aria-label="Erledigt"><div class="d"><div class="t1" style="${on?'text-decoration:line-through;opacity:.5':''}">${esc(l.it.n)}</div><div class="mute sm">${l.packs} × ${packLabel(l.it)}</div></div><div class="amt" style="${on?'opacity:.5':''}">${eur2(l.price)}</div></div>`;}).join('')}${dn?`<button class="btn ghost sm" style="margin-top:14px" onclick="korbReset()">Haken zurücksetzen</button>`:''}</div></details></div>`;
+       <h2>Einkaufskorb</h2><div class="card" style="padding:12px 16px"><details class="its big"><summary><b>${b.lines.length} Artikel</b> · ${eur2(b.total)}${dn?` · ${dn} erledigt`:''}</summary><div style="margin-top:6px">${b.lines.map((l,i)=>{const on=pl.done.includes(l.it.id);return `${i===0||b.lines[i-1].it.c!==l.it.c?`<div class="mute sm" style="margin-top:12px;text-transform:uppercase;letter-spacing:.1em">${l.it.c}</div>`:''}<div class="tx"><input type="checkbox" style="width:24px;height:24px;accent-color:var(--gold);flex:none" ${on?'checked':''} onchange="korbTick('${l.it.id}')" aria-label="Erledigt"><div class="d"><div class="t1" style="${on?'text-decoration:line-through;opacity:.5':''}">${esc(l.it.n)}</div><div class="mute sm">${l.packs} × ${packLabel(l.it)}</div></div><div class="amt" style="${on?'opacity:.5':''}">${eur2(l.price)}</div></div>`;}).join('')}${dn?`<button class="btn ghost sm" style="margin-top:14px" onclick="korbReset()">Haken zurücksetzen</button>`:''}</div></details></div>`;
     }
   }
   return h;
@@ -2188,20 +2209,21 @@ function vBiz(){
    <div class="row" style="margin-top:8px"><span>Gezahlte Vorsteuer</span><b>${eur2(ms.vst)}</b></div>
    <div class="row" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><span><b>Zahllast</b></span><b class="${ms.zahllast>0?'neg':'pos'}">${eur2(ms.zahllast)}</b></div>
    <p class="note">Richtwert für die Umsatzsteuer-Voranmeldung. Buchungen ohne eigenen Satz rechnet die App mit 19 %.</p></div>`:''}
-  <div class="card" style="padding:4px 16px">${tab(ms)}</div>
+  <div class="card flush">${tab(ms)}</div>
   <button class="btn" onclick="bizExport('${m}','${m}','${mLabel(m)}')">${ic('download')} Monat als Tabelle laden</button>
   <h2>Geschäftsjahr ${fyLabel(y)}</h2>
   <div class="grid2">${kpi('Einnahmen',r?ys.nEinn:ys.einn,'pos')}${kpi('Ausgaben',r?ys.nAusg:ys.ausg)}</div>
   <div class="card total"><div class="gold sm" style="font-weight:700">ÜBERSCHUSS${r?' (NETTO)':''}</div><div class="big ${ys.ueber>=0?'pos':'neg'}">${eur(ys.ueber)}</div>
    <div class="mute sm">${fmtD(fm[0]+'-01')} bis ${fmtD(fm[11]+'-'+dim(fm[11]))} · ${ys.n} ${ys.n===1?'Buchung':'Buchungen'}</div></div>
-  <div class="card" style="padding:4px 16px">${fm.map(x=>{const o=bizSum(S.tx.filter(t=>t.biz&&mk(t.d)===x));if(!o.n)return '';
+  <div class="card flush">${fm.map(x=>{const o=bizSum(S.tx.filter(t=>t.biz&&mk(t.d)===x));if(!o.n)return '';
     return `<div class="tx"><div class="d"><div class="t1">${mLabel(x)}</div><div class="mute sm">${o.n} ${o.n===1?'Buchung':'Buchungen'}</div></div><div class="amt ${o.ueber>=0?'pos':''}">${eur2(o.ueber)}</div></div>`;}).join('')||'<p class="mute" style="padding:12px 0">Noch keine Buchungen in diesem Geschäftsjahr.</p>'}</div>
   <button class="btn" onclick="bizExport('${fm[0]}','${fm[11]}','Geschäftsjahr ${fyLabel(y)}')">${ic('download')} Geschäftsjahr als Tabelle laden</button>
-  <p class="note">Die Datei öffnen Sie in Excel per Doppelklick, in Google Sheets über Datei, Importieren, Hochladen.</p>
+  <p class="note">Die Datei öffnen Sie in Excel per Doppelklick, in Google Sheets über Datei, Importieren, Hochladen. Die Aufstellung ist eine Vorbereitung für Ihren Steuerberater, keine Buchführung nach GoBD.</p>
   <h2>Einstellungen</h2><div class="card">
    <label class="fl" style="margin-top:0">Umsatzsteuer</label><div class="chips">
     <button type="button" class="chip ${B.ust==='klein'?'on':''}" onclick="bizSet('ust','klein')">Kleinunternehmer § 19</button>
     <button type="button" class="chip ${B.ust==='regel'?'on':''}" onclick="bizSet('ust','regel')">Regelbesteuert</button></div>
+   <p class="note">Kleinunternehmer nach § 19 UStG weisen keine Umsatzsteuer aus, alle Beträge gelten brutto. Regelbesteuert heißt: Sie geben Bruttobeträge ein, die App rechnet Netto, Umsatzsteuer und Zahllast heraus.</p>
    <label class="fl">Geschäftsjahr beginnt im</label>
    <select class="f" onchange="bizSet('fy',this.value)" aria-label="Startmonat des Geschäftsjahres">${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${B.fy===i+1?'selected':''}>${mLabel('2026-'+pad(i+1)).split(' ')[0]}</option>`).join('')}</select>
    <label class="chk"><input type="checkbox" ${B.mixed?'checked':''} onchange="bizSet('mixed')"> Gemischtes Konto: bei jeder Buchung wählbar, ob sie geschäftlich ist</label>
@@ -2219,8 +2241,8 @@ function renderMode(){
      <p class="mute">Sie haben ${n} ${n===1?'Buchung':'Buchungen'} erfasst. Im Unternehmens-Modus zeigt MeinMoney nur geschäftliche Buchungen.</p>
      <div class="card" style="margin-top:14px"><b>Privat lassen</b><div class="mute sm">Die Buchungen bleiben im privaten Bereich und sind dort jederzeit erreichbar. Sie starten geschäftlich bei null.</div>
       <button class="btn ghost" style="margin-top:12px" onclick="setMode('biz',false)">Privat lassen</button></div>
-     <div class="card"><b>Ins Unternehmen übernehmen</b><div class="mute sm">Alle ${n} Buchungen werden geschäftlich. Die Kategorien werden dabei auf die geschäftlichen umgestellt, die meisten landen zunächst in „Sonstiges". <b>Das lässt sich nicht rückgängig machen.</b> Legen Sie vorher unter Mehr eine Sicherung an.</div>
-      <button class="btn" style="margin-top:12px" onclick="setMode('biz',true)">Übernehmen</button></div>
+     <div class="card"><b>Ins Unternehmen übernehmen</b><div class="mute sm">Alle ${n} Buchungen werden geschäftlich. Die Kategorien werden dabei auf die geschäftlichen umgestellt, die meisten landen zunächst in „Sonstiges“. <b>Das lässt sich nicht rückgängig machen.</b> Legen Sie vorher unter Mehr eine Sicherung an.</div>
+      <button class="btn" style="margin-top:12px" onclick="if(confirm('Alle ${n} Buchungen werden geschäftlich und die Kategorien zurückgesetzt. Das lässt sich nicht rückgängig machen. Fortfahren?'))setMode('biz',true)">Übernehmen</button></div>
      <button class="btn ghost" style="margin-top:6px" onclick="S.mo.step=1;renderMode()">Zurück</button>`;
     return;
   }
@@ -2266,7 +2288,7 @@ const HELP=[
  {t:'Dauerauftrag nachträglich',k:'dauerauftrag nachträglich rückwirkend vorhandene buchung markieren entfernen',
   a:'Öffnen Sie eine vorhandene Buchung über den <b>Stift</b> und setzen Sie den Haken. Gleiche Buchungen aus früheren Monaten werden mit verknüpft, und die Folgemonate werden sofort nachgebucht. Haken entfernen löscht den Dauerauftrag wieder, die Buchungen bleiben.'},
  {t:'Kategorien anlegen',k:'kategorie kategorien eigene neue anlegen erstellen ändern umbenennen farbe symbol stichwort',
-  a:'Unter <b>Mehr › Eigene Kategorien</b> oder beim Erfassen über den Chip <b>Neue Kategorie</b>. Sie wählen Name, Art, Farbe, Symbol und optional Stichwörter. Wer etwa „Fressnapf, Tierarzt" einträgt, dem sortiert die App solche Buchungen künftig von allein zu.'},
+  a:'Unter <b>Mehr › Eigene Kategorien</b> oder beim Erfassen über den Chip <b>Neue Kategorie</b>. Sie wählen Name, Art, Farbe, Symbol und optional Stichwörter. Wer etwa „Fressnapf, Tierarzt“ einträgt, dem sortiert die App solche Buchungen künftig von allein zu.'},
  {t:'Budget setzen',k:'budget limit grenze monatsbudget höchstbetrag budgets festlegen',
   a:'Unter <b>Mehr › Monatsbudgets pro Kategorie</b>. Tragen Sie einen Betrag ein, und die Übersicht zeigt einen Balken mit Ihrem Stand. Budgets gibt es nur im Privat-Modus.'},
  {t:'Sparziel',k:'sparziel ziel sparen ansparen urlaub notgroschen zielbetrag',
@@ -2400,6 +2422,22 @@ function tourEnd(done){
   S.tour=null; if(done){ S.tourDone=true; save(); }
   S.tab='home'; render(); window.scrollTo(0,0);
 }
+
+/* ---------- Dialoge: Escape und Fokus ---------- */
+/* Ein Beobachter statt Anpassung jeder einzelnen Oeffnen-Funktion */
+const CLOSE_FN={addm:'closeAdd',sm:'closeStmt',lm:'closeList',km:'closeCat',hm:'closeHelp',im:'closeInstall',dm:'closeDecide',bm:'closeBackup',cm:'closeCancel',fm:'closeFeedback',gm:'closeGoal',paywall:'closePaywall'};
+let lastFocus=null;
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape') return;
+  const open=[...document.querySelectorAll('.modal.show')].filter(el=>CLOSE_FN[el.id]).pop(); if(!open) return;
+  const fn=window[CLOSE_FN[open.id]];
+  if(typeof fn==='function'){ e.preventDefault(); fn(); }   /* die Frage nach der Nutzungsart bleibt bewusst offen */
+});
+new MutationObserver(ms=>ms.forEach(m=>{
+  const el=m.target, auf=el.classList.contains('show'), war=m.oldValue&&m.oldValue.includes('show');
+  if(auf&&!war){ lastFocus=document.activeElement; const f=el.querySelector('.sheet input:not([type=hidden]),.sheet button'); if(f) setTimeout(()=>f.focus(),60); }
+  else if(!auf&&war&&lastFocus){ const t=lastFocus; lastFocus=null; setTimeout(()=>{try{t.focus();}catch(e){}},0); }
+})).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class'],attributeOldValue:true});
 
 /* ---------- Render ---------- */
 function render(keepScroll){
