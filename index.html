@@ -202,7 +202,7 @@ ul.ck li:before{content:"";position:absolute;left:0;top:.62em;width:16px;height:
 .kv dt{color:var(--mute)} .kv dd{font-weight:600;word-break:break-word}
 .radio{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:16px;margin-top:8px;cursor:pointer;background:rgba(255,255,255,.04);transition:all .2s;font-size:14px}
 .radio:hover{border-color:rgba(201,170,34,.5)}
-.radio input{margin-top:3px;accent-color:#C9AA22;width:18px;height:18px;flex:none}
+.radio input{margin-top:3px;accent-color:var(--gold);width:18px;height:18px;flex:none}
 svg.i{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.22em;flex:none}
 /* Klickbare Diagramme und Listen */
 .click{cursor:pointer}
@@ -267,6 +267,7 @@ details.note summary{color:var(--gold)}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .scanbtn:disabled{opacity:.5;pointer-events:none}
 .card.flush{padding:4px 16px}
+.badge{background:none;border:0;color:var(--gold);font:inherit;font-size:12px;text-decoration:underline;cursor:pointer;padding:4px 2px}
 .legal{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:6px}
 .legal a{color:var(--mute);font-size:13px;text-decoration:none;transition:color .2s;padding:6px 0;display:inline-block}
 .legal a:hover{color:var(--gold)}
@@ -315,7 +316,7 @@ details.note summary{color:var(--gold)}
 
 <div class="modal" id="km" onclick="if(event.target===this)closeCat()"><div class="sheet" role="dialog" aria-modal="true" id="ksheet"></div></div>
 <div class="modal" id="mm"><div class="sheet" role="dialog" aria-modal="true" id="msheet"></div></div>
-<div class="modal" id="hm" onclick="if(event.target===this)closeHelp()"><div class="sheet" role="dialog" aria-modal="true" id="hsheet"></div></div>
+<div class="modal" id="hm" style="z-index:24" onclick="if(event.target===this)closeHelp()"><div class="sheet" role="dialog" aria-modal="true" id="hsheet"></div></div>
 <div class="tour" id="tourbox"></div>
 
 <div class="modal" id="paywall" onclick="if(event.target===this)closePaywall()"><div class="sheet" role="dialog" aria-modal="true">
@@ -358,12 +359,12 @@ const BIZ_CATS = {
   'Werbung & Reisen':{c:'#E8A04C',fixed:false,ic:'sparkles',kw:['werbung','anzeige','google ads','meta','facebook','hotel','bahn','flug','lufthansa','booking']},
   'Versicherungen & Beiträge':{c:'#3FB8AF',fixed:true,ic:'shield',kw:['versicherung','beitrag','ihk','kammer','innung','haftpflicht','allianz','huk','axa']},
   'Telefon & Porto':{c:'#A3B18A',fixed:true,ic:'share',kw:['telekom','vodafone','o2 ','mobilfunk','internet','post','dhl','porto','hermes']},
-  'Büromaterial':{c:'#C9AA22',fixed:false,ic:'pencil',kw:['büro','buero','papier','drucker','toner','schreibwaren','amazon','ikea']},
+  'Büromaterial':{c:'#B5835A',fixed:false,ic:'pencil',kw:['büro','buero','papier','drucker','toner','schreibwaren','amazon','ikea']},
   'Software & IT':{c:'#E5735C',fixed:true,ic:'repeat',kw:['software','lizenz','hosting','domain','cloud','microsoft','adobe','apple.com','google workspace']},
   'Fortbildung':{c:'#D98CC1',fixed:false,ic:'trophy',kw:['seminar','schulung','fortbildung','kurs','coaching','fachbuch']},
   'Beratung':{c:'#7FB0E0',fixed:false,ic:'fileText',kw:['steuerberater','rechtsanwalt','notar','beratung','buchhaltung']},
   'Bewirtung':{c:'#C77D3A',fixed:false,ic:'utensils',kw:['restaurant','bewirtung','gaststätte','gaststaette','catering']},
-  'Bankgebühren':{c:'#8A8F98',fixed:true,ic:'landmark',kw:['kontoführung','kontofuehrung','bankgebühr','entgelt','gebühren']},
+  'Bankgebühren':{c:'#6E7480',fixed:true,ic:'landmark',kw:['kontoführung','kontofuehrung','bankgebühr','entgelt','gebühren']},
   'Sonstiges':{c:'#8A8F98',fixed:false,ic:'package',kw:[]}
 };
 const BASE_CATS = {
@@ -374,7 +375,7 @@ const BASE_CATS = {
   'Lebensmittel':{c:'#6CC17B',fixed:false,ic:'cart',kw:['rewe','edeka','lidl','aldi','kaufland','penny','netto','dm ','rossmann','markt','supermarkt','bäckerei','metzger','denn','alnatura','globus']},
   'Restaurants & Café':{c:'#E8A04C',fixed:false,ic:'utensils',kw:['lieferando','wolt','uber eats','restaurant','café','cafe','starbucks','mcdonald','burger','pizza','bäcker','imbiss','kiosk','kebab','döner']},
   'Mobilität':{c:'#57C2E0',fixed:false,ic:'car',kw:['shell','aral','esso','tankstelle','jet ','db ','bahn','deutsche bahn','uber','tier ','parken','kfz','vvs','bvg','mvv','flixbus']},
-  'Freizeit & Shopping':{c:'#C9AA22',fixed:false,ic:'bag',kw:['amazon','zalando','ebay','kino','ikea','otto','media markt','saturn','steam','playstation','hotel','booking','airbnb','ryanair','lufthansa','h&m']},
+  'Freizeit & Shopping':{c:'#D98CC1',fixed:false,ic:'bag',kw:['amazon','zalando','ebay','kino','ikea','otto','media markt','saturn','steam','playstation','hotel','booking','airbnb','ryanair','lufthansa','h&m']},
   'Gesundheit':{c:'#3FB8AF',fixed:false,ic:'heart',kw:['apotheke','arzt','zahnarzt','optiker','physio']},
   'Bargeld':{c:'#A3B18A',fixed:false,ic:'coins',kw:['bargeldabhebung','geldautomat','abhebung','bargeld']},
   'Sonstiges':{c:'#8A8F98',fixed:false,ic:'package',kw:[]}
@@ -433,7 +434,7 @@ function fixCats(){
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], mode:null, biz:{ust:'klein',mixed:false,fy:1}, tourDone:false, tour:null, chat:null, refCode:null, refBy:null, upl:0, customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null, list:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-25.7';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-25.8';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -888,13 +889,16 @@ function renderSheet(){
   const F=S.form; if(!F) return;
   const sc=S.scan, ed=!!F.editId;
   document.getElementById('addsheet').innerHTML=`
-  <div class="row" style="margin-bottom:14px"><h3>${ed?'Buchung bearbeiten':'Neue Buchung'}</h3><button class="del" style="font-size:20px" onclick="closeAdd()" aria-label="Schließen">${ic('x')}</button></div>
+  <div class="row" style="margin-bottom:14px"><h3>${ed?'Buchung bearbeiten':'Neue Buchung'}</h3>
+   <div style="display:flex;gap:4px"><button class="del" onclick="openHelp()" aria-label="Hilfe zu diesem Fenster">${ic('sparkles')}</button>
+   <button class="del" style="font-size:20px" onclick="closeAdd()" aria-label="Schließen">${ic('x')}</button></div></div>
   <div class="seg"><button class="e ${F.type==='exp'?'on':''}" onclick="setType('exp')">Ausgabe</button><button class="i ${F.type==='inc'?'on':''}" onclick="setType('inc')">Einnahme</button></div>
   <label class="fl">Betrag in €</label>
   <input class="f amtin" id="f_amt" inputmode="decimal" placeholder="0,00" value="${esc(F.amt)}" oninput="S.form.amt=this.value" autocomplete="off" aria-label="Betrag in Euro">
   <label class="fl">Beschreibung</label>
   <input class="f" id="f_desc" placeholder="${F.type==='inc'?'z. B. Gehalt':'z. B. REWE Einkauf'}" value="${esc(F.desc)}" oninput="onDesc(this.value)" autocomplete="off" aria-label="Beschreibung">
   <label class="fl">Kategorie</label><div class="chips" id="chips">${chipsHtml()}</div>
+  ${!ed&&!F.catManual&&!(F.desc||'').trim()?'<p class="note">Noch nicht geprüft: Ohne Beschreibung raten wir die Kategorie nicht, es bleibt bei der Vorauswahl.</p>':''}
   <label class="fl">Datum</label><input class="f" type="date" value="${F.date}" onchange="S.form.date=this.value" aria-label="Datum der Buchung">
   ${S.biz.mixed&&S.mode?`<label class="chk"><input type="checkbox" ${F.biz?'checked':''} onchange="toggleBiz(this.checked)"> Geschäftliche Buchung</label>
   ${F.biz!==isBiz()?'<p class="note">Diese Buchung erscheint danach im '+(F.biz?'Unternehmens-':'Privat-')+'Bereich.</p>':''}`:''}
@@ -930,7 +934,7 @@ function splitParts(F,a){
   const {others,mainItems}=itemGroups(F);
   if(!others.length) return null;
   const sum=others.reduce((x,o)=>x+o.sum,0), main=Math.round((a-sum)*100)/100;
-  if(main<-0.005){toast(`Die herausgenommenen Positionen ergeben ${eur2(sum)}, mehr als der Beleg. Bitte prüfen Sie die Beträge der Positionen.`);return false;}
+  if(main<-0.005){toast(`Die herausgenommenen Positionen ergeben ${eur2(sum)}, mehr als der Betrag des Belegs. Bitte prüfen Sie die Beträge der Positionen.`);return false;}
   return {others,mainItems,main:Math.max(0,main)};
 }
 function saveForm(){
@@ -1275,7 +1279,9 @@ async function onStmt(file){
 function stTotals(){const R=(S.st.rows||[]).filter(r=>r.inc);return {n:R.length,inc:R.filter(r=>r.amt>0).reduce((x,r)=>x+r.amt,0),exp:R.filter(r=>r.amt<0).reduce((x,r)=>x-r.amt,0)};}
 function renderStmt(){
   const st=S.st, box=document.getElementById('ssheet'); if(!st||!box) return;
-  const head=`<div class="row" style="margin-bottom:10px"><h3>Kontoauszug analysieren</h3><button class="del" style="font-size:20px" onclick="closeStmt()" aria-label="Schließen">${ic('x')}</button></div>`;
+  const head=`<div class="row" style="margin-bottom:10px"><h3>Kontoauszug analysieren</h3>
+   <div style="display:flex;gap:4px"><button class="del" onclick="openHelp()" aria-label="Hilfe zu diesem Fenster">${ic('sparkles')}</button>
+   <button class="del" style="font-size:20px" onclick="closeStmt()" aria-label="Schließen">${ic('x')}</button></div></div>`;
   if(st.busy){box.innerHTML=head+`<div class="rcpt"><span class="spin"></span>${esc(st.msg)}</div>`;return;}
   if(st.err){box.innerHTML=head+`<div class="rcpt" style="border-color:var(--neg)">${esc(st.err)}</div><button class="btn ghost" style="margin-top:14px" onclick="closeStmt()">Schließen</button>`;return;}
   const T=stTotals(), ds=st.rows.map(r=>r.d).sort(), guess=st.rows.filter(r=>r.guess&&r.inc).length, dups=st.rows.filter(r=>r.dup).length, trans=st.rows.filter(r=>r.transfer&&!r.dup).length;
@@ -1286,7 +1292,7 @@ function renderStmt(){
    ${dups?`<p class="note" style="margin:0 0 8px">${dups} bereits vorhandene Buchungen sind abgewählt.</p>`:''}
    ${trans?`<p class="note" style="margin:0 0 8px">${trans} Umbuchungen und Stornos sind abgewählt, damit sie Einnahmen und Ausgaben nicht doppelt zählen bzw. sich aufheben. Sie können sie bei Bedarf anwählen. Bargeldabhebungen zählen als Ausgabe.</p>`:''}
    <div class="card flush" style="max-height:46vh;overflow:auto">${st.rows.map((r,i)=>`<div class="tx" style="${r.inc?'':'opacity:.45'}"><input type="checkbox" style="width:24px;height:24px;accent-color:var(--gold);flex:none" ${r.inc?'checked':''} onchange="stToggle(${i})" aria-label="Übernehmen">
-     <div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">${r.d.slice(8)}.${r.d.slice(5,7)}. <select onchange="stCat(${i},this.value)" aria-label="Kategorie">${CAT_NAMES.map(c=>`<option ${c===r.cat?'selected':''}>${c}</option>`).join('')}</select><label style="white-space:nowrap"><input type="checkbox" style="accent-color:#C9AA22" ${r.rep?'checked':''} onchange="S.st.rows[${i}].rep=this.checked"> Dauerauftrag</label> ${r.guess?' <span class="gold">Vorzeichen prüfen</span>':''}${r.transfer?` <span class="gold">${r.reversal?'Storno':'Umbuchung'}</span>`:''}</div></div>
+     <div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">${r.d.slice(8)}.${r.d.slice(5,7)}. <select onchange="stCat(${i},this.value)" aria-label="Kategorie">${CAT_NAMES.map(c=>`<option ${c===r.cat?'selected':''}>${c}</option>`).join('')}</select><label style="white-space:nowrap"><input type="checkbox" style="accent-color:#C9AA22" ${r.rep?'checked':''} onchange="S.st.rows[${i}].rep=this.checked"> Dauerauftrag</label> ${r.guess?' <span class="gold">Vorzeichen prüfen</span>':''}${r.transfer?` <button type="button" class="badge" onclick="event.stopPropagation();toast('${r.reversal?'Storno: die Gegenbuchung hebt diese Zahlung auf, deshalb ist sie abgewählt.':'Umbuchung zwischen eigenen Konten, deshalb ist sie abgewählt, damit nichts doppelt zählt.'}')">${r.reversal?'Storno':'Umbuchung'}</button>`:''}</div></div>
      <button class="amt ${r.amt>0?'pos':''}" style="background:none;border:0;font-size:15px;cursor:pointer;color:${r.amt>0?'':'var(--text)'}" onclick="stFlip(${i})" aria-label="Vorzeichen wechseln">${r.amt>0?'+':''}${eur2(r.amt)}</button></div>`).join('')}</div>
    <button class="btn" style="margin-top:16px" ${T.n?'':'disabled'} onclick="stImport()">${T.n} Buchungen übernehmen</button>
    <p class="note">Ihr Kontoauszug wird nur auf diesem Gerät verarbeitet und nicht hochgeladen oder gespeichert.</p>`;
@@ -1497,8 +1503,8 @@ function onBackup(file){
   if(!file) return;
   file.text().then(t=>{
     try{ S.bk=cleanBackup(JSON.parse(t)); renderBackup(); document.getElementById('bm').classList.add('show'); }
-    catch(e){ S.bk={err:e.message==='groesse'?'Die Sicherung ist zu groß.':'Das ist keine gültige MeinMoney-Sicherung. Bitte wählen Sie eine Datei, die Sie mit „Sicherung speichern“ erstellt haben.'}; renderBackup(); document.getElementById('bm').classList.add('show'); }
-  }).catch(()=>{S.bk={err:'Die Datei konnte nicht gelesen werden.'};renderBackup();document.getElementById('bm').classList.add('show');});
+    catch(e){ S.bk={err:e.message==='groesse'?'Die Sicherung ist zu groß. Bitte wählen Sie eine kleinere Sicherungsdatei.':'Das ist keine gültige MeinMoney-Sicherung. Bitte wählen Sie eine Datei, die Sie mit „Sicherung speichern“ erstellt haben.'}; renderBackup(); document.getElementById('bm').classList.add('show'); }
+  }).catch(()=>{S.bk={err:'Die Datei konnte nicht gelesen werden. Bitte versuchen Sie es erneut oder wählen Sie eine andere Datei.'};renderBackup();document.getElementById('bm').classList.add('show');});
 }
 function renderBackup(){
   const B=S.bk, box=document.getElementById('bsheet'); if(!B||!box) return;
@@ -2114,7 +2120,7 @@ function vShop(){
     const rm=S.shopRm||'all';
     h+=`<input type="search" placeholder="Rezept oder Zutat suchen …" value="${esc(S.shopQ||'')}" oninput="shopRecSearch(this.value)" style="margin-bottom:10px" aria-label="Rezepte durchsuchen">
      <div class="chips" style="margin-bottom:12px">${[['all','Alle'],['f','Frühstück'],['l','Mittagessen'],['a','Abendessen']].map(([k,t])=>ch(rm===k,`S.shopRm='${k}';S.shopMore=30;render(true)`,t)).join('')}</div>
-     <p class="note" style="margin:0 0 10px">Es gelten Ihre Einstellungen für Ernährung und Unverträglichkeiten aus „Plan &amp; Korb" und die Jahreszeit.</p><div id="sh_rl“>${recListHtml()}</div>`;
+     <p class="note" style="margin:0 0 10px">Es gelten Ihre Einstellungen für Ernährung und Unverträglichkeiten aus „Plan &amp; Korb“ und die Jahreszeit.</p><div id="sh_rl">${recListHtml()}</div>`;
   } else {
     const prior=months().filter(x=>x<mk(today())).slice(-3), avg=prior.length?prior.map(x=>sums(x).by['Lebensmittel']||0).reduce((a,b)=>a+b,0)/prior.length:0;
     h+=(!S.premium?`<div class="card tip locked" onclick="openPaywall()" style="cursor:pointer;text-align:center;padding:26px 20px"><span class="lockmsg">${ic('lock')} Premium</span><h3 style="margin:0 0 6px">Neuen Einkauf zusammenstellen</h3><p class="mute">Budget, Personen, Kinder nach Alter, Ernährung und Ausschlüsse. Die App baut daraus einen Speiseplan im Budget.</p></div>`:`<div class="card"><label class="fl" style="margin-top:0">Budget für diesen Einkauf (€)</label><input class="f amtin" id="sh_bud" inputmode="decimal" placeholder="z. B. 60" value="${esc(P.budget)}" onchange="shopBudget(this.value)" autocomplete="off">
@@ -2133,7 +2139,7 @@ function vShop(){
     const pl=H.plan;
     if(pl){
       const b=basket(pl.days,pl.people,pl.bio,pl.basics), dn=b.lines.filter(l=>pl.done.includes(l.it.id)).length, ok=b.total<=pl.budget, pct=Math.min(100,pl.budget?b.total/pl.budget*100:100);
-      h+=`<h2>Ihr Ergebnis</h2><div class="card"><div class="row"><div><div class="mute sm">Einkaufskorb</div><div style="font-size:28px;font-weight:800">${eur2(b.total)}</div></div><div style="text-align:right"><div class="mute sm">Budget</div><div style="font-size:18px;font-weight:700">${eur2(pl.budget)}</div></div></div>
+      h+=`<h2>Ihr Ergebnis</h2><div class="card"><div class="row"><div class="kpi"><div class="lbl">Einkaufskorb</div><div class="big">${eur2(b.total)}</div></div><div class="kpi" style="text-align:right"><div class="lbl">Budget</div><div class="val">${eur2(pl.budget)}</div></div></div>
        <div style="height:8px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin:12px 0 10px"><div style="height:100%;width:${pct}%;background:${ok?'var(--pos)':'var(--neg)'}"></div></div>
        <p class="sm ${ok?'pos':''}" style="${ok?'':'color:var(--neg)'}">${ok?`${ic('check')} Im Budget, ${eur2(pl.budget-b.total)} bleiben übrig.`:`${ic('alert')} Das Budget reicht dafür nicht. Nötig wären ${eur2(b.total)}. Tipp: weniger Tage, ein günstigerer Laden, vegetarisch oder ohne Bio.`}</p>
        <p class="mute sm" style="margin-top:6px">Etwa ${eur2(b.total/(pl.n||pl.people)/pl.days.length)} pro Person und Tag.</p>
@@ -2433,11 +2439,18 @@ document.addEventListener('keydown',e=>{
   const fn=window[CLOSE_FN[open.id]];
   if(typeof fn==='function'){ e.preventDefault(); fn(); }   /* die Frage nach der Nutzungsart bleibt bewusst offen */
 });
-new MutationObserver(ms=>ms.forEach(m=>{
+const modalObs=new MutationObserver(ms=>ms.forEach(m=>{
   const el=m.target, auf=el.classList.contains('show'), war=m.oldValue&&m.oldValue.includes('show');
-  if(auf&&!war){ lastFocus=document.activeElement; const f=el.querySelector('.sheet input:not([type=hidden]),.sheet button'); if(f) setTimeout(()=>f.focus(),60); }
+  if(auf&&!war){
+    lastFocus=document.activeElement;
+    const sh=el.querySelector('.sheet'), h=sh&&sh.querySelector('h3');
+    if(sh&&h) sh.setAttribute('aria-label',h.textContent.trim());
+    const f=sh&&(sh.querySelector('input:not([type=hidden]):not([type=file]),textarea,select')||sh.querySelector('button:not(.del)'));
+    if(f) setTimeout(()=>f.focus(),60);
+  }
   else if(!auf&&war&&lastFocus){ const t=lastFocus; lastFocus=null; setTimeout(()=>{try{t.focus();}catch(e){}},0); }
-})).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class'],attributeOldValue:true});
+}));
+document.querySelectorAll('.modal').forEach(m=>modalObs.observe(m,{attributes:true,attributeFilter:['class'],attributeOldValue:true}));
 
 /* ---------- Render ---------- */
 function render(keepScroll){
