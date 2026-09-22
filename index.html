@@ -434,12 +434,15 @@ function fixCats(){
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], mode:null, biz:{ust:'klein',mixed:false,fy:1}, tourDone:false, tour:null, chat:null, refCode:null, refBy:null, upl:0, customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null, list:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-25.8';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-26.1';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
+const PAY_READY=false;   /* auf true stellen, sobald bezahlt werden kann: dann endet die Testphase wieder regulär */
 function trialInfo(){
   const day=S.trialStart?Math.round((new Date(today()+'T00:00:00')-new Date(S.trialStart+'T00:00:00'))/86400000):0;  /* round: Zeitumstellung macht Tage 23h/25h lang */
-  return {day,left:Math.max(0,TRIAL_DAYS-day),decideIn:Math.max(0,DECIDE_DAY-day),phase:day>=TRIAL_DAYS?'ended':day>=DECIDE_DAY?'decide':'trial'};
+  const vorbei=day>=TRIAL_DAYS;
+  return {day,left:Math.max(0,TRIAL_DAYS-day),decideIn:Math.max(0,DECIDE_DAY-day),
+    phase:vorbei?(PAY_READY?'ended':'open'):day>=DECIDE_DAY?'decide':'trial'};
 }
 /* S.premium gilt als aktiv, wenn gekauft (paid) oder die Testphase noch läuft */
 Object.defineProperty(S,'premium',{get(){return S.paid||trialInfo().phase!=='ended';},set(v){S.paid=!!v;}});
@@ -825,7 +828,7 @@ function vMore(){
   <h2>Wiederkehrende Buchungen</h2><div class="card">
    ${S.rec.filter(r=>!!r.biz===isBiz()).map(r=>`<div class="tx"><span class="dot" style="background:${catOf(r.cat).c}"></span><div class="d"><div class="t1">${esc(r.desc)}</div><div class="mute sm">${ivName(r.iv)} am ${r.day}.</div></div><div class="amt ${r.amt>0?'pos':''}">${r.amt>0?'+':''}${eur2(r.amt)}</div><button class="del" onclick="delRec('${r.id}')" aria-label="Entfernen">${ic('x')}</button></div>`).join('')||'<p class="mute sm">Noch keine. Beim Erfassen einer Buchung können Sie „Jeden Monat wiederholen“ anhaken, z. B. für Miete und Gehalt.</p>'}</div>
   <h2>Kassenzettel-Scans</h2><div class="card"><div class="row"><div><b>${S.premium?'Unbegrenzt':scansLeft()+' von '+FREE_SCANS+' übrig'}</b><div class="mute sm">${S.premium?'Mit Premium':'in diesem Monat (Gratis-Version)'}</div></div><button class="btn sm" onclick="openAdd(true)">${ic('camera')} Scannen</button></div></div>
-  <h2>Premium</h2>${trialBanner()}<div class="card"><div class="row"><div><b>${S.paid?'Premium aktiv (Demo)':trialInfo().phase!=='ended'?'Premium-Testphase':'Basis-Version'}</b><div class="mute sm">${S.paid?'Alle Funktionen freigeschaltet':trialInfo().phase!=='ended'?`Alle Funktionen frei, noch ${trialInfo().left} Tage`:'Erfassen, Dashboard und Prognose sind kostenlos'}</div></div>
+  <h2>Premium</h2>${trialBanner()}<div class="card"><div class="row"><div><b>${S.paid?'Premium aktiv (Demo)':trialInfo().phase==='open'?'Premium weiterhin frei':trialInfo().phase!=='ended'?'Premium-Testphase':'Basis-Version'}</b><div class="mute sm">${S.paid?'Alle Funktionen freigeschaltet':trialInfo().phase==='open'?'Alle Funktionen frei, bis die Bezahlung eingerichtet ist':trialInfo().phase!=='ended'?`Alle Funktionen frei, noch ${trialInfo().left} Tage`:'Erfassen, Dashboard und Prognose sind kostenlos'}</div></div>
   <button class="btn sm" onclick="${S.paid?'togglePremium(false)':'openPaywall()'}">${S.paid?'Beenden':'Preise'}</button></div></div>
   <h2>Ihre Daten</h2><div class="card"><div><b>${S.tx.length}</b> Buchungen gespeichert<div class="mute sm">Nur lokal auf diesem Gerät. Kassenzettel-Fotos werden nicht gespeichert.</div></div>
   <div class="rcpt" style="margin-top:14px"><b>${ic('fileText')} Sicherung</b><div class="sm" style="margin-top:4px">Ihre Daten liegen nur auf diesem Gerät. Speichern Sie regelmäßig eine Sicherung, damit nichts verloren geht, z. B. bei einem Gerätewechsel.</div><div class="sm ${S.lastBackup?'':'gold'}" style="margin-top:8px">${S.lastBackup?'Letzte Sicherung: '+fmtD(S.lastBackup):'Noch keine Sicherung angelegt'}</div>
@@ -1549,7 +1552,7 @@ function dlCsv(){
 }
 function openPaywall(){
   const t=trialInfo(), n=document.getElementById('pwTrial');
-  n.textContent=S.paid?'':t.phase!=='ended'?`Sie testen Premium gerade kostenlos: noch ${t.left} Tage.`:'Ihre Testphase ist beendet.';
+  n.textContent=S.paid?'':t.phase==='open'?'Premium ist weiterhin frei, bis die Bezahlung eingerichtet ist.':t.phase!=='ended'?`Sie testen Premium gerade kostenlos: noch ${t.left} Tage.`:'Ihre Testphase ist beendet.';
   document.getElementById('paywall').classList.add('show');
 }
 function closePaywall(){document.getElementById('paywall').classList.remove('show');}
@@ -1577,6 +1580,7 @@ function trialBanner(){
   const t=trialInfo();
   if(t.phase==='trial'&&!S.choice) return `<div class="card" style="margin-top:14px;padding:12px 16px"><div class="row sm"><span>${ic('gift')} <b>Premium-Testphase</b></span><span class="gold"><b>noch ${t.left} Tage</b></span></div><div class="bar" style="margin:8px 0 2px;height:6px"><i style="width:${Math.min(100,t.day/TRIAL_DAYS*100)}%"></i></div><div class="mute sm">Alle Funktionen sind freigeschaltet. In ${t.decideIn} Tagen fragen wir, wie es weitergeht.</div></div>`;
   if(t.phase==='trial') return `<div class="card" style="margin-top:14px;padding:12px 16px"><div class="row sm"><span>${ic('gift')} <b>Premium-Testphase</b></span><span class="gold"><b>noch ${t.left} Tage</b></span></div><div class="mute sm">Sie wechseln danach zur Basis-Version.</div></div>`;
+  if(t.phase==='open') return `<div class="card" style="margin-top:14px;padding:12px 16px"><div class="row sm"><span>${ic('gift')} <b>Premium weiterhin frei</b></span></div><div class="mute sm" style="margin-top:4px">Die Testphase ist vorbei, aber es gibt noch keine Bezahlmöglichkeit. Sie behalten alle Funktionen, bis es so weit ist. Wir sagen rechtzeitig Bescheid.</div></div>`;
   if(t.phase==='decide'&&!S.choice) return `<div class="card total" style="margin-top:14px"><div class="gold sm" style="font-weight:700">ENTSCHEIDUNG · NOCH ${t.left} TAGE</div><div style="margin:6px 0 12px">Ihre Premium-Testphase endet bald. Möchten Sie Premium behalten oder die Basis-Version nutzen?</div><button class="btn" onclick="openDecide()">Jetzt entscheiden</button></div>`;
   if(t.phase==='decide') return `<div class="card" style="margin-top:14px;padding:12px 16px"><div class="row sm"><span>${ic('gift')} <b>Premium-Testphase</b></span><span class="gold"><b>noch ${t.left} Tage</b></span></div><div class="mute sm">Sie haben die Basis-Version gewählt. Das gilt nach der Testphase.</div></div>`;
   if(t.phase==='ended'&&S.choice!=='basic') return `<div class="card total" style="margin-top:14px"><div class="gold sm" style="font-weight:700">TESTPHASE BEENDET</div><div style="margin:6px 0 12px">Sie nutzen jetzt die Basis-Version. Premium gibt es für 3,99 € im Monat.</div><button class="btn" onclick="openDecide()">Optionen ansehen</button></div>`;
@@ -1696,7 +1700,7 @@ function techInfo(){
     ['Tage seit Start',S.trialStart?String(daysSince(S.trialStart)):'?'],
     ['Buchungen',String(S.tx.length)],['Kassenzettel-Scans',String(n)],['Kontoauszug-Importe',String(st)],
     ['Budgets / Sparziele',`${Object.keys(S.budgets).length} / ${S.goals.length}`],['Kategorie-Korrekturen',String(Object.keys(S.rules).length)],
-    ['Status',S.paid?'Premium (Demo)':ti.phase==='ended'?'Basis':`Testphase (Tag ${ti.day+1} von ${TRIAL_DAYS})`],
+    ['Status',S.paid?'Premium (Demo)':ti.phase==='ended'?'Basis':ti.phase==='open'?`Testphase verlängert (Tag ${ti.day+1})`:`Testphase (Tag ${ti.day+1} von ${TRIAL_DAYS})`],
   ];
 }
 function feedbackText(){
@@ -2461,7 +2465,7 @@ function render(keepScroll){
   const kb=document.getElementById('killbar'); if(kb) kb.hidden=!S.paid;
   const ns=document.getElementById('navShop');
   if(ns) ns.innerHTML=isBiz()?navIco('fileText')+'Auswertung':navIco('cart')+'Einkaufen';
-  const p=document.getElementById('premPill'), ti=trialInfo();p.classList.toggle('on',S.premium);p.innerHTML=ic('star')+' '+(S.paid?'Premium aktiv':ti.phase!=='ended'?`Test · ${ti.left} Tage`:'Premium');
+  const p=document.getElementById('premPill'), ti=trialInfo();p.classList.toggle('on',S.premium);p.innerHTML=ic('star')+' '+(S.paid?'Premium aktiv':ti.phase==='open'?'Premium frei':ti.phase!=='ended'?`Test · ${ti.left} Tage`:'Premium');
   if(keepScroll) window.scrollTo(0,y);
   const s=document.querySelector('input[type=search]'); if(s&&S.filter&&document.activeElement===document.body){s.focus();s.setSelectionRange(s.value.length,s.value.length);}
 }
@@ -2474,7 +2478,7 @@ render();
 /* Direktlink zur Kündigung, z. B. von der Website: …/#kuendigen */
 if(location.hash==='#kuendigen') setTimeout(openCancel,250);
 window.addEventListener('hashchange',()=>{if(location.hash==='#kuendigen')openCancel();});
-{const t=trialInfo(); if(!S.paid&&!S.choice&&t.phase!=='trial') setTimeout(openDecide,600);}   /* ab Tag 42 einmal pro Start nachfragen */
+{const t=trialInfo(); if(PAY_READY&&!S.paid&&!S.choice&&t.phase!=='trial') setTimeout(openDecide,600);}   /* ab Tag 42 einmal pro Start nachfragen */
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(()=>{});
 setTimeout(checkUpdate,3000);
 </script>
