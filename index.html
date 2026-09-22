@@ -255,6 +255,15 @@ details.note summary{color:var(--gold)}
 .steps li::before{content:counter(s);flex:none;width:26px;height:26px;border-radius:50%;background:var(--grad);color:#0B0C0F;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
 .steps svg.i{color:var(--gold);width:1.2em;height:1.2em}
 .update{position:fixed;left:12px;right:12px;bottom:calc(146px + env(safe-area-inset-bottom));z-index:25;max-width:696px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:18px;border:1px solid rgba(201,170,34,.5);background:linear-gradient(180deg,#1c1a10,#14151a);box-shadow:0 12px 40px -10px rgba(0,0,0,.7);font-size:14px}
+.chat{display:flex;flex-direction:column;gap:10px;max-height:52vh;overflow-y:auto;overscroll-behavior:contain;padding:2px}
+.msg{max-width:88%;align-self:flex-start;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:16px 16px 16px 4px;padding:12px 14px;font-size:14px;line-height:1.5}
+.msg.me{align-self:flex-end;background:var(--gold-soft);border-color:rgba(201,170,34,.45);border-radius:16px 16px 4px 16px}
+.msg .chip{font-size:12px;padding:7px 11px}
+.tour{position:fixed;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:30;max-width:696px;margin:0 auto;padding:16px 18px 14px;border-radius:20px;border:1px solid rgba(201,170,34,.55);background:linear-gradient(180deg,#1c1a10,#14151a);box-shadow:0 18px 50px -10px rgba(0,0,0,.8);display:none}
+.tour.show{display:block}
+.tour .btns .btn{min-width:0}
+.tourskip{display:block;margin:10px auto 0;background:none;border:0;color:var(--mute);font-size:13px;text-decoration:underline;cursor:pointer;padding:6px}
+.tourhl{z-index:31;outline:2px solid var(--gold);outline-offset:3px;border-radius:14px}
 .legal{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:6px}
 .legal a{color:var(--mute);font-size:13px;text-decoration:none;transition:color .2s}
 .legal a:hover{color:var(--gold)}
@@ -303,6 +312,8 @@ details.note summary{color:var(--gold)}
 
 <div class="modal" id="km" onclick="if(event.target===this)closeCat()"><div class="sheet" id="ksheet"></div></div>
 <div class="modal" id="mm"><div class="sheet" id="msheet"></div></div>
+<div class="modal" id="hm" onclick="if(event.target===this)closeHelp()"><div class="sheet" id="hsheet"></div></div>
+<div class="tour" id="tourbox"></div>
 
 <div class="modal" id="paywall" onclick="if(event.target===this)closePaywall()"><div class="sheet">
   <h3>MeinMoney <span class="gold">Premium</span></h3>
@@ -416,10 +427,10 @@ function fixCats(){
 }
 
 /* ---------- Zustand & Speicher ---------- */
-let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], mode:null, biz:{ust:'klein',mixed:false,fy:1}, refCode:null, refBy:null, upl:0, customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null, list:null};
+let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], mode:null, biz:{ust:'klein',mixed:false,fy:1}, tourDone:false, tour:null, chat:null, refCode:null, refBy:null, upl:0, customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null, list:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-24.5';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-25.5';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 function trialInfo(){
@@ -428,8 +439,8 @@ function trialInfo(){
 }
 /* S.premium gilt als aktiv, wenn gekauft (paid) oder die Testphase noch läuft */
 Object.defineProperty(S,'premium',{get(){return S.paid||trialInfo().phase!=='ended';},set(v){S.paid=!!v;}});
-function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||'null'); if(j){S.tx=j.tx||[];S.rules=j.rules||{};S.rec=j.rec||[];S.scans=j.scans||{};S.stmts=j.stmts||{};S.budgets=j.budgets||{};S.goals=j.goals||[];S.paid=!!j.paid;S.trialStart=j.trialStart||null;S.choice=j.choice||null;S.cancels=j.cancels||[];S.lastBackup=j.lastBackup||null;S.bkSnooze=j.bkSnooze||null;S.instSnooze=j.instSnooze||null;S.customCats=cleanCats(j.customCats);S.mode=j.mode==='biz'?'biz':(j.mode==='priv'?'priv':null);S.biz=cleanBiz(j.biz);S.refCode=refOk(j.refCode);S.refBy=refOk(j.refBy);S.upl=Math.max(0,Math.min(99999,Math.round(+j.upl||0)));S.shop=cleanShop(j.shop);S.fb=Object.assign(S.fb,j.fb||{});}}catch(e){}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify({tx:S.tx,rules:S.rules,rec:S.rec,scans:S.scans,stmts:S.stmts,budgets:S.budgets,goals:S.goals,paid:S.paid,trialStart:S.trialStart,choice:S.choice,cancels:S.cancels,lastBackup:S.lastBackup,bkSnooze:S.bkSnooze,instSnooze:S.instSnooze,customCats:S.customCats,mode:S.mode,biz:S.biz,shop:S.shop,refCode:S.refCode,refBy:S.refBy,upl:S.upl,fb:S.fb}))}catch(e){toast('Speichern nicht möglich (Speicher voll oder gesperrt)')}}
+function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||'null'); if(j){S.tx=j.tx||[];S.rules=j.rules||{};S.rec=j.rec||[];S.scans=j.scans||{};S.stmts=j.stmts||{};S.budgets=j.budgets||{};S.goals=j.goals||[];S.paid=!!j.paid;S.trialStart=j.trialStart||null;S.choice=j.choice||null;S.cancels=j.cancels||[];S.lastBackup=j.lastBackup||null;S.bkSnooze=j.bkSnooze||null;S.instSnooze=j.instSnooze||null;S.customCats=cleanCats(j.customCats);S.mode=j.mode==='biz'?'biz':(j.mode==='priv'?'priv':null);S.tourDone=!!j.tourDone;S.biz=cleanBiz(j.biz);S.refCode=refOk(j.refCode);S.refBy=refOk(j.refBy);S.upl=Math.max(0,Math.min(99999,Math.round(+j.upl||0)));S.shop=cleanShop(j.shop);S.fb=Object.assign(S.fb,j.fb||{});}}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({tx:S.tx,rules:S.rules,rec:S.rec,scans:S.scans,stmts:S.stmts,budgets:S.budgets,goals:S.goals,paid:S.paid,trialStart:S.trialStart,choice:S.choice,cancels:S.cancels,lastBackup:S.lastBackup,bkSnooze:S.bkSnooze,instSnooze:S.instSnooze,customCats:S.customCats,mode:S.mode,biz:S.biz,tourDone:S.tourDone,shop:S.shop,refCode:S.refCode,refBy:S.refBy,upl:S.upl,fb:S.fb}))}catch(e){toast('Speichern nicht möglich (Speicher voll oder gesperrt)')}}
 
 /* ---------- Helfer ---------- */
 const eur=(n,d=0)=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',minimumFractionDigits:d,maximumFractionDigits:d}).format(n===0?0:n);
@@ -802,6 +813,8 @@ function vMore(){
   <h2>Monatsbudgets pro Kategorie</h2><div class="card">
    ${EXP_CATS.map(c=>`<div class="row" style="padding:6px 0"><span><span class="dot" style="background:${CATS[c].c};display:inline-block"></span> ${c}</span><input class="f" style="width:110px;text-align:right;padding:8px 10px" inputmode="decimal" placeholder="kein Limit" value="${S.budgets[c]||''}" onchange="setBudget('${c}',this.value)" aria-label="Budget ${c}"></div>`).join('')}
    <p class="note">${S.premium?'Unbegrenzt viele Budgets.':`Gratis: bis zu ${FREE_BUDGETS} Budgets (${Object.keys(S.budgets).length} belegt).`}</p></div>
+  <h2>Hilfe</h2><div class="card"><div class="row"><div><b>Hilfe und Einführung</b><div class="mute sm">Fragen zur Bedienung beantworten, oder den Rundgang durch die App noch einmal starten.</div></div></div>
+   <div class="btns" style="margin-top:12px"><button class="btn" onclick="openHelp()">${ic('sparkles')} Frage stellen</button><button class="btn ghost" onclick="tourStart()">Rundgang starten</button></div></div>
   <h2>Nutzungsart</h2><div class="card"><div class="row"><div><b>${isBiz()?'Unternehmen':'Privat'}</b><div class="mute sm">${isBiz()?'Betriebseinnahmen, Betriebsausgaben und Auswertung für die Einnahmenüberschussrechnung.':'Haushaltsbuch mit Budgets, Sparzielen und Einkaufsplaner.'}</div></div>
    <button class="btn sm" onclick="openMode()">Wechseln</button></div>
    <p class="note">Private und geschäftliche Buchungen bleiben getrennt. Beim Wechsel geht nichts verloren.</p></div>
@@ -2226,7 +2239,168 @@ function setMode(m,move){
   document.getElementById('mm').classList.remove('show'); S.mo=null;
   S.tab='home'; S.month=null; render(); window.scrollTo(0,0);
   toast(S.mode==='biz'?'Unternehmens-Modus aktiv':'Privat-Modus aktiv');
+  if(!S.tourDone) setTimeout(tourStart,500);   /* Einführung direkt nach der Frage, überspringbar */
 }
+/* ---------- Hilfe: Wissensstand, Suche und Einführung ---------- */
+/* Alles läuft auf dem Gerät. Es gibt keine KI und keine Verbindung nach außen, nur einen Abgleich
+   der Frage mit den hinterlegten Stichwörtern. Was die App nicht weiß, sagt sie offen. */
+const HELP=[
+ {t:'Buchung erfassen',k:'buchung erfassen eintragen eingeben hinzufügen anlegen neue ausgabe einnahme plus knopf',
+  a:'Tippen Sie auf das <b>+</b> rechts über der unteren Leiste. Wählen Sie oben <b>Ausgabe</b> oder <b>Einnahme</b>, geben Sie Betrag, Beschreibung, Kategorie und Datum ein und speichern Sie. Die Kategorie schlägt die App anhand der Beschreibung vor.'},
+ {t:'Buchung ändern',k:'ändern ändere abändern anpassen bearbeiten korrigieren falsch stift buchung umbuchen',
+  a:'Tippen Sie in der Liste auf den <b>Stift</b> neben der Buchung. Sie finden die Liste unter <b>Buchungen</b> oder indem Sie auf der Übersicht auf Einnahmen, Ausgaben oder ein Stück des Diagramms tippen.'},
+ {t:'Buchung löschen',k:'löschen lösche entfernen weg wegmachen stornieren doppelt falsch erfasst raus',
+  a:'Neben jeder Buchung steht ein <b>X</b>, in der Liste unter Buchungen und in den Listen, die sich aus der Übersicht öffnen. In der Bearbeiten-Maske gibt es unten <b>Buchung löschen</b>. Es kommt immer eine Rückfrage.'},
+ {t:'Vorzeichen falsch',k:'vorzeichen falsch minus plus gutschrift als ausgabe erkannt einnahme ausgabe vertauscht',
+  a:'Öffnen Sie die Buchung über den <b>Stift</b> und schalten Sie oben von <b>Ausgabe</b> auf <b>Einnahme</b> oder umgekehrt. Das ist besser als löschen, weil sonst der Betrag auf beiden Seiten fehlt.'},
+ {t:'Kassenzettel scannen',k:'kassenzettel beleg scannen foto fotografieren bon quittung abfotografieren kamera',
+  a:'Tippen Sie auf <b>+</b> und dann auf <b>Foto aufnehmen</b> oder <b>PDF / Bild hochladen</b>. Die App liest Händler, Datum, Summe und Positionen <b>auf Ihrem Gerät</b> aus. Das Foto wird nicht gespeichert und nicht hochgeladen. Prüfen Sie das Ergebnis, bevor Sie speichern.'},
+ {t:'Positionen eigene Kategorie',k:'position positionen einzeln kategorie zigaretten tabak aufteilen splitten teilen beleg',
+  a:'Nach dem Scan steht unter <b>Positionen erkannt</b> jede Zeile mit einem Auswahlfeld. Stellen Sie einzelne Positionen um, etwa Zigaretten auf Tabak. Die App legt dann pro Kategorie eine eigene Buchung an, der Gesamtbetrag bleibt gleich.'},
+ {t:'Kontoauszug hochladen',k:'kontoauszug auszug importieren hochladen bank pdf csv umsätze einlesen',
+  a:'Auf der Übersicht <b>Kontoauszug hochladen</b> oder unter Mehr. Nehmen Sie das PDF oder die CSV aus Ihrem Online-Banking, kein Foto und keinen Scan. In der Vorschau prüfen Sie jede Zeile, wählen Kategorien und haken ab, was übernommen werden soll.'},
+ {t:'Bank-Zugangsdaten',k:'bank login zugangsdaten passwort pin tan konto verbinden sicherheit bankdaten',
+  a:'MeinMoney fragt <b>niemals</b> nach Ihren Bankdaten. Es gibt keinen Bank-Login. Sie laden den Auszug selbst aus Ihrem Online-Banking herunter und hier hoch. Er wird nur auf Ihrem Gerät gelesen.'},
+ {t:'Dauerauftrag',k:'dauerauftrag wiederkehrend wiederholen jeden monat miete gehalt regelmäßig abo automatisch',
+  a:'Haken Sie beim Erfassen <b>Regelmäßig wiederholen</b> an und wählen Sie den Takt: monatlich, vierteljährlich, halbjährlich oder jährlich. Ohne Auswahl gilt monatlich. Die App bucht ab dem Startdatum automatisch weiter.'},
+ {t:'Dauerauftrag nachträglich',k:'dauerauftrag nachträglich rückwirkend vorhandene buchung markieren entfernen',
+  a:'Öffnen Sie eine vorhandene Buchung über den <b>Stift</b> und setzen Sie den Haken. Gleiche Buchungen aus früheren Monaten werden mit verknüpft, und die Folgemonate werden sofort nachgebucht. Haken entfernen löscht den Dauerauftrag wieder, die Buchungen bleiben.'},
+ {t:'Kategorien anlegen',k:'kategorie kategorien eigene neue anlegen erstellen ändern umbenennen farbe symbol stichwort',
+  a:'Unter <b>Mehr › Eigene Kategorien</b> oder beim Erfassen über den Chip <b>Neue Kategorie</b>. Sie wählen Name, Art, Farbe, Symbol und optional Stichwörter. Wer etwa „Fressnapf, Tierarzt" einträgt, dem sortiert die App solche Buchungen künftig von allein zu.'},
+ {t:'Budget setzen',k:'budget limit grenze monatsbudget höchstbetrag budgets festlegen',
+  a:'Unter <b>Mehr › Monatsbudgets pro Kategorie</b>. Tragen Sie einen Betrag ein, und die Übersicht zeigt einen Balken mit Ihrem Stand. Budgets gibt es nur im Privat-Modus.'},
+ {t:'Sparziel',k:'sparziel ziel sparen ansparen urlaub notgroschen zielbetrag',
+  a:'Unter <b>Mehr › Neues Sparziel</b>. Sie geben Name, Zielbetrag und optional ein Datum an und pflegen den gesparten Stand selbst.'},
+ {t:'Prognose',k:'prognose vorhersage monatsende hochgerechnet schätzung voraussichtlich wie berechnet',
+  a:'Die Übersicht zeigt, was am Monatsende voraussichtlich übrig bleibt. Tippen Sie auf <b>Wie kommt die Prognose zustande?</b>, dann sehen Sie die ganze Rechnung: bisherige Ausgaben, Tagesschnitt, Hochrechnung auf die Resttage und noch offene Fixkosten.'},
+ {t:'Spartipps',k:'spartipp spartipps tipp sparpotenzial vorschläge sparen wie berechnet woher',
+  a:'Die Tipps entstehen allein aus Ihren eigenen Buchungen. Unter jedem Tipp steht <b>Wie kommt die App darauf?</b> mit Regel, Zahlen und den zugrunde liegenden Buchungen. Wir vermitteln nichts und bekommen keine Provisionen.'},
+ {t:'Einkaufsplaner',k:'einkaufen einkaufsplaner einkaufsliste liste supermarkt laden rezepte speiseplan korb budget einkauf',
+  a:'Im Reiter <b>Einkaufen</b>. Sie wählen Ihren Laden, führen eine Einkaufsliste, lassen sich aus einem Budget einen Speiseplan mit Einkaufskorb zusammenstellen und stöbern in über 200 Rezepten. Die Preise sind Richtwerte, keine tagesaktuellen Angebote.'},
+ {t:'Preisschild fotografieren',k:'preisschild preis foto scannen laden artikel erfassen einkaufsliste preis',
+  a:'Im Reiter Einkaufen unter der Eingabezeile: <b>Preisschild fotografieren</b>. Die App liest Artikel und Preis aus und blendet Grundpreise je Kilo oder Liter aus. Prüfen Sie beides, bevor Sie es übernehmen.'},
+ {t:'Privat oder Unternehmen',k:'privat unternehmen geschäftlich modus wechseln firma gewerbe umstellen nutzungsart',
+  a:'Beim ersten Start fragt die App danach, wechseln können Sie unter <b>Mehr › Nutzungsart</b>. Beide Bereiche haben eigene Buchungen und Kategorien und sehen sich nicht gegenseitig. Es geht nichts verloren.'},
+ {t:'Einnahmenüberschussrechnung',k:'eür euer einnahmenüberschussrechnung steuer steuerberater export excel tabelle auswertung geschäftsjahr umsatz gewinn',
+  a:'Im Unternehmens-Modus im Reiter <b>Auswertung</b>. Dort finden Sie Monat und Geschäftsjahr mit Überschuss und Aufschlüsselung, dazu den Export als Tabelle für Excel oder Google Sheets. <b>Wichtig:</b> Das ist eine Vorbereitung für Ihren Steuerberater und keine Buchführung nach GoBD.'},
+ {t:'Umsatzsteuer',k:'umsatzsteuer ust mehrwertsteuer vorsteuer zahllast kleinunternehmer netto brutto 19 7 prozent',
+  a:'Im Reiter Auswertung unter Einstellungen wählen Sie <b>Kleinunternehmer § 19</b> oder <b>Regelbesteuert</b>. Bei Regelbesteuerung geben Sie Bruttobeträge ein, wählen je Buchung 19 %, 7 % oder ohne, und die App rechnet Netto, Umsatzsteuer und Zahllast heraus. Ohne Angabe rechnet sie mit 19 %.'},
+ {t:'Sicherung',k:'sicherung backup speichern exportieren wiederherstellen gerätewechsel datenverlust neues handy umziehen',
+  a:'Unter <b>Mehr › Sicherung</b>. Laden Sie regelmäßig eine Datei herunter, besonders vor einem Gerätewechsel. Über <b>Sicherung einspielen</b> holen Sie alles zurück. Ihre Daten liegen nur auf diesem Gerät, es gibt keine Kopie bei uns.'},
+ {t:'Daten weg',k:'daten weg verschwunden leer alles gelöscht verloren browser gelöscht nichts mehr da',
+  a:'Die Daten hängen am Browser dieses Geräts und an der Adresse. Sie verschwinden, wenn Sie die Browserdaten löschen, den privaten Modus nutzen oder das Gerät wechseln. Falls Sie eine Sicherungsdatei haben, spielen Sie sie unter Mehr wieder ein. Ohne Sicherung lassen sie sich leider nicht wiederherstellen.'},
+ {t:'Datenschutz',k:'datenschutz daten sicher wo gespeichert cloud server hochgeladen privat dsgvo wer sieht',
+  a:'Alles bleibt auf Ihrem Gerät. Buchungen, Fotos und Kontoauszüge werden hier ausgewertet und nicht hochgeladen. Es gibt keine Konten, keine Werbung, kein Tracking und keinen Datenverkauf.'},
+ {t:'Als App installieren',k:'installieren app startbildschirm home homescreen downloaden icon symbol handy',
+  a:'Auf dem iPhone in Safari über <b>Teilen › Zum Home-Bildschirm</b>, auf Android über das Browser-Menü <b>Zum Startbildschirm hinzufügen</b>. Danach startet MeinMoney wie eine normale App. Einen Hinweis dazu finden Sie auch unter Mehr.'},
+ {t:'Premium und Preise',k:'premium preis kosten abo bezahlen testphase gratis kostenlos basis wieviel euro monat jahr',
+  a:'Die ersten 8 Wochen sind alle Funktionen frei. Danach entscheiden Sie: Die Basis-Version bleibt kostenlos, Premium kostet 3,99 € im Monat oder 29,99 € im Jahr. Es gibt keine Werbung und keine versteckten Kosten.'},
+ {t:'Was bleibt in der Basis-Version',k:'basis kostenlos was bleibt verliere ich grenzen limit eingeschränkt nach testphase',
+  a:'Alles, was Sie erstellt haben, bleibt erhalten und nutzbar: Buchungen, Budgets, Sparziele, eigene Kategorien, Einkaufsliste und Ihr letzter Speiseplan. Begrenzt ist nur Neues, etwa 5 Scans und 1 Kontoauszug pro Monat.'},
+ {t:'Kündigen',k:'kündigen kündigung abo beenden stoppen abbestellen vertrag',
+  a:'Ganz oben ist immer der Balken <b>Verträge hier kündigen</b> sichtbar. Dort führt Sie die App durch die Kündigung.'},
+ {t:'Feedback',k:'feedback fehler melden bug problem verbesserung vorschlag kontakt support hilfe email',
+  a:'Unter <b>Mehr › Feedback geben</b>. Ihre Nachricht geht als E-Mail heraus, nur mit dem, was Sie schreiben, plus Gerät und Version. Buchungsinhalte werden nie mitgeschickt.'},
+ {t:'Beispieldaten',k:'beispiel demo testdaten ausprobieren anschauen beispieldaten laden',
+  a:'Auf der leeren Übersicht steht <b>Oder erst mit Beispieldaten ansehen</b>, ebenso unter Mehr. Achtung: Beispieldaten ersetzen vorhandene Buchungen, die App fragt vorher nach.'},
+ {t:'Diagramm',k:'diagramm kreis chart grafik auswertung wohin geht das geld verlauf kategorie anteil',
+  a:'Auf der Übersicht sehen Sie unter <b>Wohin geht das Geld?</b> die Aufteilung nach Kategorie und darunter den Verlauf über die Monate. Tippen Sie auf ein Stück oder einen Eintrag darunter, um die zugehörigen Buchungen zu sehen.'},
+ {t:'Monat wechseln',k:'monat wechseln vormonat zurück blättern anderer monat auswählen zeitraum',
+  a:'Oben über den Zahlen stehen Pfeile links und rechts neben dem Monatsnamen. Damit blättern Sie durch alle Monate, in denen Sie Buchungen haben.'},
+ {t:'Abo-Radar',k:'abo radar abos verträge wiederkehrende zahlungen erkannt netflix spotify jahreskosten',
+  a:'Unter <b>Spartipps</b> listet das Abo- und Vertrags-Radar alle Zahlungen, die regelmäßig in gleicher Höhe wiederkehren, mit Monats- und Jahreskosten. So sehen Sie schnell, was sich zu kündigen lohnt.'},
+ {t:'Weiterempfehlen',k:'empfehlen teilen weitersagen freunde link einladen empfehlung',
+  a:'Unter <b>Mehr › MeinMoney weiterempfehlen</b>. Ein Tipp öffnet das Teilen-Menü Ihres Handys mit fertigem Text und Link.'},
+ {t:'Einführung nochmal',k:'einführung tour guide rundgang nochmal erklärung anleitung neu starten hilfe',
+  a:'Unter <b>Mehr › Hilfe und Einführung</b> starten Sie den Rundgang jederzeit neu.'}
+];
+const HELP_TOP=['Buchung erfassen','Kassenzettel scannen','Kontoauszug hochladen','Sicherung','Datenschutz','Premium und Preise'];
+const hNorm=s=>String(s).toLowerCase().replace(/[äÄ]/g,'a').replace(/[öÖ]/g,'o').replace(/[üÜ]/g,'u').replace(/ß/g,'ss').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+/* Frage mit den Stichwörtern abgleichen: längere Treffer zählen mehr */
+function helpFind(q){
+  const STOP=' wie was wo wer wann warum ich mir mich mein meine meinem meinen der die das den dem ein eine einen ist sind kann man und oder fuer mit von bei auf aus sich es im in zu zum zur nicht auch noch mal bitte hallo danke app ';
+  const words=hNorm(q).split(' ').filter(w=>w.length>=3&&!STOP.includes(' '+w+' '));
+  if(!words.length) return [];
+  return HELP.map(h=>{
+    const keys=hNorm(h.t+' '+h.k).split(' ');
+    let sc=0;
+    words.forEach(w=>{
+      let best=0;
+      keys.forEach(k=>{
+        if(k===w) best=Math.max(best,w.length*2);
+        /* deutsche Wortformen: scanne/scannen, loesche/loeschen, installiere/installieren */
+        else if(w.length>=5&&k.length>=5&&(k.startsWith(w)||w.startsWith(k))) best=Math.max(best,w.length*2-2);
+      });
+      sc+=best;
+    });
+    return {h,sc};
+  }).filter(x=>x.sc>=6).sort((a,b)=>b.sc-a.sc).slice(0,3).map(x=>x.h);
+}
+function openHelp(){
+  if(!S.chat||!S.chat.length) S.chat=[{me:false,a:'Hallo! Ich beantworte Fragen zur Bedienung von MeinMoney. Schreiben Sie Ihre Frage, oder tippen Sie unten auf ein Thema.',tips:HELP_TOP}];
+  renderHelp(); document.getElementById('hm').classList.add('show');
+}
+function closeHelp(){document.getElementById('hm').classList.remove('show');}
+function renderHelp(){
+  const box=document.getElementById('hsheet'); if(!box) return;
+  box.innerHTML=`<div class="row" style="margin-bottom:10px"><h3>${ic('sparkles')} Hilfe</h3><button class="del" style="font-size:20px" onclick="closeHelp()" aria-label="Schließen">${ic('x')}</button></div>
+   <div class="chat" id="chatlog">${S.chat.map(m=>m.me
+     ? `<div class="msg me">${esc(m.a)}</div>`
+     : `<div class="msg">${m.a}${m.tips&&m.tips.length?`<div class="chips" style="margin-top:10px">${m.tips.map(t=>`<button type="button" class="chip" onclick="helpAsk('${esc(jsq(t))}')">${esc(t)}</button>`).join('')}</div>`:''}</div>`).join('')}</div>
+   <form class="row" style="gap:8px;margin-top:12px" onsubmit="helpSend(event)"><input class="f" id="hq" placeholder="Ihre Frage, z. B. Wie scanne ich einen Bon?" maxlength="120" autocomplete="off" aria-label="Frage eingeben"><button class="btn sm" type="submit" style="flex:none;width:auto;padding:13px 14px" aria-label="Senden">${ic('chevR')}</button></form>
+   <p class="note">Die Antworten sind fest in der App hinterlegt. Es wird nichts gesendet und nichts gespeichert. Für alles Weitere nutzen Sie bitte ${'<a href="#" onclick="closeHelp();openFeedback();return false" class="gold">Feedback</a>'}.</p>`;
+  const l=document.getElementById('chatlog'); if(l) l.scrollTop=l.scrollHeight;
+}
+function helpSend(e){ e.preventDefault(); const el=document.getElementById('hq'); const q=(el?el.value:'').trim(); if(!q) return; if(el) el.value=''; helpAsk(q); }
+function helpAsk(q){
+  S.chat.push({me:true,a:q});
+  const hits=helpFind(q);
+  if(!hits.length) S.chat.push({me:false,a:'Dazu habe ich leider nichts hinterlegt. Vielleicht hilft eines dieser Themen. Wenn nicht, schreiben Sie uns bitte über Feedback, dann nehmen wir die Antwort auf.',tips:HELP_TOP});
+  else {
+    S.chat.push({me:false,a:`<b>${esc(hits[0].t)}</b><br>${hits[0].a}`,tips:hits.slice(1).map(h=>h.t)});
+  }
+  if(S.chat.length>40) S.chat=S.chat.slice(-40);
+  renderHelp();
+}
+/* ---------- Einführung beim ersten Start ---------- */
+function tourSteps(){
+  const biz=isBiz();
+  return [
+   {tab:'home',sel:null,t:'Willkommen bei MeinMoney',a:'In einer Minute zeige ich Ihnen, wo was liegt. Sie können jederzeit auf Überspringen tippen.'},
+   {tab:'home',sel:'.fab',t:'Buchungen erfassen',a:'Über das <b>+</b> erfassen Sie Einnahmen und Ausgaben. Dort können Sie auch einen Kassenzettel fotografieren, die App liest ihn auf Ihrem Gerät aus.'},
+   {tab:'home',sel:'nav button[data-t=home]',t:'Übersicht',a:biz?'Hier sehen Sie Ihre betrieblichen Zahlen des Monats, das Diagramm und den Verlauf.':'Hier sehen Sie, was am Monatsende voraussichtlich übrig bleibt, wohin Ihr Geld fließt und wie sich die Monate entwickeln. Tippen Sie auf eine Zahl, um die Buchungen dahinter zu sehen.'},
+   {tab:'tx',sel:'nav button[data-t=tx]',t:'Buchungen',a:'Alle Buchungen des Monats, durchsuchbar. Der Stift ändert eine Buchung, das X löscht sie.'},
+   biz
+    ? {tab:'shop',sel:'nav button[data-t=shop]',t:'Auswertung',a:'Monat und Geschäftsjahr mit Überschuss, Umsatzsteuer und Export als Tabelle für Ihren Steuerberater.'}
+    : {tab:'shop',sel:'nav button[data-t=shop]',t:'Einkaufen',a:'Einkaufsliste, Speiseplan im Budget und über 200 Rezepte. Preise sind Richtwerte, keine Angebote.'},
+   {tab:'tips',sel:'nav button[data-t=tips]',t:'Spartipps',a:'Tipps aus Ihren eigenen Zahlen, dazu das Abo-Radar. Unter jedem Tipp steht, wie die App darauf kommt.'},
+   {tab:'more',sel:'nav button[data-t=more]',t:'Mehr',a:'Kontoauszug hochladen, eigene Kategorien, Budgets, Sicherung und die Nutzungsart. <b>Legen Sie regelmäßig eine Sicherung an</b>, Ihre Daten liegen nur auf diesem Gerät.'},
+   {tab:'more',sel:null,t:'Fertig',a:'Das war alles. Fragen beantwortet der Hilfe-Chat unter <b>Mehr › Hilfe und Einführung</b>, jederzeit erreichbar.'}
+  ];
+}
+function tourStart(){ S.tour={i:0}; tourShow(); }
+function tourShow(){
+  const T=tourSteps(), st=T[S.tour.i]; if(!st){ tourEnd(true); return; }
+  if(S.tab!==st.tab){ S.tab=st.tab; render(); }
+  document.querySelectorAll('.tourhl').forEach(e=>e.classList.remove('tourhl'));
+  if(st.sel){ const e=document.querySelector(st.sel); if(e) e.classList.add('tourhl'); }
+  const box=document.getElementById('tourbox');
+  box.innerHTML=`<div class="row" style="align-items:flex-start"><b>${esc(st.t)}</b><span class="mute sm" style="flex:none">${S.tour.i+1} von ${T.length}</span></div>
+   <p class="sm" style="margin:8px 0 0">${st.a}</p>
+   <div class="btns" style="margin-top:14px">${S.tour.i?`<button class="btn ghost sm" onclick="tourGo(-1)">Zurück</button>`:''}
+    <button class="btn sm" onclick="tourGo(1)">${S.tour.i===T.length-1?'Fertig':'Weiter'}</button></div>
+   <button class="tourskip" onclick="tourEnd(true)">Überspringen</button>`;
+  box.classList.add('show');
+  window.scrollTo(0,0);
+}
+function tourGo(d){ S.tour.i+=d; tourShow(); }
+function tourEnd(done){
+  document.querySelectorAll('.tourhl').forEach(e=>e.classList.remove('tourhl'));
+  const b=document.getElementById('tourbox'); if(b) b.classList.remove('show');
+  S.tour=null; if(done){ S.tourDone=true; save(); }
+  S.tab='home'; render(); window.scrollTo(0,0);
+}
+
 /* ---------- Render ---------- */
 function render(keepScroll){
   const y=window.scrollY, ms=months();
@@ -2243,6 +2417,7 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.t)
 load(); rebuildCats(); fixCats(); catchRef(); autoPost();
 if(!S.trialStart){S.trialStart=today();save();}   /* Testphase startet beim ersten Öffnen */
 if(!S.mode) setTimeout(()=>openMode(true),400);   /* Frage nach der Nutzungsart, auch bei vorhandenen Daten */
+else if(!S.tourDone) setTimeout(tourStart,600);      /* Einführung für alle, die sie noch nicht gesehen haben */
 render();
 /* Direktlink zur Kündigung, z. B. von der Website: …/#kuendigen */
 if(location.hash==='#kuendigen') setTimeout(openCancel,250);
