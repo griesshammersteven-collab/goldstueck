@@ -434,7 +434,7 @@ function fixCats(){
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], mode:null, biz:{ust:'klein',mixed:false,fy:1}, tourDone:false, tour:null, chat:null, refCode:null, refBy:null, upl:0, customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null, list:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-26.1';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-26.2';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 const PAY_READY=false;   /* auf true stellen, sobald bezahlt werden kann: dann endet die Testphase wieder regulär */
@@ -1855,8 +1855,8 @@ async function applyUpdate(){
   try{
     const fresh=await fetch('index.html?nocache='+Date.now(),{cache:'no-store'});
     if('caches' in window&&fresh.ok){
-      const k=(await caches.keys()).find(x=>x.startsWith('monatsklar-'));
-      if(k){const c=await caches.open(k); await c.put(new Request(new URL('index.html',location.href)),fresh.clone()); await c.put(new Request(new URL('./',location.href)),fresh.clone());}
+      const ks=(await caches.keys()).filter(x=>x.startsWith('meinmoney-'));
+      for(const k of ks){const c=await caches.open(k); await c.put(new Request(new URL('index.html',location.href)),fresh.clone()); await c.put(new Request(new URL('./',location.href)),fresh.clone());}
     }
   }catch(e){}
   location.reload();
