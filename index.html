@@ -434,7 +434,7 @@ function fixCats(){
 let S = {tx:[], rules:{}, rec:[], scans:{}, stmts:{}, budgets:{}, goals:[], paid:false, trialStart:null, choice:null, cancels:[], mode:null, biz:{ust:'klein',mixed:false,fy:1}, tourDone:false, tour:null, chat:null, refCode:null, refBy:null, upl:0, customCats:[], shop:{store:null,seed:0,list:[],prefs:{budget:'',adults:2,kids:[],people:2,days:3,diet:'all',bio:false,meals:{f:false,l:false,a:true},excl:{lf:false,gf:false,nf:false},nou:false,no:[],basics:true},hist:[],plan:null}, shopTab:'list', ck:null, lastBackup:null, bkSnooze:null, instSnooze:null, inst:null, fb:{answers:[],asked:{},snooze:{},done:{},pending:{},off:false,sent:0}, ff:null, cx:null, month:null, tab:'home', filter:'', form:null, scan:null, gf:null, st:null, list:null};
 const KEY='goldstueck_v2';
 const FREE_BUDGETS=3, FREE_GOALS=1, FREE_STMTS=1;
-const APP_VERSION='2026-09-26.2';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
+const APP_VERSION='2026-09-26.3';   /* bei jeder Veröffentlichung erhöhen: daran erkennt die App, dass es eine neuere Version gibt */
 /* Testphase: 8 Wochen Premium für alle. Danach endet Premium, und die App fragt nach der Entscheidung (Premium kaufen oder Basis). */
 const TRIAL_DAYS=56, DECIDE_DAY=56;
 const PAY_READY=false;   /* auf true stellen, sobald bezahlt werden kann: dann endet die Testphase wieder regulär */
@@ -1086,7 +1086,7 @@ function parseReceipt(text){
   let merchant=''; for(const l of lines.slice(0,8)){const letters=(l.match(/[A-Za-zÄÖÜäöüß]/g)||[]).length;if(letters>=3&&letters>=l.length*0.5&&!/kassenbon|beleg|rechnung|kundenbeleg|tel|www\.|str\./i.test(l)){merchant=l.replace(/[^A-Za-zÄÖÜäöüß0-9&.\- ]/g,'').trim().slice(0,40);break;}}
   const items=[]; const firstTot=lines.findIndex(l=>TOT.test(l)&&!/netto|mwst|steuer/i.test(l)&&amtsOf(l).length); const end=firstTot>=0?firstTot:lines.length;
   lines.slice(0,end).forEach(l=>{
-    const m=l.match(/^(.*?[A-Za-zÄÖÜäöüß].*?)\s+(-?\d{1,4}[.,]\d{2})\s*(?:[A-C*]|EUR|€)?(?:\s*\*)?$/);
+    const m=l.match(/^(.*?[A-Za-zÄÖÜäöüß].*?)\s+(-?\d{1,4}[.,]\d{2})(?:\s*(?:[A-C*]|EUR|€))*\s*$/);
     if(m&&!SKIP.test(l)&&!/^\d+\s*(stk|x)\b/i.test(l)&&!/\bkg\s*x\b/i.test(l)){const p=num(m[2]);const n=m[1].replace(/\s+\d+\s*(x|stk)?$/i,'').trim().slice(0,40);if(!isNaN(p)&&n.length>1&&p<5000&&n!==merchant)items.push({n,p});}
   });
   /* Bekannten Händler suchen: erst Zeilen, die mit dem Händlernamen BEGINNEN (z. B. "REWE Markt GmbH", auch am Belegende), dann irgendwo im Text.
